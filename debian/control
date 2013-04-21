@@ -15,7 +15,7 @@ Build-Depends:
  , libboost-python-dev
  , libboost-system-dev
  , libboost-program-options-dev
- , libpng12-dev
+ , libpng-dev
  , libjpeg-dev
  , libtiff4-dev
  , zlib1g-dev
