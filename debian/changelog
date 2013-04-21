@@ -10,11 +10,12 @@ mapnik (2.1.0+ds1-1) UNRELEASED; urgency=low
   * Python bindings testsuite temporarily disabled
   * Adapt debian/rules get-orig-source target to new upstream layout
   * Build-Depends on libpng-dev instead of libpng12-dev (Closes: #662425)
+  * Bump debhelper compatibility to 9
 
   [ Andrew Harvey ]
   * Change debian/rules to use top level font directory (Closes: 665798)
 
- -- David Paleino <dapal@debian.org>  Sun, 21 Apr 2013 10:36:14 +0200
+ -- David Paleino <dapal@debian.org>  Sun, 21 Apr 2013 10:39:50 +0200
 
 mapnik (2.0.0+ds1-3) unstable; urgency=low
 
