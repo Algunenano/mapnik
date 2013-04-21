@@ -1,5 +1,6 @@
 mapnik (2.0.1+ds1-1) UNRELEASED; urgency=low
 
+  [ David Paleino ]
   * New upstream version
   * Switch debian/watch to github tags
   * debian/patches/:
@@ -9,7 +10,10 @@ mapnik (2.0.1+ds1-1) UNRELEASED; urgency=low
   * Python bindings testsuite temporarily disabled
   * Adapt debian/rules get-orig-source target to new upstream layout
 
- -- David Paleino <dapal@debian.org>  Sun, 21 Apr 2013 10:27:11 +0200
+  [ Andrew Harvey ]
+  * Change debian/rules to use top level font directory (Closes: 665798)
+
+ -- Andrew Harvey <andrew.harvey4@gmail.com>  Sat, 04 Aug 2012 16:05:42 +1000
 
 mapnik (2.0.0+ds1-3) unstable; urgency=low
 
