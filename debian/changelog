@@ -1,5 +1,8 @@
 mapnik (2.1.0+ds1-1) UNRELEASED; urgency=low
 
+  [ Andrew Harvey ]
+  * Change debian/rules to use top level font directory (Closes: #665798)
+
   [ David Paleino ]
   * New upstream version
   * Switch debian/watch to github tags
@@ -11,9 +14,6 @@ mapnik (2.1.0+ds1-1) UNRELEASED; urgency=low
   * Adapt debian/rules get-orig-source target to new upstream layout
   * Build-Depends on libpng-dev instead of libpng12-dev (Closes: #662425)
   * Bump debhelper compatibility to 9
-
-  [ Andrew Harvey ]
-  * Change debian/rules to use top level font directory (Closes: 665798)
 
  -- David Paleino <dapal@debian.org>  Sun, 21 Apr 2013 10:39:50 +0200
 
