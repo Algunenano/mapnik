@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,24 +20,26 @@
  *
  *****************************************************************************/
 
-//$Id: datasource_cache.hpp 39 2005-04-10 20:39:53Z pavlenko $
-
-#ifndef DATASOURCE_CACHE_HPP
-#define DATASOURCE_CACHE_HPP
+#ifndef MAPNIK_DATASOURCE_CACHE_HPP
+#define MAPNIK_DATASOURCE_CACHE_HPP
 
 // mapnik
 #include <mapnik/utils.hpp>
 #include <mapnik/params.hpp>
 #include <mapnik/plugin.hpp>
 #include <mapnik/datasource.hpp>
+
 // boost
+#include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
+
 // stl
 #include <map>
 
 namespace mapnik {
-class MAPNIK_DECL datasource_cache : 
-        public singleton <datasource_cache,CreateStatic>
+class MAPNIK_DECL datasource_cache :
+        public singleton <datasource_cache,CreateStatic>,
+        private boost::noncopyable
 {
     friend class CreateStatic<datasource_cache>;
 private:
@@ -51,10 +53,11 @@ private:
     static std::vector<std::string> plugin_directories_;
 public:
     static std::vector<std::string> plugin_names();
-    static std::string plugin_directories();    
-    static void register_datasources(const std::string& path);
+    static std::string plugin_directories();
+    static void register_datasources(std::string const& path);
+    static bool register_datasource(std::string const& path);
     static boost::shared_ptr<datasource> create(parameters const& params, bool bind=true);
 };
 }
 
-#endif   //DATASOURCE_CACHE_HPP
+#endif // MAPNIK_DATASOURCE_CACHE_HPP

@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,10 +20,9 @@
  *
  *****************************************************************************/
 
-//$Id$
-
 //mapnik
 #include <mapnik/font_set.hpp>
+
 //stl
 #include <string>
 #include <iostream>
@@ -39,7 +38,7 @@ font_set::font_set(std::string const& name)
 font_set::font_set(font_set const& rhs)
     : name_(rhs.name_),
       face_names_(rhs.face_names_) {}
-   
+
 font_set& font_set::operator=(font_set const& other)
 {
     if (this == &other)
@@ -48,10 +47,10 @@ font_set& font_set::operator=(font_set const& other)
     face_names_ = other.face_names_;
 
     return *this;
-} 
+}
 
 font_set::~font_set() {}
-    
+
 unsigned font_set::size() const
 {
     return face_names_.size();
@@ -66,7 +65,7 @@ std::string const& font_set::get_name() const
 {
     return name_;
 }
-    
+
 std::vector<std::string> const& font_set::get_face_names() const
 {
     return face_names_;

@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2010 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,11 +19,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
-//$Id$
 
-#ifndef GRADIENT_HPP
-#define GRADIENT_HPP
+#ifndef MAPNIK_GRADIENT_HPP
+#define MAPNIK_GRADIENT_HPP
 
+// agg
 #include <agg_trans_affine.h>
 
 // mapnik
@@ -32,13 +32,13 @@
 
 // stl
 #include <vector>
- 
+
 namespace mapnik
 {
 
 typedef std::pair<double, mapnik::color> stop_pair;
 typedef std::vector<stop_pair > stop_array;
-        
+
 enum gradient_enum
 {
     NO_GRADIENT,
@@ -60,7 +60,7 @@ enum gradient_unit_enum
 DEFINE_ENUM( gradient_unit_e, gradient_unit_enum );
 
 class MAPNIK_DECL gradient
-{       
+{
     gradient_e gradient_type_;
     stop_array stops_;
     // control points for the gradient, x1/y1 is the start point, x2/y2 the stop point.
@@ -77,22 +77,22 @@ class MAPNIK_DECL gradient
     // transform
     agg::trans_affine transform_;
 public:
-    explicit gradient();
+    gradient();
     gradient(gradient const& other);
     gradient& operator=(const gradient& rhs);
 
     void set_gradient_type(gradient_e grad);
     gradient_e get_gradient_type() const;
 
-    void set_transform(agg::trans_affine transform);
-    agg::trans_affine get_transform() const;
+    void set_transform(agg::trans_affine const& transform);
+    agg::trans_affine const&  get_transform() const;
 
     void set_units(gradient_unit_e units);
     gradient_unit_e get_units() const;
 
     void add_stop(double offset, color const& c);
     bool has_stop() const;
-    
+
     stop_array const& get_stop_array() const;
 
     void set_control_points(double x1, double y1, double x2, double y2, double r=0);
@@ -104,4 +104,4 @@ private:
 };
 }
 
-#endif //GRADIENT_HPP
+#endif // MAPNIK_GRADIENT_HPP

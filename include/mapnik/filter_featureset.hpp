@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,24 +20,23 @@
  *
  *****************************************************************************/
 
-//$Id$
-
 #ifndef MAPNIK_FILTER_FEATURESET_HPP
 #define MAPNIK_FILTER_FEATURESET_HPP
 
+// mapnik
 #include <mapnik/datasource.hpp>
 
 namespace mapnik {
-    
-template <typename T> 
-class filter_featureset : public Featureset 
+
+template <typename T>
+class filter_featureset : public Featureset
 {
     typedef T filter_type;
-        
+
 public:
     filter_featureset(featureset_ptr fs, filter_type const& filter)
         : fs_(fs), filter_(filter) {}
-        
+
     feature_ptr next()
     {
         feature_ptr feature = fs_->next();
@@ -47,11 +46,11 @@ public:
         }
         return feature;
     }
-        
+
 private:
     featureset_ptr fs_;
     filter_type filter_;
 };
 }
 
-#endif //MAPNIK_FILTER_FEATURESET_HPP
+#endif // MAPNIK_FILTER_FEATURESET_HPP

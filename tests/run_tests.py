@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 
+import sys
+
+try:
+    import nose
+except ImportError:
+    sys.stderr.write("Unable to run python tests: the third party 'nose' module is required\nTo install 'nose' do:\n\tsudo pip install nose (or on debian systems: apt-get install python-nose\n")
+    sys.exit(1)
+    
 from python_tests.utilities import TodoPlugin
 from nose.plugins.doctests import Doctest
 
@@ -12,7 +20,7 @@ def usage():
 def main():
     try:
         opts, args = getopt.getopt(sys.argv[1:], "hvqp:", ["help", "prefix="])
-    except getopt.GetoptError as err:
+    except getopt.GetoptError,err:
         print(str(err))
         usage()
         sys.exit(2)
@@ -33,11 +41,11 @@ def main():
             prefix = a
         else:
             assert False, "Unhandled option"
-   
+
     if quiet and verbose:
         usage()
         sys.exit(2)
- 
+
     if prefix:
         # Allow python to find libraries for testing on the buildbot
         sys.path.insert(0, os.path.join(prefix, "lib/python%s/site-packages" % sys.version[:3]))
@@ -63,8 +71,9 @@ def main():
         # 3 * '-v' gets us debugging information from nose
         argv.append('-v')
         argv.append('-v')
-    
-    argv.extend(['-w','./tests/python_tests'])
+
+    dirname = os.path.dirname(sys.argv[0]) 
+    argv.extend(['-w', dirname+'/python_tests'])
 
     if not nose.run(argv=argv, plugins=[TodoPlugin(), Doctest()]):
         sys.exit(1)

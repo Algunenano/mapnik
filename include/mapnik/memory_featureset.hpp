@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,16 +20,19 @@
  *
  *****************************************************************************/
 
-//$Id$
-#ifndef MEMORY_FEATURESET_HPP
-#define MEMORY_FEATURESET_HPP
+#ifndef MAPNIK_MEMORY_FEATURESET_HPP
+#define MAPNIK_MEMORY_FEATURESET_HPP
 
+// mapnik
+#include <mapnik/debug.hpp>
 #include <mapnik/memory_datasource.hpp>
+
+// boost
 #include <boost/utility.hpp>
 
 namespace mapnik {
-    
-class memory_featureset : public Featureset, private boost::noncopyable
+
+class memory_featureset : public Featureset
 {
 public:
     memory_featureset(box2d<double> const& bbox, memory_datasource const& ds)
@@ -45,16 +48,17 @@ public:
     {}
 
     virtual ~memory_featureset() {}
-        
+
     feature_ptr next()
     {
         while (pos_ != end_)
         {
-            for  (unsigned i=0; i<(*pos_)->num_geometries();++i) {
+            for  (unsigned i=0; i<(*pos_)->num_geometries();++i)
+            {
                 geometry_type & geom = (*pos_)->get_geometry(i);
-#ifdef MAPNIK_DEBUG
-                std::clog << "bbox_=" << bbox_ << ", geom.envelope=" << geom.envelope() << "\n";
-#endif
+
+                MAPNIK_LOG_DEBUG(memory_featureset) << "memory_featureset: BBox=" << bbox_ << ",Envelope=" << geom.envelope();
+
                 if (bbox_.intersects(geom.envelope()))
                 {
                     return *pos_++;
@@ -62,15 +66,15 @@ public:
             }
             ++pos_;
         }
-           
+
         return feature_ptr();
     }
-        
+
 private:
     box2d<double> bbox_;
     std::vector<feature_ptr>::const_iterator pos_;
-    std::vector<feature_ptr>::const_iterator end_; 
+    std::vector<feature_ptr>::const_iterator end_;
 };
 }
 
-#endif // MEMORY_FEATURESET_HPP
+#endif // MAPNIK_MEMORY_FEATURESET_HPP

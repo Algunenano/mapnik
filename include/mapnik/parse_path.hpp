@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2010 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,13 +24,16 @@
 #define MAPNIK_PARSE_PATH_HPP
 
 // mapnik
+#include <mapnik/config.hpp>
 #include <mapnik/attribute.hpp>
 #include <mapnik/feature.hpp>
 #include <mapnik/value.hpp>
+
 // boost
 #include <boost/shared_ptr.hpp>
 #include <boost/variant.hpp>
 #include <boost/foreach.hpp>
+
 // stl
 #include <string>
 #include <vector>
@@ -40,8 +43,13 @@ namespace mapnik {
 typedef boost::variant<std::string, attribute> path_component;
 typedef std::vector<path_component> path_expression;
 typedef boost::shared_ptr<path_expression> path_expression_ptr;
+template <typename Iterator> struct path_expression_grammar;
 
-path_expression_ptr parse_path(std::string const & str);
+MAPNIK_DECL path_expression_ptr parse_path(std::string const & str);
+MAPNIK_DECL bool parse_path_from_string(path_expression_ptr const& path,
+                                        std::string const & str,
+                                        path_expression_grammar<std::string::const_iterator> const& g);
+
 
 template <typename T>
 struct path_processor
@@ -52,61 +60,62 @@ struct path_processor
         path_visitor_ (std::string & filename, feature_type const& f)
             : filename_(filename),
               feature_(f) {}
-        
+
         void operator() (std::string const& token) const
         {
             filename_ += token;
         }
-        
+
         void operator() (attribute const& attr) const
         {
             // convert mapnik::value to std::string
-            filename_ += attr.value<mapnik::value,feature_type>(feature_).to_string();
+            value const& val = feature_.get(attr.name());
+            filename_ += val.to_string();
         }
-        
+
         std::string & filename_;
         feature_type const& feature_;
     };
-    
+
     struct to_string_ : boost::static_visitor<void>
     {
         to_string_ (std::string & str)
             : str_(str) {}
-        
+
         void operator() (std::string const& token) const
         {
             str_ += token;
         }
 
-        void operator() (attribute const& attr) const    
+        void operator() (attribute const& attr) const
         {
             str_ += "[";
             str_ += attr.name();
             str_ += "]";
         }
-        
+
         std::string & str_;
     };
-    
+
     template <typename T1>
     struct collect_ : boost::static_visitor<void>
     {
         collect_ (T1 & cont)
             : cont_(cont) {}
-        
+
         void operator() (std::string const& token) const
         {
             boost::ignore_unused_variable_warning(token);
         }
-        
-        void operator() (attribute const& attr) const    
+
+        void operator() (attribute const& attr) const
         {
             cont_.insert(attr.name());
         }
-        
+
         T1 & cont_;
     };
-    
+
     static std::string evaluate(path_expression const& path,feature_type const& f)
     {
         std::string out;
@@ -115,7 +124,7 @@ struct path_processor
             boost::apply_visitor(eval,token);
         return out;
     }
-    
+
     static std::string to_string(path_expression const& path)
     {
         std::string str;
@@ -124,7 +133,7 @@ struct path_processor
             boost::apply_visitor(visitor,token);
         return str;
     }
-    
+
     template <typename T2>
     static void collect_attributes(path_expression const& path, T2 & names)
     {
@@ -139,4 +148,4 @@ typedef mapnik::path_processor<Feature> path_processor_type;
 
 }
 
-#endif //MAPNIK_PARSE_PATH_HPP
+#endif // MAPNIK_PARSE_PATH_HPP

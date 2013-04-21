@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2010 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,22 +19,23 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
-//$Id$
 
-#ifndef MAPNIK_SVG_PATH_ADAPTER
-#define MAPNIK_SVG_PATH_ADAPTER
+#ifndef MAPNIK_SVG_PATH_ADAPTER_HPP
+#define MAPNIK_SVG_PATH_ADAPTER_HPP
 
 // mapnik
 #include <boost/utility.hpp>
+
 // agg
 #include "agg_math.h"
 #include "agg_array.h"
 #include "agg_bezier_arc.h"
+
 // stl
 #include <cmath>
 #include <vector>
 
-namespace mapnik { 
+namespace mapnik {
 namespace svg {
 
 using namespace agg;
@@ -44,62 +45,62 @@ template<class VertexContainer> class path_adapter : boost::noncopyable
 public:
     typedef VertexContainer            container_type;
     typedef path_adapter<VertexContainer> self_type;
-    
+
     //--------------------------------------------------------------------
-    path_adapter(VertexContainer & vertices) : m_vertices(vertices), m_iterator(0) {}
-    //void remove_all() { m_vertices.remove_all(); m_iterator = 0; }
-    //void free_all()   { m_vertices.free_all();   m_iterator = 0; }
-    
+    path_adapter(VertexContainer & vertices) : vertices_(vertices), iterator_(0) {}
+    //void remove_all() { vertices_.remove_all(); iterator_ = 0; }
+    //void free_all()   { vertices_.free_all();   iterator_ = 0; }
+
     // Make path functions
     //--------------------------------------------------------------------
     unsigned start_new_path();
-    
+
     void move_to(double x, double y);
     void move_rel(double dx, double dy);
-    
+
     void line_to(double x, double y);
     void line_rel(double dx, double dy);
-    
+
     void hline_to(double x);
     void hline_rel(double dx);
-    
+
     void vline_to(double y);
     void vline_rel(double dy);
-    
+
     void arc_to(double rx, double ry,
                 double angle,
                 bool large_arc_flag,
                 bool sweep_flag,
                 double x, double y);
-    
+
     void arc_rel(double rx, double ry,
                  double angle,
                  bool large_arc_flag,
                  bool sweep_flag,
                  double dx, double dy);
-    
-    void curve3(double x_ctrl, double y_ctrl, 
+
+    void curve3(double x_ctrl, double y_ctrl,
                 double x_to,   double y_to);
-    
-    void curve3_rel(double dx_ctrl, double dy_ctrl, 
+
+    void curve3_rel(double dx_ctrl, double dy_ctrl,
                     double dx_to,   double dy_to);
-    
+
     void curve3(double x_to, double y_to);
-    
+
     void curve3_rel(double dx_to, double dy_to);
-    
-    void curve4(double x_ctrl1, double y_ctrl1, 
-                double x_ctrl2, double y_ctrl2, 
+
+    void curve4(double x_ctrl1, double y_ctrl1,
+                double x_ctrl2, double y_ctrl2,
                 double x_to,    double y_to);
 
-    void curve4_rel(double dx_ctrl1, double dy_ctrl1, 
-                    double dx_ctrl2, double dy_ctrl2, 
+    void curve4_rel(double dx_ctrl1, double dy_ctrl1,
+                    double dx_ctrl2, double dy_ctrl2,
                     double dx_to,    double dy_to);
 
-    void curve4(double x_ctrl2, double y_ctrl2, 
+    void curve4(double x_ctrl2, double y_ctrl2,
                 double x_to,    double y_to);
 
-    void curve4_rel(double x_ctrl2, double y_ctrl2, 
+    void curve4_rel(double x_ctrl2, double y_ctrl2,
                     double x_to,    double y_to);
 
 
@@ -108,8 +109,8 @@ public:
 
     // Accessors
     //--------------------------------------------------------------------
-    const container_type& vertices() const { return m_vertices; } 
-    container_type& vertices()       { return m_vertices; } 
+    const container_type& vertices() const { return vertices_; }
+    container_type& vertices()       { return vertices_; }
 
     unsigned total_vertices() const;
 
@@ -133,9 +134,9 @@ public:
     void     rewind(unsigned path_id);
     unsigned vertex(double* x, double* y);
 
-    // Arrange the orientation of a polygon, all polygons in a path, 
-    // or in all paths. After calling arrange_orientations() or 
-    // arrange_orientations_all_paths(), all the polygons will have 
+    // Arrange the orientation of a polygon, all polygons in a path,
+    // or in all paths. After calling arrange_orientations() or
+    // arrange_orientations_all_paths(), all the polygons will have
     // the same orientation, i.e. path_flags_cw or path_flags_ccw
     //--------------------------------------------------------------------
     unsigned arrange_polygon_orientation(unsigned start, path_flags_e orientation);
@@ -143,7 +144,7 @@ public:
     void     arrange_orientations_all_paths(path_flags_e orientation);
     void     invert_polygon(unsigned start);
 
-    // Flip all vertices horizontally or vertically, 
+    // Flip all vertices horizontally or vertically,
     // between x1 and x2, or between y1 and y2 respectively
     //--------------------------------------------------------------------
     void flip_x(double x1, double x2);
@@ -151,7 +152,7 @@ public:
 
     // Concatenate path. The path is added as is.
     //--------------------------------------------------------------------
-    template<class VertexSource> 
+    template<class VertexSource>
     void concat_path(VertexSource& vs, unsigned path_id = 0)
     {
         double x(0), y(0);
@@ -159,14 +160,14 @@ public:
         vs.rewind(path_id);
         while(!is_stop(cmd = vs.vertex(&x, &y)))
         {
-            m_vertices.add_vertex(x, y, cmd);
+            vertices_.add_vertex(x, y, cmd);
         }
     }
 
     //--------------------------------------------------------------------
-    // Join path. The path is joined with the existing one, that is, 
+    // Join path. The path is joined with the existing one, that is,
     // it behaves as if the pen of a plotter was always down (drawing)
-    template<class VertexSource> 
+    template<class VertexSource>
     void join_path(VertexSource& vs, unsigned path_id = 0)
     {
         double x, y;
@@ -184,7 +185,7 @@ public:
                     if(calc_distance(x, y, x0, y0) > vertex_dist_epsilon)
                     {
                         if(is_move_to(cmd)) cmd = path_cmd_line_to;
-                        m_vertices.add_vertex(x, y, cmd);
+                        vertices_.add_vertex(x, y, cmd);
                     }
                 }
                 else
@@ -197,18 +198,18 @@ public:
                     {
                         if(is_move_to(cmd)) cmd = path_cmd_line_to;
                     }
-                    m_vertices.add_vertex(x, y, cmd);
+                    vertices_.add_vertex(x, y, cmd);
                 }
             }
             while(!is_stop(cmd = vs.vertex(&x, &y)))
             {
-                m_vertices.add_vertex(x, y, is_move_to(cmd) ? 
-                                      unsigned(path_cmd_line_to) : 
+                vertices_.add_vertex(x, y, is_move_to(cmd) ?
+                                      unsigned(path_cmd_line_to) :
                                       cmd);
             }
         }
     }
-    
+
     //--------------------------------------------------------------------
     void translate(double dx, double dy, unsigned path_id=0);
     void translate_all_paths(double dx, double dy);
@@ -217,16 +218,16 @@ public:
     template<class Trans>
     void transform(const Trans& trans, unsigned path_id=0)
     {
-        unsigned num_ver = m_vertices.total_vertices();
+        unsigned num_ver = vertices_.total_vertices();
         for(; path_id < num_ver; path_id++)
         {
             double x, y;
-            unsigned cmd = m_vertices.vertex(path_id, &x, &y);
+            unsigned cmd = vertices_.vertex(path_id, &x, &y);
             if(is_stop(cmd)) break;
             if(is_vertex(cmd))
             {
                 trans.transform(&x, &y);
-                m_vertices.modify_vertex(path_id, x, y);
+                vertices_.modify_vertex(path_id, x, y);
             }
         }
     }
@@ -236,14 +237,14 @@ public:
     void transform_all_paths(const Trans& trans)
     {
         unsigned idx;
-        unsigned num_ver = m_vertices.total_vertices();
+        unsigned num_ver = vertices_.total_vertices();
         for(idx = 0; idx < num_ver; idx++)
         {
             double x, y;
-            if(is_vertex(m_vertices.vertex(idx, &x, &y)))
+            if(is_vertex(vertices_.vertex(idx, &x, &y)))
             {
                 trans.transform(&x, &y);
-                m_vertices.modify_vertex(idx, x, y);
+                vertices_.modify_vertex(idx, x, y);
             }
         }
     }
@@ -254,37 +255,34 @@ private:
     unsigned perceive_polygon_orientation(unsigned start, unsigned end);
     void     invert_polygon(unsigned start, unsigned end);
 
-    VertexContainer & m_vertices;
-    unsigned          m_iterator;
+    VertexContainer & vertices_;
+    unsigned          iterator_;
+    double start_x_;
+    double start_y_;
 };
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 unsigned path_adapter<VC>::start_new_path()
 {
-    if(!is_stop(m_vertices.last_command()))
+    if(!is_stop(vertices_.last_command()))
     {
-        m_vertices.add_vertex(0.0, 0.0, path_cmd_stop);
+        vertices_.add_vertex(0.0, 0.0, path_cmd_stop);
     }
-    return m_vertices.total_vertices();
+    return vertices_.total_vertices();
 }
 
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 inline void path_adapter<VC>::rel_to_abs(double* x, double* y) const
 {
-    if(m_vertices.total_vertices())
+    if(vertices_.total_vertices())
     {
         double x2;
         double y2;
-        if(is_vertex(m_vertices.last_vertex(&x2, &y2)))
-        {
-            *x += x2;
-            *y += y2;
-        }
-        else if (!is_stop(m_vertices.last_command()) && 
-                 is_vertex(m_vertices.prev_vertex(&x2, &y2)))
+        if(is_vertex(vertices_.last_vertex(&x2, &y2))
+           || !is_stop(vertices_.last_command()))
         {
             *x += x2;
             *y += y2;
@@ -293,88 +291,90 @@ inline void path_adapter<VC>::rel_to_abs(double* x, double* y) const
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 inline void path_adapter<VC>::move_to(double x, double y)
 {
-    m_vertices.add_vertex(x, y, path_cmd_move_to);
+    start_x_ = x;
+    start_y_ = y;
+    vertices_.add_vertex(x, y, path_cmd_move_to);
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 inline void path_adapter<VC>::move_rel(double dx, double dy)
 {
     rel_to_abs(&dx, &dy);
-    m_vertices.add_vertex(dx, dy, path_cmd_move_to);
+    vertices_.add_vertex(dx, dy, path_cmd_move_to);
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 inline void path_adapter<VC>::line_to(double x, double y)
 {
-    m_vertices.add_vertex(x, y, path_cmd_line_to);
+    vertices_.add_vertex(x, y, path_cmd_line_to);
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 inline void path_adapter<VC>::line_rel(double dx, double dy)
 {
     rel_to_abs(&dx, &dy);
-    m_vertices.add_vertex(dx, dy, path_cmd_line_to);
+    vertices_.add_vertex(dx, dy, path_cmd_line_to);
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 inline void path_adapter<VC>::hline_to(double x)
 {
-    m_vertices.add_vertex(x, last_y(), path_cmd_line_to);
+    vertices_.add_vertex(x, last_y(), path_cmd_line_to);
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 inline void path_adapter<VC>::hline_rel(double dx)
 {
     double dy = 0;
     rel_to_abs(&dx, &dy);
-    m_vertices.add_vertex(dx, dy, path_cmd_line_to);
+    vertices_.add_vertex(dx, dy, path_cmd_line_to);
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 inline void path_adapter<VC>::vline_to(double y)
 {
-    m_vertices.add_vertex(last_x(), y, path_cmd_line_to);
+    vertices_.add_vertex(last_x(), y, path_cmd_line_to);
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 inline void path_adapter<VC>::vline_rel(double dy)
 {
     double dx = 0;
     rel_to_abs(&dx, &dy);
-    m_vertices.add_vertex(dx, dy, path_cmd_line_to);
+    vertices_.add_vertex(dx, dy, path_cmd_line_to);
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 void path_adapter<VC>::arc_to(double rx, double ry,
                               double angle,
                               bool large_arc_flag,
                               bool sweep_flag,
                               double x, double y)
 {
-    if(m_vertices.total_vertices() && is_vertex(m_vertices.last_command()))
+    if(vertices_.total_vertices() && is_vertex(vertices_.last_command()))
     {
         const double epsilon = 1e-30;
         double x0 = 0.0;
         double y0 = 0.0;
-        m_vertices.last_vertex(&x0, &y0);
+        vertices_.last_vertex(&x0, &y0);
 
         rx = fabs(rx);
         ry = fabs(ry);
 
         // Ensure radii are valid
         //-------------------------
-        if(rx < epsilon || ry < epsilon) 
+        if(rx < epsilon || ry < epsilon)
         {
             line_to(x, y);
             return;
@@ -403,7 +403,7 @@ void path_adapter<VC>::arc_to(double rx, double ry,
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 void path_adapter<VC>::arc_rel(double rx, double ry,
                                double angle,
                                bool large_arc_flag,
@@ -415,36 +415,36 @@ void path_adapter<VC>::arc_rel(double rx, double ry,
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
-void path_adapter<VC>::curve3(double x_ctrl, double y_ctrl, 
+template<class VC>
+void path_adapter<VC>::curve3(double x_ctrl, double y_ctrl,
                               double x_to,   double y_to)
 {
-    m_vertices.add_vertex(x_ctrl, y_ctrl, path_cmd_curve3);
-    m_vertices.add_vertex(x_to,   y_to,   path_cmd_curve3);
+    vertices_.add_vertex(x_ctrl, y_ctrl, path_cmd_curve3);
+    vertices_.add_vertex(x_to,   y_to,   path_cmd_curve3);
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
-void path_adapter<VC>::curve3_rel(double dx_ctrl, double dy_ctrl, 
+template<class VC>
+void path_adapter<VC>::curve3_rel(double dx_ctrl, double dy_ctrl,
                                   double dx_to,   double dy_to)
 {
     rel_to_abs(&dx_ctrl, &dy_ctrl);
     rel_to_abs(&dx_to,   &dy_to);
-    m_vertices.add_vertex(dx_ctrl, dy_ctrl, path_cmd_curve3);
-    m_vertices.add_vertex(dx_to,   dy_to,   path_cmd_curve3);
+    vertices_.add_vertex(dx_ctrl, dy_ctrl, path_cmd_curve3);
+    vertices_.add_vertex(dx_to,   dy_to,   path_cmd_curve3);
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 void path_adapter<VC>::curve3(double x_to, double y_to)
 {
     double x0;
     double y0;
-    if(is_vertex(m_vertices.last_vertex(&x0, &y0)))
+    if(is_vertex(vertices_.last_vertex(&x0, &y0)))
     {
         double x_ctrl;
-        double y_ctrl; 
-        unsigned cmd = m_vertices.prev_vertex(&x_ctrl, &y_ctrl);
+        double y_ctrl;
+        unsigned cmd = vertices_.prev_vertex(&x_ctrl, &y_ctrl);
         if(is_curve(cmd))
         {
             x_ctrl = x0 + x0 - x_ctrl;
@@ -460,7 +460,7 @@ void path_adapter<VC>::curve3(double x_to, double y_to)
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 void path_adapter<VC>::curve3_rel(double dx_to, double dy_to)
 {
     rel_to_abs(&dx_to, &dy_to);
@@ -468,33 +468,33 @@ void path_adapter<VC>::curve3_rel(double dx_to, double dy_to)
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
-void path_adapter<VC>::curve4(double x_ctrl1, double y_ctrl1, 
-                              double x_ctrl2, double y_ctrl2, 
+template<class VC>
+void path_adapter<VC>::curve4(double x_ctrl1, double y_ctrl1,
+                              double x_ctrl2, double y_ctrl2,
                               double x_to,    double y_to)
 {
-    m_vertices.add_vertex(x_ctrl1, y_ctrl1, path_cmd_curve4);
-    m_vertices.add_vertex(x_ctrl2, y_ctrl2, path_cmd_curve4);
-    m_vertices.add_vertex(x_to,    y_to,    path_cmd_curve4);
+    vertices_.add_vertex(x_ctrl1, y_ctrl1, path_cmd_curve4);
+    vertices_.add_vertex(x_ctrl2, y_ctrl2, path_cmd_curve4);
+    vertices_.add_vertex(x_to,    y_to,    path_cmd_curve4);
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
-void path_adapter<VC>::curve4_rel(double dx_ctrl1, double dy_ctrl1, 
-                                  double dx_ctrl2, double dy_ctrl2, 
+template<class VC>
+void path_adapter<VC>::curve4_rel(double dx_ctrl1, double dy_ctrl1,
+                                  double dx_ctrl2, double dy_ctrl2,
                                   double dx_to,    double dy_to)
 {
     rel_to_abs(&dx_ctrl1, &dy_ctrl1);
     rel_to_abs(&dx_ctrl2, &dy_ctrl2);
     rel_to_abs(&dx_to,    &dy_to);
-    m_vertices.add_vertex(dx_ctrl1, dy_ctrl1, path_cmd_curve4);
-    m_vertices.add_vertex(dx_ctrl2, dy_ctrl2, path_cmd_curve4);
-    m_vertices.add_vertex(dx_to,    dy_to,    path_cmd_curve4);
+    vertices_.add_vertex(dx_ctrl1, dy_ctrl1, path_cmd_curve4);
+    vertices_.add_vertex(dx_ctrl2, dy_ctrl2, path_cmd_curve4);
+    vertices_.add_vertex(dx_to,    dy_to,    path_cmd_curve4);
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
-void path_adapter<VC>::curve4(double x_ctrl2, double y_ctrl2, 
+template<class VC>
+void path_adapter<VC>::curve4(double x_ctrl2, double y_ctrl2,
                               double x_to,    double y_to)
 {
     double x0;
@@ -502,7 +502,7 @@ void path_adapter<VC>::curve4(double x_ctrl2, double y_ctrl2,
     if(is_vertex(last_vertex(&x0, &y0)))
     {
         double x_ctrl1;
-        double y_ctrl1; 
+        double y_ctrl1;
         unsigned cmd = prev_vertex(&x_ctrl1, &y_ctrl1);
         if(is_curve(cmd))
         {
@@ -519,8 +519,8 @@ void path_adapter<VC>::curve4(double x_ctrl2, double y_ctrl2,
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
-void path_adapter<VC>::curve4_rel(double dx_ctrl2, double dy_ctrl2, 
+template<class VC>
+void path_adapter<VC>::curve4_rel(double dx_ctrl2, double dy_ctrl2,
                                   double dx_to,    double dy_to)
 {
     rel_to_abs(&dx_ctrl2, &dy_ctrl2);
@@ -529,109 +529,109 @@ void path_adapter<VC>::curve4_rel(double dx_ctrl2, double dy_ctrl2,
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 inline void path_adapter<VC>::end_poly(unsigned flags)
 {
-    if(is_vertex(m_vertices.last_command()))
+    if(is_vertex(vertices_.last_command()))
     {
-        m_vertices.add_vertex(0.0, 0.0, path_cmd_end_poly | flags);
+        vertices_.add_vertex(start_x_, start_y_, path_cmd_end_poly | flags);
     }
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 inline void path_adapter<VC>::close_polygon(unsigned flags)
 {
     end_poly(path_flags_close | flags);
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 inline unsigned path_adapter<VC>::total_vertices() const
 {
-    return m_vertices.total_vertices();
+    return vertices_.total_vertices();
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 inline unsigned path_adapter<VC>::last_vertex(double* x, double* y) const
 {
-    return m_vertices.last_vertex(x, y);
+    return vertices_.last_vertex(x, y);
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 inline unsigned path_adapter<VC>::prev_vertex(double* x, double* y) const
 {
-    return m_vertices.prev_vertex(x, y);
+    return vertices_.prev_vertex(x, y);
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 inline double path_adapter<VC>::last_x() const
 {
-    return m_vertices.last_x();
+    return vertices_.last_x();
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 inline double path_adapter<VC>::last_y() const
 {
-    return m_vertices.last_y();
+    return vertices_.last_y();
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 inline unsigned path_adapter<VC>::vertex(unsigned idx, double* x, double* y) const
 {
-    return m_vertices.vertex(idx, x, y);
+    return vertices_.vertex(idx, x, y);
 }
- 
+
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 inline unsigned path_adapter<VC>::command(unsigned idx) const
 {
-    return m_vertices.command(idx);
+    return vertices_.command(idx);
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 void path_adapter<VC>::modify_vertex(unsigned idx, double x, double y)
 {
-    m_vertices.modify_vertex(idx, x, y);
+    vertices_.modify_vertex(idx, x, y);
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 void path_adapter<VC>::modify_vertex(unsigned idx, double x, double y, unsigned cmd)
 {
-    m_vertices.modify_vertex(idx, x, y, cmd);
+    vertices_.modify_vertex(idx, x, y, cmd);
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 void path_adapter<VC>::modify_command(unsigned idx, unsigned cmd)
 {
-    m_vertices.modify_command(idx, cmd);
+    vertices_.modify_command(idx, cmd);
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 inline void path_adapter<VC>::rewind(unsigned path_id)
 {
-    m_iterator = path_id;
+    iterator_ = path_id;
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 inline unsigned path_adapter<VC>::vertex(double* x, double* y)
 {
-    if(m_iterator >= m_vertices.total_vertices()) return path_cmd_stop;
-    return m_vertices.vertex(m_iterator++, x, y);
+    if(iterator_ >= vertices_.total_vertices()) return path_cmd_stop;
+    return vertices_.vertex(iterator_++, x, y);
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 unsigned path_adapter<VC>::perceive_polygon_orientation(unsigned start,
                                                         unsigned end)
 {
@@ -643,79 +643,79 @@ unsigned path_adapter<VC>::perceive_polygon_orientation(unsigned start,
     for(i = 0; i < np; i++)
     {
         double x1, y1, x2, y2;
-        m_vertices.vertex(start + i,            &x1, &y1);
-        m_vertices.vertex(start + (i + 1) % np, &x2, &y2);
+        vertices_.vertex(start + i,            &x1, &y1);
+        vertices_.vertex(start + (i + 1) % np, &x2, &y2);
         area += x1 * y2 - y1 * x2;
     }
     return (area < 0.0) ? path_flags_cw : path_flags_ccw;
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 void path_adapter<VC>::invert_polygon(unsigned start, unsigned end)
 {
     unsigned i;
-    unsigned tmp_cmd = m_vertices.command(start);
-        
+    unsigned tmp_cmd = vertices_.command(start);
+
     --end; // Make "end" inclusive
 
     // Shift all commands to one position
     for(i = start; i < end; i++)
     {
-        m_vertices.modify_command(i, m_vertices.command(i + 1));
+        vertices_.modify_command(i, vertices_.command(i + 1));
     }
 
     // Assign starting command to the ending command
-    m_vertices.modify_command(end, tmp_cmd);
+    vertices_.modify_command(end, tmp_cmd);
 
     // Reverse the polygon
     while(end > start)
     {
-        m_vertices.swap_vertices(start++, end--);
+        vertices_.swap_vertices(start++, end--);
     }
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 void path_adapter<VC>::invert_polygon(unsigned start)
 {
     // Skip all non-vertices at the beginning
-    while(start < m_vertices.total_vertices() && 
-          !is_vertex(m_vertices.command(start))) ++start;
+    while(start < vertices_.total_vertices() &&
+          !is_vertex(vertices_.command(start))) ++start;
 
     // Skip all insignificant move_to
-    while(start+1 < m_vertices.total_vertices() && 
-          is_move_to(m_vertices.command(start)) &&
-          is_move_to(m_vertices.command(start+1))) ++start;
+    while(start+1 < vertices_.total_vertices() &&
+          is_move_to(vertices_.command(start)) &&
+          is_move_to(vertices_.command(start+1))) ++start;
 
     // Find the last vertex
     unsigned end = start + 1;
-    while(end < m_vertices.total_vertices() && 
-          !is_next_poly(m_vertices.command(end))) ++end;
+    while(end < vertices_.total_vertices() &&
+          !is_next_poly(vertices_.command(end))) ++end;
 
     invert_polygon(start, end);
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
-unsigned path_adapter<VC>::arrange_polygon_orientation(unsigned start, 
+template<class VC>
+unsigned path_adapter<VC>::arrange_polygon_orientation(unsigned start,
                                                        path_flags_e orientation)
 {
     if(orientation == path_flags_none) return start;
-        
+
     // Skip all non-vertices at the beginning
-    while(start < m_vertices.total_vertices() && 
-          !is_vertex(m_vertices.command(start))) ++start;
+    while(start < vertices_.total_vertices() &&
+          !is_vertex(vertices_.command(start))) ++start;
 
     // Skip all insignificant move_to
-    while(start+1 < m_vertices.total_vertices() && 
-          is_move_to(m_vertices.command(start)) &&
-          is_move_to(m_vertices.command(start+1))) ++start;
+    while(start+1 < vertices_.total_vertices() &&
+          is_move_to(vertices_.command(start)) &&
+          is_move_to(vertices_.command(start+1))) ++start;
 
     // Find the last vertex
     unsigned end = start + 1;
-    while(end < m_vertices.total_vertices() && 
-          !is_next_poly(m_vertices.command(end))) ++end;
+    while(end < vertices_.total_vertices() &&
+          !is_next_poly(vertices_.command(end))) ++end;
 
     if(end - start > 2)
     {
@@ -724,10 +724,10 @@ unsigned path_adapter<VC>::arrange_polygon_orientation(unsigned start,
             // Invert polygon, set orientation flag, and skip all end_poly
             invert_polygon(start, end);
             unsigned cmd;
-            while(end < m_vertices.total_vertices() && 
-                  is_end_poly(cmd = m_vertices.command(end)))
+            while(end < vertices_.total_vertices() &&
+                  is_end_poly(cmd = vertices_.command(end)))
             {
-                m_vertices.modify_command(end++, set_orientation(cmd, orientation));
+                vertices_.modify_command(end++, set_orientation(cmd, orientation));
             }
         }
     }
@@ -735,16 +735,16 @@ unsigned path_adapter<VC>::arrange_polygon_orientation(unsigned start,
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
-unsigned path_adapter<VC>::arrange_orientations(unsigned start, 
+template<class VC>
+unsigned path_adapter<VC>::arrange_orientations(unsigned start,
                                                 path_flags_e orientation)
 {
     if(orientation != path_flags_none)
     {
-        while(start < m_vertices.total_vertices())
+        while(start < vertices_.total_vertices())
         {
             start = arrange_polygon_orientation(start, orientation);
-            if(is_stop(m_vertices.command(start)))
+            if(is_stop(vertices_.command(start)))
             {
                 ++start;
                 break;
@@ -755,13 +755,13 @@ unsigned path_adapter<VC>::arrange_orientations(unsigned start,
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 void path_adapter<VC>::arrange_orientations_all_paths(path_flags_e orientation)
 {
     if(orientation != path_flags_none)
     {
         unsigned start = 0;
-        while(start < m_vertices.total_vertices())
+        while(start < vertices_.total_vertices())
         {
             start = arrange_orientations(start, orientation);
         }
@@ -769,70 +769,70 @@ void path_adapter<VC>::arrange_orientations_all_paths(path_flags_e orientation)
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 void path_adapter<VC>::flip_x(double x1, double x2)
 {
     unsigned i;
     double x, y;
-    for(i = 0; i < m_vertices.total_vertices(); i++)
+    for(i = 0; i < vertices_.total_vertices(); i++)
     {
-        unsigned cmd = m_vertices.vertex(i, &x, &y);
+        unsigned cmd = vertices_.vertex(i, &x, &y);
         if(is_vertex(cmd))
         {
-            m_vertices.modify_vertex(i, x2 - x + x1, y);
+            vertices_.modify_vertex(i, x2 - x + x1, y);
         }
     }
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 void path_adapter<VC>::flip_y(double y1, double y2)
 {
     unsigned i;
     double x, y;
-    for(i = 0; i < m_vertices.total_vertices(); i++)
+    for(i = 0; i < vertices_.total_vertices(); i++)
     {
-        unsigned cmd = m_vertices.vertex(i, &x, &y);
+        unsigned cmd = vertices_.vertex(i, &x, &y);
         if(is_vertex(cmd))
         {
-            m_vertices.modify_vertex(i, x, y2 - y + y1);
+            vertices_.modify_vertex(i, x, y2 - y + y1);
         }
     }
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 void path_adapter<VC>::translate(double dx, double dy, unsigned path_id)
 {
-    unsigned num_ver = m_vertices.total_vertices();
+    unsigned num_ver = vertices_.total_vertices();
     for(; path_id < num_ver; path_id++)
     {
         double x, y;
-        unsigned cmd = m_vertices.vertex(path_id, &x, &y);
+        unsigned cmd = vertices_.vertex(path_id, &x, &y);
         if(is_stop(cmd)) break;
         if(is_vertex(cmd))
         {
             x += dx;
             y += dy;
-            m_vertices.modify_vertex(path_id, x, y);
+            vertices_.modify_vertex(path_id, x, y);
         }
     }
 }
 
 //------------------------------------------------------------------------
-template<class VC> 
+template<class VC>
 void path_adapter<VC>::translate_all_paths(double dx, double dy)
 {
     unsigned idx;
-    unsigned num_ver = m_vertices.total_vertices();
+    unsigned num_ver = vertices_.total_vertices();
     for(idx = 0; idx < num_ver; idx++)
     {
         double x, y;
-        if(is_vertex(m_vertices.vertex(idx, &x, &y)))
+        if(is_vertex(vertices_.vertex(idx, &x, &y)))
         {
             x += dx;
             y += dy;
-            m_vertices.modify_vertex(idx, x, y);
+            vertices_.modify_vertex(idx, x, y);
         }
     }
 }
@@ -841,30 +841,30 @@ void path_adapter<VC>::translate_all_paths(double dx, double dy)
 template<class Container> class vertex_stl_adapter : boost::noncopyable
 {
 public:
-    
+
     typedef typename Container::value_type vertex_type;
     typedef typename vertex_type::value_type value_type;
-    
+
     explicit vertex_stl_adapter(Container & vertices)
-        : m_vertices(vertices) {}
-    
+        : vertices_(vertices) {}
+
     void add_vertex(double x, double y, unsigned cmd)
     {
-        m_vertices.push_back(vertex_type(value_type(x), 
-                                         value_type(y), 
+        vertices_.push_back(vertex_type(value_type(x),
+                                         value_type(y),
                                          int8u(cmd)));
     }
 
     void modify_vertex(unsigned idx, double x, double y)
     {
-        vertex_type& v = m_vertices[idx];
+        vertex_type& v = vertices_[idx];
         v.x = value_type(x);
         v.y = value_type(y);
     }
 
     void modify_vertex(unsigned idx, double x, double y, unsigned cmd)
     {
-        vertex_type& v = m_vertices[idx];
+        vertex_type& v = vertices_[idx];
         v.x   = value_type(x);
         v.y   = value_type(y);
         v.cmd = int8u(cmd);
@@ -872,61 +872,61 @@ public:
 
     void modify_command(unsigned idx, unsigned cmd)
     {
-        m_vertices[idx].cmd = int8u(cmd);
+        vertices_[idx].cmd = int8u(cmd);
     }
 
     void swap_vertices(unsigned v1, unsigned v2)
     {
-        vertex_type t = m_vertices[v1];
-        m_vertices[v1] = m_vertices[v2];
-        m_vertices[v2] = t;
+        vertex_type t = vertices_[v1];
+        vertices_[v1] = vertices_[v2];
+        vertices_[v2] = t;
     }
 
     unsigned last_command() const
     {
-        return m_vertices.size() ? 
-            m_vertices[m_vertices.size() - 1].cmd : 
+        return vertices_.size() ?
+            vertices_[vertices_.size() - 1].cmd :
             (unsigned)path_cmd_stop;
     }
 
     unsigned last_vertex(double* x, double* y) const
     {
-        if(m_vertices.size() == 0)
+        if(vertices_.size() == 0)
         {
             *x = *y = 0.0;
             return path_cmd_stop;
         }
-        return vertex(m_vertices.size() - 1, x, y);
+        return vertex(vertices_.size() - 1, x, y);
     }
 
     unsigned prev_vertex(double* x, double* y) const
     {
-        if(m_vertices.size() < 2)
+        if(vertices_.size() < 2)
         {
             *x = *y = 0.0;
             return path_cmd_stop;
         }
-        return vertex(m_vertices.size() - 2, x, y);
+        return vertex(vertices_.size() - 2, x, y);
     }
 
     double last_x() const
     {
-        return m_vertices.size() ? m_vertices[m_vertices.size() - 1].x : 0.0;
+        return vertices_.size() ? vertices_[vertices_.size() - 1].x : 0.0;
     }
 
     double last_y() const
     {
-        return m_vertices.size() ? m_vertices[m_vertices.size() - 1].y : 0.0;
+        return vertices_.size() ? vertices_[vertices_.size() - 1].y : 0.0;
     }
 
     unsigned total_vertices() const
     {
-        return m_vertices.size();
+        return vertices_.size();
     }
 
     unsigned vertex(unsigned idx, double* x, double* y) const
     {
-        const vertex_type& v = m_vertices[idx];
+        const vertex_type& v = vertices_[idx];
         *x = v.x;
         *y = v.y;
         return v.cmd;
@@ -934,17 +934,17 @@ public:
 
     unsigned command(unsigned idx) const
     {
-        return m_vertices[idx].cmd;
+        return vertices_[idx].cmd;
     }
 
 private:
-    Container & m_vertices;
+    Container & vertices_;
 };
 
 
 typedef std::vector<vertex_d> svg_path_storage;
 
-typedef path_adapter<vertex_stl_adapter<svg_path_storage> > svg_path_adapter; 
+typedef path_adapter<vertex_stl_adapter<svg_path_storage> > svg_path_adapter;
 
 }}
 

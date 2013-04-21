@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,19 +20,20 @@
  *
  *****************************************************************************/
 
-//$Id: tiff_reader.cpp 17 2005-03-08 23:58:43Z pavlenko $
 // mapnik
+#include <mapnik/debug.hpp>
 #include <mapnik/image_reader.hpp>
 #include <boost/filesystem/operations.hpp>
 
-extern "C" 
-{
-#include <tiffio.h>    
-}
 // stl
 #include <iostream>
 
-namespace mapnik 
+extern "C"
+{
+#include <tiffio.h>
+}
+
+namespace mapnik
 {
 
 using std::min;
@@ -75,7 +76,7 @@ image_reader* create_tiff_reader(const std::string& file)
 {
     return new tiff_reader(file);
 }
-    
+
 const bool registered = register_image_reader("tiff",create_tiff_reader);
 }
 
@@ -97,10 +98,10 @@ void tiff_reader::init()
     // TODO: error handling
     TIFFSetWarningHandler(0);
     TIFF* tif = load_if_exists(file_name_);
-    if (!tif) throw image_reader_exception ("Can't load tiff file");
-    
+    if (!tif) throw image_reader_exception( std::string("Can't load tiff file: '") + file_name_ + "'");
+
     char msg[1024];
-    
+
     if (TIFFRGBAImageOK(tif,msg))
     {
         TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width_);
@@ -144,7 +145,7 @@ unsigned tiff_reader::height() const
 
 
 void tiff_reader::read(unsigned x,unsigned y,image_data_32& image)
-{    
+{
     if (read_method_==stripped)
     {
         read_stripped(x,y,image);
@@ -165,7 +166,8 @@ void tiff_reader::read_generic(unsigned /*x*/,unsigned /*y*/,image_data_32& /*im
     TIFF* tif = load_if_exists(file_name_);
     if (tif)
     {
-        std::clog << "TODO:tiff is not stripped or tiled\n";
+        MAPNIK_LOG_DEBUG(tiff_reader) << "tiff_reader: TODO - tiff is not stripped or tiled";
+
         TIFFClose(tif);
     }
 }
@@ -255,17 +257,17 @@ void tiff_reader::read_stripped(unsigned x0,unsigned y0,image_data_32& image)
         TIFFClose(tif);
     }
 }
-    
+
 TIFF* tiff_reader::load_if_exists(std::string const& filename)
 {
     TIFF * tif = 0;
     boost::filesystem::path path(file_name_);
     if (exists(path)) //  && is_regular(path)) { -- not supported in boost-1.33.*
-    {    
+    {
         // File path is a full file path and does exist
         tif = TIFFOpen(filename.c_str(), "rb");
     }
-        
+
     return tif;
 }
 }

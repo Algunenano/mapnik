@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2010 Artem Pavelenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -36,17 +36,17 @@ static const char * gradient_strings[] = {
 IMPLEMENT_ENUM( gradient_e, gradient_strings )
 
 
-gradient::gradient() 
-    : gradient_type_(NO_GRADIENT),
-      stops_(),
-      x1_(0),
-      y1_(0),
-      x2_(0),
-      y2_(0),
-      r_(0),
-      units_(OBJECT_BOUNDING_BOX)
-{
-}
+gradient::gradient()
+: gradient_type_(NO_GRADIENT),
+    stops_(),
+    x1_(0),
+    y1_(0),
+    x2_(0),
+    y2_(0),
+    r_(0),
+    units_(OBJECT_BOUNDING_BOX),
+    transform_()
+{}
 
 gradient::gradient(gradient const& other)
     : gradient_type_(other.gradient_type_),
@@ -67,21 +67,21 @@ gradient & gradient::operator=(const gradient& rhs)
     return *this;
 }
 
-void gradient::set_gradient_type(gradient_e grad) 
+void gradient::set_gradient_type(gradient_e grad)
 {
     gradient_type_=grad;
 }
 
-gradient_e gradient::get_gradient_type() const 
+gradient_e gradient::get_gradient_type() const
 {
     return gradient_type_;
 }
 
-void gradient::set_transform(agg::trans_affine transform)
+void gradient::set_transform(agg::trans_affine const& transform)
 {
     transform_ = transform;
 }
-agg::trans_affine gradient::get_transform() const
+agg::trans_affine const& gradient::get_transform() const
 {
     return transform_;
 }
@@ -100,7 +100,7 @@ void gradient::add_stop(double offset,mapnik::color const& c)
     stops_.push_back(mapnik::stop_pair(offset,c));
 }
 
-bool gradient::has_stop() const 
+bool gradient::has_stop() const
 {
     return ! stops_.empty();
 }

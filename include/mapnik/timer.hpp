@@ -1,5 +1,5 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
  * Copyright (C) 2011 Artem Pavlenko
@@ -20,16 +20,44 @@
  *
  *****************************************************************************/
 
-#ifndef MAPNIK_TIMER_INCLUDED
-#define MAPNIK_TIMER_INCLUDED
+#ifndef MAPNIK_TIMER_HPP
+#define MAPNIK_TIMER_HPP
 
+// stl
 #include <cstdlib>
 #include <string>
 #include <sstream>
 #include <iomanip>
-#include <sys/time.h> 
+#include <ctime>
+
+#ifdef _WINDOWS
+#define NOMINMAX
+#include <windows.h>
+#else
+#include <sys/time.h> // for gettimeofday() on unix
+#include <sys/resource.h>
+#endif
+
 
 namespace mapnik {
+
+
+// Try to return the time now
+inline double time_now()
+{
+#ifdef _WINDOWS
+    LARGE_INTEGER t, f;
+    QueryPerformanceCounter(&t);
+    QueryPerformanceFrequency(&f);
+    return double(t.QuadPart) / double(f.QuadPart);
+#else
+    struct timeval t;
+    struct timezone tzp;
+    gettimeofday(&t, &tzp);
+    return t.tv_sec + t.tv_usec * 1e-6;
+#endif
+}
+
 
 // Measure times in both wall clock time and CPU times. Results are returned in milliseconds.
 class timer
@@ -40,44 +68,50 @@ public:
         restart();
     }
 
-    void restart() 
-    {   
-        _stopped = false;
-        gettimeofday(&_wall_clock_start, NULL);
-        _cpu_start = clock();
+    virtual ~timer()
+    {
+    }
+
+    void restart()
+    {
+        stopped_ = false;
+        wall_clock_start_ = time_now();
+        cpu_start_ = clock();
     }
 
     virtual void stop() const
     {
-        _stopped = true;
-        _cpu_end = clock();
-        gettimeofday(&_wall_clock_end, NULL);
+        stopped_ = true;
+        cpu_end_ = clock();
+        wall_clock_end_ = time_now();
     }
 
     double cpu_elapsed() const
     {
         // return elapsed CPU time in ms
-        if (!_stopped)
+        if (! stopped_)
+        {
             stop();
+        }
 
-        return ((double) (_cpu_end - _cpu_start)) / CLOCKS_PER_SEC * 1000.0;
+        return ((double) (cpu_end_ - cpu_start_)) / CLOCKS_PER_SEC * 1000.0;
     }
 
     double wall_clock_elapsed() const
     {
         // return elapsed wall clock time in ms
-        if (!_stopped)
+        if (! stopped_)
+        {
             stop();
+        }
 
-        long seconds  = _wall_clock_end.tv_sec  - _wall_clock_start.tv_sec;
-        long useconds = _wall_clock_end.tv_usec - _wall_clock_start.tv_usec;
-
-        return ((seconds) * 1000 + useconds / 1000.0) + 0.5;
+        return (wall_clock_end_ - wall_clock_start_) * 1000.0;
     }
+
 protected:
-    mutable timeval _wall_clock_start, _wall_clock_end;
-    mutable clock_t _cpu_start, _cpu_end;
-    mutable bool _stopped;
+    mutable double wall_clock_start_, wall_clock_end_;
+    mutable clock_t cpu_start_, cpu_end_;
+    mutable bool stopped_;
 };
 
 //  A progress_timer behaves like a timer except that the destructor displays
@@ -85,17 +119,19 @@ protected:
 class progress_timer : public timer
 {
 public:
-    progress_timer(std::ostream & os, std::string const& base_message):
-      os_(os),
-      base_message_(base_message)
-      {}
+    progress_timer(std::ostream & os, std::string const& base_message)
+        : os_(os),
+          base_message_(base_message)
+    {}
 
     ~progress_timer()
     {
-        if (!_stopped)
+        if (! stopped_)
+        {
             stop();
+        }
     }
-    
+
     void stop() const
     {
         timer::stop();
@@ -103,22 +139,24 @@ public:
         {
             std::ostringstream s;
             s.precision(2);
-            s << std::fixed; 
+            s << std::fixed;
             s << wall_clock_elapsed() << "ms (cpu " << cpu_elapsed() << "ms)";
-            s << std::setw(30 - (int)s.tellp()) << std::right << "| " << base_message_ << "\n"; 
+            s << std::setw(30 - (int)s.tellp()) << std::right << "| " << base_message_ << "\n";
             os_ << s.str();
         }
         catch (...) {} // eat any exceptions
     }
 
-    void discard() {
-        _stopped = true;
+    void discard()
+    {
+        stopped_ = true;
     }
 
 private:
     std::ostream & os_;
     std::string base_message_;
 };
-    
-};
-#endif // MAPNIK_TIMER_INCLUDED
+
+}
+
+#endif // MAPNIK_TIMER_HPP

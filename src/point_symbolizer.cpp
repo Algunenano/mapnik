@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,6 @@
  *
  *****************************************************************************/
 
-//$Id$
 // mapnik
 #include <mapnik/point_symbolizer.hpp>
 #include <mapnik/enumeration.hpp>
@@ -37,13 +36,13 @@ static const char * point_placement_strings[] = {
 IMPLEMENT_ENUM( point_placement_e, point_placement_strings )
 
 point_symbolizer::point_symbolizer()
-    : symbolizer_with_image(path_expression_ptr(new path_expression)), // FIXME
-      symbolizer_base(),
-      overlap_(false),
-      point_p_(CENTROID_POINT_PLACEMENT),
-      ignore_placement_(false) {}
-    
-point_symbolizer::point_symbolizer(path_expression_ptr file) 
+: symbolizer_with_image(path_expression_ptr(new path_expression)), // FIXME
+    symbolizer_base(),
+    overlap_(false),
+    point_p_(CENTROID_POINT_PLACEMENT),
+    ignore_placement_(false) {}
+
+point_symbolizer::point_symbolizer(path_expression_ptr file)
     : symbolizer_with_image(file),
       symbolizer_base(),
       overlap_(false),
@@ -61,7 +60,7 @@ void point_symbolizer::set_allow_overlap(bool overlap)
 {
     overlap_ = overlap;
 }
-    
+
 bool point_symbolizer::get_allow_overlap() const
 {
     return overlap_;
@@ -81,7 +80,7 @@ void point_symbolizer::set_ignore_placement(bool ignore_placement)
 {
     ignore_placement_ = ignore_placement;
 }
-    
+
 bool point_symbolizer::get_ignore_placement() const
 {
     return ignore_placement_;

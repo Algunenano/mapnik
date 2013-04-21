@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,12 +19,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
-//$Id$
 
 // mapnik
 #include <mapnik/svg_renderer.hpp>
 
-namespace mapnik { 
+namespace mapnik {
 
 template <typename OutputIterator>
 bool svg_renderer<OutputIterator>::process(rule::symbolizers const& syms,
@@ -33,7 +32,7 @@ bool svg_renderer<OutputIterator>::process(rule::symbolizers const& syms,
 {
     // svg renderer supports processing of multiple symbolizers.
 
-    typedef coord_transform2<CoordTransform, geometry_type> path_type;
+    typedef coord_transform<CoordTransform, geometry_type> path_type;
 
     // process each symbolizer to collect its (path) information.
     // path information (attributes from line_ and polygon_ symbolizers)
@@ -47,7 +46,7 @@ bool svg_renderer<OutputIterator>::process(rule::symbolizers const& syms,
     for(unsigned i=0; i<feature.num_geometries(); ++i)
     {
         geometry_type const& geom = feature.get_geometry(i);
-        if(geom.num_points() > 1)
+        if(geom.size() > 1)
         {
             path_type path(t_, geom, prj_trans);
             generator_.generate_path(path, path_attributes_);

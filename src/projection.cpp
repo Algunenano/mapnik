@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,8 +20,6 @@
  *
  *****************************************************************************/
 
-//$Id$
-
 // mapnik
 #include <mapnik/projection.hpp>
 #include <mapnik/utils.hpp>
@@ -35,53 +33,54 @@
 namespace mapnik {
 
 #if defined(MAPNIK_THREADSAFE) && PJ_VERSION < 480
+#warning mapnik is building against < proj 4.8, reprojection will be faster if you use >= 4.8
 boost::mutex projection::mutex_;
 #endif
-   
+
 projection::projection(std::string const& params)
     : params_(params)
-{ 
-    init(); //
-}
-    
-projection::projection(projection const& rhs)
-    : params_(rhs.params_) 
 {
-    init(); //
+    init();
 }
-        
-projection& projection::operator=(projection const& rhs) 
-{ 
+
+projection::projection(projection const& rhs)
+    : params_(rhs.params_)
+{
+    init();
+}
+
+projection& projection::operator=(projection const& rhs)
+{
     projection tmp(rhs);
     swap(tmp);
     return *this;
 }
-    
-bool projection::operator==(const projection& other) const 
+
+bool projection::operator==(const projection& other) const
 {
     return (params_ == other.params_);
 }
-    
-bool projection::operator!=(const projection& other) const 
+
+bool projection::operator!=(const projection& other) const
 {
     return !(*this == other);
 }
-    
+
 bool projection::is_initialized() const
 {
     return proj_ ? true : false;
 }
-    
+
 bool projection::is_geographic() const
 {
     return is_geographic_;
 }
-    
+
 std::string const& projection::params() const
 {
     return params_;
 }
-    
+
 void projection::forward(double & x, double &y ) const
 {
 #if defined(MAPNIK_THREADSAFE) && PJ_VERSION < 480
@@ -97,9 +96,9 @@ void projection::forward(double & x, double &y ) const
     {
         x *=RAD_TO_DEG;
         y *=RAD_TO_DEG;
-    }           
+    }
 }
-    
+
 void projection::inverse(double & x,double & y) const
 {
 #if defined(MAPNIK_THREADSAFE) && PJ_VERSION < 480
@@ -109,7 +108,7 @@ void projection::inverse(double & x,double & y) const
     {
         x *=DEG_TO_RAD;
         y *=DEG_TO_RAD;
-    }  
+    }
     projUV p;
     p.u = x;
     p.v = y;
@@ -117,8 +116,8 @@ void projection::inverse(double & x,double & y) const
     x = RAD_TO_DEG * p.u;
     y = RAD_TO_DEG * p.v;
 }
-    
-projection::~projection() 
+
+projection::~projection()
 {
 #if defined(MAPNIK_THREADSAFE) && PJ_VERSION < 480
     mutex::scoped_lock lock(mutex_);
@@ -128,19 +127,24 @@ projection::~projection()
     if (proj_ctx_) pj_ctx_free(proj_ctx_);
 #endif
 }
-    
+
 void projection::init()
 {
 #if defined(MAPNIK_THREADSAFE) && PJ_VERSION < 480
     mutex::scoped_lock lock(mutex_);
 #endif
 #if PJ_VERSION >= 480
-    proj_ctx_=pj_ctx_alloc();
-    proj_=pj_init_plus_ctx(proj_ctx_, params_.c_str());
+    proj_ctx_ = pj_ctx_alloc();
+    proj_ = pj_init_plus_ctx(proj_ctx_, params_.c_str());
+    if (!proj_)
+    {
+        if (proj_ctx_) pj_ctx_free(proj_ctx_);
+        throw proj_init_error(params_);
+    }
 #else
-    proj_=pj_init_plus(params_.c_str());
-#endif
+    proj_ = pj_init_plus(params_.c_str());
     if (!proj_) throw proj_init_error(params_);
+#endif
     is_geographic_ = pj_is_latlong(proj_) ? true : false;
 }
 
@@ -149,14 +153,15 @@ std::string projection::expanded() const
     if (proj_) {
         std::string def(pj_get_def( proj_, 0 ));
         //boost::algorithm::ireplace_first(def,params_,"");
-        return boost::trim_copy(def);
+        boost::trim(def);
+        return def;
     }
     return std::string("");
 }
-    
-void projection::swap (projection& rhs)
+
+void projection::swap(projection& rhs)
 {
     std::swap(params_,rhs.params_);
-    init ();
+    init();
 }
 }

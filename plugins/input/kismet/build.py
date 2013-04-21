@@ -19,11 +19,12 @@
 #
 # $Id$
 
+Import ('plugin_base')
 Import ('env')
 
 prefix = env['PREFIX']
 
-plugin_env = env.Clone()
+plugin_env = plugin_base.Clone()
 
 kismet_src = Split(
   """
@@ -36,7 +37,9 @@ libraries = []
 # Link Library to Dependencies
 libraries.append('mapnik')
 libraries.append(env['ICU_LIB_NAME'])
-libraries.append('boost_thread%s' % env['BOOST_APPEND'])
+libraries.append('boost_system%s' % env['BOOST_APPEND'])
+if env['THREADING'] == 'multi':
+    libraries.append('boost_thread%s' % env['BOOST_APPEND'])
 
 input_plugin = plugin_env.SharedLibrary('../kismet', source=kismet_src, SHLIBPREFIX='', SHLIBSUFFIX='.input', LIBS=libraries, LINKFLAGS=env['CUSTOM_LDFLAGS'])
 

@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2009 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,25 +20,34 @@
  *
  *****************************************************************************/
 
-#ifndef  MAPNIK_EXPRESSION_NODE_HPP
-#define  MAPNIK_EXPRESSION_NODE_HPP
+#ifndef MAPNIK_EXPRESSION_NODE_HPP
+#define MAPNIK_EXPRESSION_NODE_HPP
 
 // mapnik
 #include <mapnik/value.hpp>
 #include <mapnik/attribute.hpp>
+
 // boost
-#include <boost/variant.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/regex.hpp>
 #if defined(BOOST_REGEX_HAS_ICU)
 #include <boost/regex/icu.hpp>
 #endif
+#include <boost/variant.hpp>
+#include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
 
 namespace mapnik
 {
 
-namespace tags  { 
+namespace tags  {
+struct negate
+{
+    static const char* str()
+    {
+        return "-";
+    }
+};
+
 struct plus
 {
     static const char* str()
@@ -162,14 +171,16 @@ struct regex_replace_node;
 
 typedef mapnik::value value_type;
 
-typedef boost::variant <  
+typedef boost::variant <
 value_type,
 attribute,
-boost::recursive_wrapper<binary_node<tags::plus> >,    
+geometry_type_attribute,
+boost::recursive_wrapper<unary_node<tags::negate> >,
+boost::recursive_wrapper<binary_node<tags::plus> >,
 boost::recursive_wrapper<binary_node<tags::minus> >,
-boost::recursive_wrapper<binary_node<tags::mult> >,    
+boost::recursive_wrapper<binary_node<tags::mult> >,
 boost::recursive_wrapper<binary_node<tags::div> >,
-boost::recursive_wrapper<binary_node<tags::mod> >, 
+boost::recursive_wrapper<binary_node<tags::mod> >,
 boost::recursive_wrapper<binary_node<tags::less> >,
 boost::recursive_wrapper<binary_node<tags::less_equal> >,
 boost::recursive_wrapper<binary_node<tags::greater> >,
@@ -184,6 +195,7 @@ boost::recursive_wrapper<regex_replace_node>
 > expr_node;
 
 template <typename Tag> struct make_op;
+template <> struct make_op<tags::negate> { typedef std::negate<value_type> type;};
 template <> struct make_op<tags::plus> { typedef std::plus<value_type> type;};
 template <> struct make_op<tags::minus> { typedef std::minus<value_type> type;};
 template <> struct make_op<tags::mult> { typedef std::multiplies<value_type> type;};
@@ -209,7 +221,7 @@ struct unary_node
     {
         return Tag::str();
     }
-    
+
     expr_node expr;
 };
 
@@ -219,7 +231,7 @@ struct binary_node
     binary_node(expr_node const& a, expr_node const& b)
         : left(a),
           right(b) {}
-    
+
     static const char* type()
     {
         return Tag::str();
@@ -228,12 +240,10 @@ struct binary_node
 };
 
 #if defined(BOOST_REGEX_HAS_ICU)
+
 struct regex_match_node
 {
-    regex_match_node (expr_node const& a, UnicodeString const& ustr)
-        : expr(a),
-          pattern(boost::make_u32regex(ustr)) {}
-    
+    regex_match_node (expr_node const& a, UnicodeString const& ustr);
     expr_node expr;
     boost::u32regex pattern;
 };
@@ -241,22 +251,17 @@ struct regex_match_node
 
 struct regex_replace_node
 {
-    regex_replace_node (expr_node const& a, UnicodeString const& ustr, UnicodeString const& f)
-        : expr(a),
-          pattern(boost::make_u32regex(ustr)),
-          format(f) {}
-    
+    regex_replace_node (expr_node const& a, UnicodeString const& ustr, UnicodeString const& f);
     expr_node expr;
     boost::u32regex pattern;
     UnicodeString format;
 };
+
 #else
+
 struct regex_match_node
 {
-    regex_match_node (expr_node const& a, std::string const& str)
-        : expr(a),
-          pattern(str) {}
-    
+    regex_match_node (expr_node const& a, std::string const& str);
     expr_node expr;
     boost::regex pattern;
 };
@@ -264,11 +269,7 @@ struct regex_match_node
 
 struct regex_replace_node
 {
-    regex_replace_node (expr_node const& a, std::string const& str, std::string const& f)
-        : expr(a),
-          pattern(str),
-          format(f) {}
-    
+    regex_replace_node (expr_node const& a, std::string const& str, std::string const& f);
     expr_node expr;
     boost::regex pattern;
     std::string format;
@@ -288,50 +289,55 @@ struct function_call
 
 // ops
 
-inline expr_node & operator += ( expr_node &left ,const expr_node &right) 
-{ 
-    return left =  binary_node<tags::plus>(left,right); 
-} 
-
-inline expr_node & operator -= ( expr_node &left ,const expr_node &right) 
-{ 
-    return left =  binary_node<tags::minus>(left,right); 
+inline expr_node& operator- (expr_node& expr)
+{
+    return expr = unary_node<tags::negate>(expr);
 }
 
-inline expr_node & operator *= ( expr_node &left ,const expr_node &right) 
-{ 
-    return left =  binary_node<tags::mult>(left,right); 
+inline expr_node & operator += ( expr_node &left ,const expr_node &right)
+{
+    return left =  binary_node<tags::plus>(left,right);
 }
 
-inline expr_node & operator /= ( expr_node &left ,const expr_node &right) 
-{ 
-    return left =  binary_node<tags::div>(left,right); 
+inline expr_node & operator -= ( expr_node &left ,const expr_node &right)
+{
+    return left =  binary_node<tags::minus>(left,right);
 }
 
-inline expr_node & operator %= ( expr_node &left ,const expr_node &right) 
-{ 
-    return left = binary_node<tags::mod>(left,right); 
+inline expr_node & operator *= ( expr_node &left ,const expr_node &right)
+{
+    return left =  binary_node<tags::mult>(left,right);
+}
+
+inline expr_node & operator /= ( expr_node &left ,const expr_node &right)
+{
+    return left =  binary_node<tags::div>(left,right);
+}
+
+inline expr_node & operator %= ( expr_node &left ,const expr_node &right)
+{
+    return left = binary_node<tags::mod>(left,right);
 }
 
 inline expr_node & operator < ( expr_node &left, expr_node const& right)
 {
     return left = binary_node<tags::less>(left,right);
-} 
+}
 
 inline expr_node & operator <= ( expr_node &left, expr_node const& right)
 {
     return left = binary_node<tags::less_equal>(left,right);
-} 
+}
 
 inline expr_node & operator > ( expr_node &left, expr_node const& right)
 {
     return left = binary_node<tags::greater>(left,right);
-} 
+}
 
 inline expr_node & operator >= ( expr_node &left, expr_node const& right)
 {
     return left = binary_node<tags::greater_equal>(left,right);
-} 
+}
 
 inline expr_node & operator == ( expr_node &left, expr_node const& right)
 {

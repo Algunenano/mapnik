@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,22 +20,22 @@
  *
  *****************************************************************************/
 
-//$Id$
+// mapnik
 #include <mapnik/scale_denominator.hpp>
-
 #include <mapnik/map.hpp>
 
+// stl
 #include <cmath>
 
 namespace mapnik {
- 
-static const double pi = 3.14159265359; 
+
+static const double pi = 3.14159265359;
 static const double meters_per_degree = 6378137 * 2 * pi/ 360;
-    
+
 double scale_denominator(Map const& map, bool geographic)
 {
     double denom = map.scale() / 0.00028;
     if (geographic) denom *= meters_per_degree;
-    return denom; 
+    return denom;
 }
 }

@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006,2009 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,16 +20,12 @@
  *
  *****************************************************************************/
 
-//$Id$
-
-#include <cstdlib>
+// mapnik
 #include <mapnik/unicode.hpp>
 
+// stl
+#include <cstdlib>
 #include <string>
-
-#ifdef MAPNIK_DEBUG
-#include <iostream>
-#endif 
 
 namespace mapnik {
 
@@ -46,8 +42,8 @@ transcoder::transcoder (std::string const& encoding)
 UnicodeString transcoder::transcode(const char* data, boost::int32_t length) const
 {
     UErrorCode err = U_ZERO_ERROR;
-    
-    UnicodeString ustr(data,length,conv_,err); 
+
+    UnicodeString ustr(data,length,conv_,err);
     if (ustr.isBogus())
     {
         ustr.remove();
@@ -58,5 +54,5 @@ UnicodeString transcoder::transcode(const char* data, boost::int32_t length) con
 transcoder::~transcoder()
 {
     if (conv_) ucnv_close(conv_);
-}   
+}
 }

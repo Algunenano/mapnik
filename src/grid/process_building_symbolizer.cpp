@@ -19,7 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
-//$Id$
 
 // mapnik
 #include <mapnik/grid/grid_rasterizer.hpp>
@@ -28,6 +27,7 @@
 #include <mapnik/grid/grid_pixel.hpp>
 #include <mapnik/grid/grid.hpp>
 #include <mapnik/segment.hpp>
+#include <mapnik/expression_evaluator.hpp>
 
 // boost
 #include <boost/scoped_ptr.hpp>
@@ -38,33 +38,39 @@
 #include "agg_scanline_bin.h"
 #include "agg_conv_stroke.h"
 
-namespace mapnik 
+namespace mapnik
 {
 
 template <typename T>
 void grid_renderer<T>::process(building_symbolizer const& sym,
-                              Feature const& feature,
-                              proj_transform const& prj_trans)
+                               mapnik::feature_impl & feature,
+                               proj_transform const& prj_trans)
 {
-    typedef coord_transform2<CoordTransform,geometry_type> path_type;
-    typedef agg::renderer_base<mapnik::pixfmt_gray16> ren_base;
+    typedef coord_transform<CoordTransform,geometry_type> path_type;
+    typedef agg::renderer_base<mapnik::pixfmt_gray32> ren_base;
     typedef agg::renderer_scanline_bin_solid<ren_base> renderer;
     agg::scanline_bin sl;
 
     grid_rendering_buffer buf(pixmap_.raw_data(), width_, height_, width_);
-    mapnik::pixfmt_gray16 pixf(buf);
+    mapnik::pixfmt_gray32 pixf(buf);
 
     ren_base renb(pixf);
     renderer ren(renb);
 
     ras_ptr->reset();
 
-    double height = sym.height() * scale_factor_;
-    
+    double height = 0.0;
+    expression_ptr height_expr = sym.height();
+    if (height_expr)
+    {
+        value_type result = boost::apply_visitor(evaluate<Feature,value_type>(feature), *height_expr);
+        height = result.to_double() * scale_factor_;
+    }
+
     for (unsigned i=0;i<feature.num_geometries();++i)
     {
-        geometry_type const& geom = feature.get_geometry(i);
-        if (geom.num_points() > 2)
+        geometry_type & geom = feature.get_geometry(i);
+        if (geom.size() > 2)
         {
             boost::scoped_ptr<geometry_type> frame(new geometry_type(LineString));
             boost::scoped_ptr<geometry_type> roof(new geometry_type(Polygon));
@@ -72,7 +78,7 @@ void grid_renderer<T>::process(building_symbolizer const& sym,
             double x0(0);
             double y0(0);
             unsigned cm = geom.vertex(&x0,&y0);
-            for (unsigned j=1;j<geom.num_points();++j)
+            for (unsigned j=1;j<geom.size();++j)
             {
                 double x(0);
                 double y(0);
@@ -86,7 +92,7 @@ void grid_renderer<T>::process(building_symbolizer const& sym,
                     frame->line_to(x,y);
                     face_segments.push_back(segment_t(x0,y0,x,y));
                 }
-                
+
                 x0 = x;
                 y0 = y;
             }
@@ -102,7 +108,7 @@ void grid_renderer<T>::process(building_symbolizer const& sym,
 
                 path_type faces_path (t_,*faces,prj_trans);
                 ras_ptr->add_path(faces_path);
-                ren.color(mapnik::gray16(feature.id()));
+                ren.color(mapnik::gray32(feature.id()));
                 agg::render_scanlines(*ras_ptr, sl, ren);
                 ras_ptr->reset();
 
@@ -111,7 +117,7 @@ void grid_renderer<T>::process(building_symbolizer const& sym,
             }
 
             geom.rewind(0);
-            for (unsigned j=0;j<geom.num_points();++j)
+            for (unsigned j=0;j<geom.size();++j)
             {
                 double x,y;
                 unsigned cm = geom.vertex(&x,&y);
@@ -129,13 +135,13 @@ void grid_renderer<T>::process(building_symbolizer const& sym,
             path_type path(t_,*frame,prj_trans);
             agg::conv_stroke<path_type> stroke(path);
             ras_ptr->add_path(stroke);
-            ren.color(mapnik::gray16(feature.id()));
+            ren.color(mapnik::gray32(feature.id()));
             agg::render_scanlines(*ras_ptr, sl, ren);
             ras_ptr->reset();
 
             path_type roof_path (t_,*roof,prj_trans);
             ras_ptr->add_path(roof_path);
-            ren.color(mapnik::gray16(feature.id()));
+            ren.color(mapnik::gray32(feature.id()));
             agg::render_scanlines(*ras_ptr, sl, ren);
         }
     }
@@ -143,7 +149,7 @@ void grid_renderer<T>::process(building_symbolizer const& sym,
 }
 
 template void grid_renderer<grid>::process(building_symbolizer const&,
-                                              Feature const&,
-                                              proj_transform const&);
+                                           mapnik::feature_impl &,
+                                           proj_transform const&);
 
 }

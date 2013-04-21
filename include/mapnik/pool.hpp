@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,17 +20,16 @@
  *
  *****************************************************************************/
 
-//$Id: pool.hpp 39 2005-04-10 20:39:53Z pavlenko $
-
-#ifndef POOL_HPP
-#define POOL_HPP
+#ifndef MAPNIK_POOL_HPP
+#define MAPNIK_POOL_HPP
 
 // mapnik
+#include <mapnik/debug.hpp>
 #include <mapnik/utils.hpp>
+
 // boost
 #include <boost/shared_ptr.hpp>
 #include <boost/utility.hpp>
-
 #ifdef MAPNIK_THREADSAFE
 #include <boost/thread/mutex.hpp>
 #endif
@@ -48,13 +47,13 @@ class PoolGuard
 {
 private:
     const T& obj_;
-    PoolT& pool_; 
+    PoolT& pool_;
 public:
     explicit PoolGuard(const T& ptr,PoolT& pool)
         : obj_(ptr),
           pool_(pool) {}
 
-    ~PoolGuard() 
+    ~PoolGuard()
     {
         pool_->returnObject(obj_);
     }
@@ -69,10 +68,10 @@ template <typename T,template <typename> class Creator>
 class Pool : private boost::noncopyable
 {
     typedef boost::shared_ptr<T> HolderType;
-    typedef std::deque<HolderType> ContType;    
-        
+    typedef std::deque<HolderType> ContType;
+
     Creator<T> creator_;
-    const unsigned initialSize_; 
+    const unsigned initialSize_;
     const unsigned maxSize_;
     ContType usedPool_;
     ContType unusedPool_;
@@ -86,7 +85,7 @@ public:
          initialSize_(initialSize),
          maxSize_(maxSize)
     {
-        for (unsigned i=0; i < initialSize_; ++i) 
+        for (unsigned i=0; i < initialSize_; ++i)
         {
             HolderType conn(creator_());
             if (conn->isOK())
@@ -95,16 +94,15 @@ public:
     }
 
     HolderType borrowObject()
-    {   
-#ifdef MAPNIK_THREADSAFE    
+    {
+#ifdef MAPNIK_THREADSAFE
         mutex::scoped_lock lock(mutex_);
 #endif
         typename ContType::iterator itr=unusedPool_.begin();
         while ( itr!=unusedPool_.end())
-        { 
-#ifdef MAPNIK_DEBUG
-            std::clog<<"borrow "<<(*itr).get()<<"\n";
-#endif
+        {
+            MAPNIK_LOG_DEBUG(pool) << "pool: Borrow instance=" << (*itr).get();
+
             if ((*itr)->isOK())
             {
                 usedPool_.push_back(*itr);
@@ -113,9 +111,8 @@ public:
             }
             else
             {
-#ifdef MAPNIK_DEBUG
-                std::clog<<"bad connection (erase)" << (*itr).get()<<"\n";
-#endif 
+                MAPNIK_LOG_DEBUG(pool) << "pool: Bad connection (erase) instance=" << (*itr).get();
+
                 itr=unusedPool_.erase(itr);
             }
         }
@@ -125,14 +122,14 @@ public:
             if (conn->isOK())
             {
                 usedPool_.push_back(conn);
-#ifdef MAPNIK_DEBUG
-                std::clog << "create << " << conn.get() << "\n";
-#endif
+
+                MAPNIK_LOG_DEBUG(pool) << "pool: Create connection=" << conn.get();
+
                 return conn;
             }
         }
         return HolderType();
-    } 
+    }
 
     void returnObject(HolderType obj)
     {
@@ -142,11 +139,10 @@ public:
         typename ContType::iterator itr=usedPool_.begin();
         while (itr != usedPool_.end())
         {
-            if (obj.get()==(*itr).get()) 
+            if (obj.get()==(*itr).get())
             {
-#ifdef MAPNIK_DEBUG
-                std::clog<<"return "<<(*itr).get()<<"\n";
-#endif
+                MAPNIK_LOG_DEBUG(pool) << "pool: Return instance=" << (*itr).get();
+
                 unusedPool_.push_back(*itr);
                 usedPool_.erase(itr);
                 return;
@@ -154,7 +150,7 @@ public:
             ++itr;
         }
     }
-         
+
     std::pair<unsigned,unsigned> size() const
     {
 #ifdef MAPNIK_THREADSAFE
@@ -164,5 +160,7 @@ public:
         return size;
     }
 };
+
 }
-#endif //POOL_HPP
+
+#endif // MAPNIK_POOL_HPP

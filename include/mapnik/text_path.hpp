@@ -1,9 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
- * Copyright (C) 2006 10East Corp.
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,156 +20,176 @@
  *
  *****************************************************************************/
 
-//$Id$
+#ifndef MAPNIK_TEXT_PATH_HPP
+#define MAPNIK_TEXT_PATH_HPP
 
-#ifndef __TEXT_PATH_H__
-#define __TEXT_PATH_H__
+// mapnik
+#include <mapnik/char_info.hpp>
+#include <mapnik/pixel_position.hpp>
 
+//stl
+#include <vector>
+
+// boost
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
+
+// uci
 #include <unicode/unistr.h>
 
 namespace mapnik
 {
-struct character_info
-{ 
-    int character;
-    double width, height;
-      
-    character_info() : character(0), width(0), height(0) {}
-    character_info(int c_, double width_, double height_) : character(c_), width(width_), height(height_) {}
-    ~character_info() {}
-        
-    character_info(const character_info &ci)
-        : character(ci.character), width(ci.width), height(ci.height)
-    {
-    }
-          
-};
-    
+
 class string_info : private boost::noncopyable
 {
 protected:
-    typedef boost::ptr_vector<character_info> characters_t;
+    typedef std::vector<char_info> characters_t;
     characters_t characters_;
-    UnicodeString const& text_;
-    double width_;
-    double height_;
+    UnicodeString text_;
     bool is_rtl;
 public:
     string_info(UnicodeString const& text)
-        : text_(text),
-          width_(0),
-          height_(0),
-          is_rtl(false) {}
-
-    void add_info(int c, double width, double height)
+        : characters_(),
+          text_(text),
+          is_rtl(false)
     {
-        characters_.push_back(new character_info(c, width, height));
+
     }
-      
+
+    string_info()
+        : characters_(),
+          text_(),
+          is_rtl(false)
+    {
+
+    }
+
+    void add_info(char_info const& info)
+    {
+        characters_.push_back(info);
+    }
+
+    void add_text(UnicodeString text)
+    {
+        text_ += text;
+    }
+
     unsigned num_characters() const
     {
         return characters_.size();
     }
-    
-    void set_rtl(bool value) {is_rtl = value;}
-    bool get_rtl() const {return is_rtl;}    
-      
-    character_info at(unsigned i) const
+
+    void set_rtl(bool value)
+    {
+        is_rtl = value;
+    }
+
+    bool get_rtl() const
+    {
+        return is_rtl;
+    }
+
+    char_info const& at(unsigned i) const
     {
         return characters_[i];
     }
-      
-    character_info operator[](unsigned i) const
+
+    char_info const& operator[](unsigned i) const
     {
         return at(i);
     }
-      
-    void set_dimensions(double width, double height)
-    {
-        width_ = width;
-        height_ = height;
-    }
-      
-    std::pair<double, double> get_dimensions() const
-    {
-        return std::pair<double, double>(width_, height_);
-    }
 
-    UnicodeString const&  get_string() const 
+    UnicodeString const&  get_string() const
     {
         return text_;
     }
 
     bool has_line_breaks() const
     {
-       UChar break_char = '\n';
-       return (text_.indexOf(break_char) >= 0);
+        UChar break_char = '\n';
+        return (text_.indexOf(break_char) >= 0);
+    }
+
+    /** Resets object to initial state. */
+    void clear(void)
+    {
+        text_ = "";
+        characters_.clear();
     }
 };
-    
-struct text_path : boost::noncopyable
+
+typedef char_info const * char_info_ptr;
+
+
+/** List of all characters and their positions and formats for a placement. */
+class text_path : boost::noncopyable
 {
     struct character_node
     {
-        int c;
-        double x, y, angle;
-               
-        character_node(int c_, double x_, double y_, double angle_) 
-            : c(c_), x(x_), y(y_), angle(angle_) {}
+        char_info_ptr c;
+        pixel_position pos;
+        double angle;
+
+        character_node(char_info_ptr c_, double x_, double y_, double angle_)
+            : c(c_),
+              pos(x_, y_),
+              angle(angle_)
+        {
+
+        }
+
         ~character_node() {}
-               
-        void vertex(int *c_, double *x_, double *y_, double *angle_)
+
+        void vertex(char_info_ptr *c_, double *x_, double *y_, double *angle_) const
         {
             *c_ = c;
-            *x_ = x;
-            *y_ = y;
+            *x_ = pos.x;
+            *y_ = pos.y;
             *angle_ = angle;
         }
     };
-         
+
+    mutable int itr_;
+public:
     typedef std::vector<character_node> character_nodes_t;
-    double starting_x;
-    double starting_y;
+    pixel_position center;
     character_nodes_t nodes_;
-    int itr_;
-          
-    std::pair<unsigned,unsigned> string_dimensions;
-        
-    text_path() 
-        : starting_x(0),
-          starting_y(0),
-          itr_(0) {} 
-         
-    //text_path(text_path const& other) : 
-    //  itr_(0),
-    //  nodes_(other.nodes_),
-    //  string_dimensions(other.string_dimensions)
-    //{}
-         
+
+    text_path(double x, double y)
+        : itr_(0),
+          center(x,y),
+          nodes_()
+    {
+
+    }
+
     ~text_path() {}
-          
-    void add_node(int c, double x, double y, double angle)
+
+    /** Adds a new char to the list. */
+    void add_node(char_info_ptr c, double x, double y, double angle)
     {
         nodes_.push_back(character_node(c, x, y, angle));
     }
-        
-    void vertex(int *c, double *x, double *y, double *angle)
+
+    /** Return node. Always returns a new node. Has no way to report that there are no more nodes. */
+    void vertex(char_info_ptr *c, double *x, double *y, double *angle) const
     {
         nodes_[itr_++].vertex(c, x, y, angle);
     }
-         
-    void rewind()
+
+    /** Start again at first node. */
+    void rewind() const
     {
         itr_ = 0;
     }
-         
+
+    /** Number of nodes. */
     int num_nodes() const
     {
         return nodes_.size();
     }
-         
+
+    /** Delete all nodes. */
     void clear()
     {
         nodes_.clear();
@@ -180,6 +199,4 @@ struct text_path : boost::noncopyable
 typedef boost::shared_ptr<text_path> text_path_ptr;
 }
 
-#endif
-
-
+#endif // MAPNIK_TEXT_PATH_HPP

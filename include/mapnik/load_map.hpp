@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,22 +19,21 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
-// $Id$
 
-#ifndef MAP_LOADER_HPP
-#define MAP_LOADER_HPP
+#ifndef MAPNIK_LOAD_MAP_HPP
+#define MAPNIK_LOAD_MAP_HPP
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
+// mapnik
 #include <mapnik/map.hpp>
+#include <mapnik/config.hpp> // for MAPNIK_DECL
+
+// stl
 #include <string>
 
 namespace mapnik
 {
 MAPNIK_DECL void load_map(Map & map, std::string const& filename, bool strict = false);
-MAPNIK_DECL void load_map_string(Map & map, std::string const& str, bool strict = false, std::string const& base_path="");
+MAPNIK_DECL void load_map_string(Map & map, std::string const& str, bool strict = false, std::string base_path="");
 }
 
-#endif // LOAD_MAP_HPP
+#endif // MAPNIK_LOAD_MAP_HPP

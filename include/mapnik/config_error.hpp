@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,38 +20,36 @@
  *
  *****************************************************************************/
 
-#ifndef MAPNIK_CONFIG_ERROR_INCLUDED
-#define MAPNIK_CONFIG_ERROR_INCLUDED
+#ifndef MAPNIK_CONFIG_ERROR_HPP
+#define MAPNIK_CONFIG_ERROR_HPP
 
 #include <iostream>
 #include <sstream>
 
 namespace mapnik {
 
+class xml_node;
 class config_error : public std::exception
 {
 public:
-    config_error() {}
+    config_error(std::string const& what);
+    config_error(std::string const& what, xml_node const& node);
+    config_error(std::string const& what, unsigned line_number, std::string const& filename);
+    virtual ~config_error() throw() {}
 
-    config_error( const std::string & what ) :
-        what_( what )
-    {
-    }
-    virtual ~config_error() throw() {};
+    virtual const char * what() const throw();
 
-    virtual const char * what() const throw()
-    {
-        return what_.c_str();    
-    }
-
-    void append_context(const std::string & ctx) const
-    {
-        what_ += " " + ctx;
-    }
-
+    void append_context(const std::string & ctx) const;
+    void append_context(const std::string & ctx, xml_node const& node) const;
+    void append_context(xml_node const& node) const;
 protected:
     mutable std::string what_;
+    mutable unsigned line_number_;
+    mutable std::string file_;
+    mutable std::string node_name_;
+    mutable std::string msg_;
 };
+
 }
 
-#endif // MAPNIK_CONFIG_ERROR_INCLUDED
+#endif // MAPNIK_CONFIG_ERROR_HPP

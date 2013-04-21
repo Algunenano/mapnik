@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,10 +20,8 @@
  *
  *****************************************************************************/
 
-//$Id$
-
-#ifndef ATTRIBUTE_DESCRIPTOR
-#define ATTRIBUTE_DESCRIPTOR
+#ifndef MAPNIK_ATTRIBUTE_DESCRIPTOR_HPP
+#define MAPNIK_ATTRIBUTE_DESCRIPTOR_HPP
 
 #include <string>
 
@@ -36,7 +34,7 @@ enum eAttributeType {
     String =4,
     Boolean =5,
     Geometry=6,
-    Object=7 
+    Object=7
 };
 
 class attribute_descriptor
@@ -51,7 +49,7 @@ public:
           primary_key_(primary_key),
           size_(size),
           precision_(precision) {}
-              
+
     attribute_descriptor(attribute_descriptor const& other)
         : name_(other.name_),
           type_(other.type_),
@@ -62,13 +60,18 @@ public:
     attribute_descriptor& operator=(attribute_descriptor const& other)
     {
         if (this == &other)
-            return *this;           
-        name_=other.name_;
-        type_=other.type_;
-        primary_key_=other.primary_key_;
-        size_=other.size_;
-        precision_=other.precision_;
-        return *this;
+        {
+            return *this;
+        }
+        else
+        {
+            name_=other.name_;
+            type_=other.type_;
+            primary_key_=other.primary_key_;
+            size_=other.size_;
+            precision_=other.precision_;
+            return *this;
+        }
     }
 
     std::string const& get_name() const
@@ -89,8 +92,8 @@ public:
     int get_size() const
     {
         return size_;
-    } 
-        
+    }
+
     int get_precision() const
     {
         return precision_;
@@ -103,7 +106,7 @@ private:
     int size_;
     int precision_;
 };
-     
+
 template <typename charT,typename traits>
 inline std::basic_ostream<charT,traits>&
 operator << (std::basic_ostream<charT,traits>& out,
@@ -118,4 +121,4 @@ operator << (std::basic_ostream<charT,traits>& out,
 
 }
 
-#endif // ATTRIBUTE_DESCRIPTOR_HPP
+#endif // MAPNIK_ATTRIBUTE_DESCRIPTOR_HPP
