@@ -1,4 +1,4 @@
-mapnik (2.0.1+ds1-1) UNRELEASED; urgency=low
+mapnik (2.1.0+ds1-1) UNRELEASED; urgency=low
 
   [ David Paleino ]
   * New upstream version
@@ -13,7 +13,7 @@ mapnik (2.0.1+ds1-1) UNRELEASED; urgency=low
   [ Andrew Harvey ]
   * Change debian/rules to use top level font directory (Closes: 665798)
 
- -- Andrew Harvey <andrew.harvey4@gmail.com>  Sat, 04 Aug 2012 16:05:42 +1000
+ -- David Paleino <dapal@debian.org>  Sun, 21 Apr 2013 10:31:58 +0200
 
 mapnik (2.0.0+ds1-3) unstable; urgency=low
 
