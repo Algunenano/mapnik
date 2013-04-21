@@ -5,6 +5,8 @@ mapnik (2.1.0+ds1-1) UNRELEASED; urgency=low
 
   [ David Paleino ]
   * New upstream version
+    - fixed compatibility with PostGIS 2.0 (AsBinary() → ST_AsBinary())
+      (Closes: #699079)
   * Switch debian/watch to github tags
   * debian/patches/:
     - 02-fix_FTBFS_binutils-gold.patch refreshed
