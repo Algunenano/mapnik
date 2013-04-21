@@ -91,9 +91,8 @@ get-orig-source:
 	tar xvf mapnik_$(UPVER).orig.tar.gz
 	@rm -vrf mapnik_$(UPVER).orig.tar.gz
 	@echo Removing third-party sources from orig.tar.gz
-	@rm -rf mapnik-mapnik-*/fonts/dejavu*
-	@rm -rf mapnik-mapnik-*/scons/
-	@rm -rf mapnik-mapnik-*/tinyxml/
-	tar cf $(TARNAME) mapnik-mapnik-*/
+	@rm -rf mapnik-$(UPVER)/fonts/dejavu*
+	@rm -rf mapnik-$(UPVER)/scons/
+	tar cf $(TARNAME) mapnik-$(UPVER)/
 	gzip -9 $(TARNAME)
-	rm -rf mapnik-mapnik-*/
+	rm -rf mapnik-$(UPVER)/
