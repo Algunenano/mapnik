@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2010 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,26 +20,26 @@
  *
  *****************************************************************************/
 
-#ifndef SVG_PATH_PARSER_HPP
-#define SVG_PATH_PARSER_HPP
+#ifndef MAPNIK_SVG_PATH_PARSER_HPP
+#define MAPNIK_SVG_PATH_PARSER_HPP
 
+#include <mapnik/config.hpp>
 #include <string>
 
 namespace mapnik { namespace svg {
 
-template <typename PathType>
-bool parse_path(const char * wkt, PathType & p);
+    template <typename PathType>
+    bool parse_path(const char * wkt, PathType & p);
 
-template <typename PathType>
-bool parse_points(const char * wkt, PathType & p);
+    template <typename PathType>
+    bool parse_points(const char * wkt, PathType & p);
 
-template <typename TransformType>
-bool parse_transform(const char * wkt, TransformType & tr);
+    template <typename TransformType>
+    bool MAPNIK_DECL parse_transform(const char * wkt, TransformType & tr);
 
-template <typename TransformType>
-bool parse_transform(std::string const&  wkt, TransformType & tr);
+//template <typename TransformType>
+//bool MAPNIK_DECL parse_transform(std::string const&  wkt, TransformType & tr);
 
-}}
+    }}
 
-
-#endif // SVG_PATH_PARSER_HPP
+#endif // MAPNIK_SVG_PATH_PARSER_HPP

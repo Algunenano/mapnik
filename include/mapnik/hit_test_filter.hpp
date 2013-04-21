@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,12 +20,14 @@
  *
  *****************************************************************************/
 
-//$Id$
+#ifndef MAPNIK_HIT_TEST_FILTER_HPP
+#define MAPNIK_HIT_TEST_FILTER_HPP
 
-#ifndef HIT_TEST_FILTER_HPP
-#define HIT_TEST_FILTER_HPP
-
+// mapnik
 #include <mapnik/feature.hpp>
+#include <mapnik/geom_util.hpp>
+// boost
+#include <boost/foreach.hpp>
 
 namespace mapnik {
 class hit_test_filter
@@ -33,20 +35,19 @@ class hit_test_filter
 public:
     hit_test_filter(double x, double y, double tol)
         : x_(x),
-          y_(y), 
+          y_(y),
           tol_(tol) {}
-        
-    bool pass(Feature const& feature)
+
+    bool pass(Feature & feature)
     {
-        for (unsigned i=0;i<feature.num_geometries();++i)
+        BOOST_FOREACH(geometry_type & geom, feature.paths())
         {
-            geometry_type const& geom = feature.get_geometry(i);
-            if (geom.hit_test(x_,y_,tol_))
+            if (label::hit_test(geom, x_,y_,tol_))
                 return true;
         }
         return false;
     }
-        
+
 private:
     double x_;
     double y_;
@@ -54,4 +55,4 @@ private:
 };
 }
 
-#endif // HIT_TEST_FILTER_HPP
+#endif // MAPNIK_HIT_TEST_FILTER_HPP

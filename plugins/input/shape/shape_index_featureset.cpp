@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,147 +20,117 @@
  *
  *****************************************************************************/
 
-//$Id: shape_index_featureset.cc 36 2005-04-05 14:32:18Z pavlenko $
+// stl
+#include <fstream>
 
 // mapnik
+#include <mapnik/debug.hpp>
 #include <mapnik/feature_factory.hpp>
 
 // boost
 #include <boost/algorithm/string.hpp>
 #include <boost/interprocess/streams/bufferstream.hpp>
 
-// stl
-#include <fstream>
-
 #include "shape_index_featureset.hpp"
+#include "shape_utils.hpp"
 
 using mapnik::feature_factory;
 using mapnik::geometry_type;
 
 template <typename filterT>
-shape_index_featureset<filterT>::shape_index_featureset(const filterT& filter,
+shape_index_featureset<filterT>::shape_index_featureset(filterT const& filter,
                                                         shape_io& shape,
-                                                        const std::set<std::string>& attribute_names,
+                                                        std::set<std::string> const& attribute_names,
                                                         std::string const& encoding,
                                                         std::string const& shape_name,
                                                         int row_limit)
     : filter_(filter),
-      //shape_type_(0),
+      ctx_(boost::make_shared<mapnik::context_type>()),
       shape_(shape),
       tr_(new transcoder(encoding)),
-      count_(0),
-      row_limit_(row_limit)
-
+      row_limit_(row_limit),
+      count_(0)
 {
     shape_.shp().skip(100);
+    setup_attributes(ctx_, attribute_names, shape_name, shape_,attr_ids_);
+
     boost::shared_ptr<shape_file> index = shape_.index();
     if (index)
     {
 #ifdef SHAPE_MEMORY_MAPPED_FILE
-        //shp_index<filterT,stream<mapped_file_source> >::query(filter,index->file(),ids_);
-        shp_index<filterT,boost::interprocess::ibufferstream>::query(filter,index->file(),ids_);
+        //shp_index<filterT,stream<mapped_file_source> >::query(filter, index->file(), ids_);
+        shp_index<filterT,boost::interprocess::ibufferstream>::query(filter, index->file(), ids_);
 #else
-        shp_index<filterT,std::ifstream>::query(filter,index->file(),ids_);
+        shp_index<filterT,std::ifstream>::query(filter, index->file(), ids_);
 #endif
     }
-    std::sort(ids_.begin(),ids_.end());    
-    
-#ifdef MAPNIK_DEBUG
-    std::clog << "Shape Plugin: query size=" << ids_.size() << std::endl;
-#endif
+
+    std::sort(ids_.begin(), ids_.end());
+
+    MAPNIK_LOG_DEBUG(shape) << "shape_index_featureset: Query size=" << ids_.size();
 
     itr_ = ids_.begin();
-
-    // deal with attributes
-    std::set<std::string>::const_iterator pos=attribute_names.begin();
-    while (pos!=attribute_names.end())
-    {
-        bool found_name = false;
-        for (int i=0;i<shape_.dbf().num_fields();++i)
-        {
-            if (shape_.dbf().descriptor(i).name_ == *pos)
-            {
-                attr_ids_.insert(i);
-                found_name = true;
-                break;
-            }
-        }
-        if (!found_name)
-        {
-            std::ostringstream s;
-
-            s << "no attribute '" << *pos << "' in '"
-              << shape_name << "'. Valid attributes are: ";
-            std::vector<std::string> list;
-            for (int i=0;i<shape_.dbf().num_fields();++i)
-            {
-                list.push_back(shape_.dbf().descriptor(i).name_);
-            }
-            s << boost::algorithm::join(list, ",") << ".";
-            
-            throw mapnik::datasource_exception( "Shape Plugin: " + s.str() );
-        }
-        ++pos;
-    }
 }
 
 template <typename filterT>
 feature_ptr shape_index_featureset<filterT>::next()
-{   
+{
     if (row_limit_ && count_ > row_limit_)
-        return feature_ptr();
-
-    if (itr_!=ids_.end())
     {
-        int pos=*itr_++;
+        return feature_ptr();
+    }
+
+    if (itr_ != ids_.end())
+    {
+        int pos = *itr_++;
         shape_.move_to(pos);
-        int type=shape_.type();
-        feature_ptr feature(feature_factory::create(shape_.id_));
+
+        int type = shape_.type();
+        feature_ptr feature(feature_factory::create(ctx_,shape_.id_));
         if (type == shape_io::shape_point)
         {
-            double x=shape_.shp().read_double();
-            double y=shape_.shp().read_double();            
-            geometry_type * point = new geometry_type(mapnik::Point);
-            point->move_to(x,y);
+            double x = shape_.shp().read_double();
+            double y = shape_.shp().read_double();
+            geometry_type* point = new geometry_type(mapnik::Point);
+            point->move_to(x, y);
             feature->add_geometry(point);
             ++count_;
         }
-  
         else if (type == shape_io::shape_pointm)
         {
-            double x=shape_.shp().read_double();
-            double y=shape_.shp().read_double();
-            shape_.shp().skip(8);// skip m
-            geometry_type * point = new geometry_type(mapnik::Point);
-            point->move_to(x,y);
+            double x = shape_.shp().read_double();
+            double y = shape_.shp().read_double();
+            // skip m
+            shape_.shp().skip(8);
+            geometry_type* point = new geometry_type(mapnik::Point);
+            point->move_to(x, y);
             feature->add_geometry(point);
             ++count_;
         }
         else if (type == shape_io::shape_pointz)
         {
-            double x=shape_.shp().read_double();
-            double y=shape_.shp().read_double();
+            double x = shape_.shp().read_double();
+            double y = shape_.shp().read_double();
             // skip z
             shape_.shp().skip(8);
-
-            //skip m if exists
-            if ( shape_.reclength_ == 8 + 36) 
+            // skip m if exists
+            if (shape_.reclength_ == 8 + 36)
             {
                 shape_.shp().skip(8);
             }
-            geometry_type * point = new geometry_type(mapnik::Point);
-            point->move_to(x,y);
+            geometry_type* point = new geometry_type(mapnik::Point);
+            point->move_to(x, y);
             feature->add_geometry(point);
             ++count_;
-        }       
+        }
         else
         {
-            while(!filter_.pass(shape_.current_extent()) && 
-                  itr_!=ids_.end())
+            while(! filter_.pass(shape_.current_extent()) &&
+                  itr_ != ids_.end())
             {
-                if (shape_.type() != shape_io::shape_null) 
+                if (shape_.type() != shape_io::shape_null)
                 {
-                    pos=*itr_++;
+                    pos = *itr_++;
                     shape_.move_to(pos);
                 }
                 else
@@ -168,7 +138,7 @@ feature_ptr shape_index_featureset<filterT>::next()
                     return feature_ptr();
                 }
             }
-            
+
             switch (type)
             {
             case shape_io::shape_multipoint:
@@ -176,89 +146,62 @@ feature_ptr shape_index_featureset<filterT>::next()
             case shape_io::shape_multipointz:
             {
                 int num_points = shape_.shp().read_ndr_integer();
-                for (int i=0; i< num_points;++i)
-                { 
-                    double x=shape_.shp().read_double();
-                    double y=shape_.shp().read_double();
-                    geometry_type * point = new geometry_type(mapnik::Point);
-                    point->move_to(x,y);
+                for (int i = 0; i < num_points; ++i)
+                {
+                    double x = shape_.shp().read_double();
+                    double y = shape_.shp().read_double();
+                    geometry_type* point = new geometry_type(mapnik::Point);
+                    point->move_to(x, y);
                     feature->add_geometry(point);
                 }
-                // ignore m and z for now 
+                // ignore m and z for now
                 ++count_;
                 break;
             }
+
             case shape_io::shape_polyline:
-            {
-                geometry_type * line = shape_.read_polyline();
-                feature->add_geometry(line);
-                ++count_;
-                break;
-            }
             case shape_io::shape_polylinem:
-            {
-                geometry_type * line = shape_.read_polylinem();
-                feature->add_geometry(line);
-                ++count_;
-                break;
-            }
             case shape_io::shape_polylinez:
             {
-                geometry_type * line = shape_.read_polylinez();
-                feature->add_geometry(line);
+                shape_.read_polyline(feature->paths());
                 ++count_;
                 break;
             }
             case shape_io::shape_polygon:
-            { 
-                geometry_type * poly = shape_.read_polygon();
-                feature->add_geometry(poly);
-                ++count_;
-                break;
-            }
             case shape_io::shape_polygonm:
-            { 
-                geometry_type * poly = shape_.read_polygonm();
-                feature->add_geometry(poly);
-                ++count_;
-                break;
-            }
             case shape_io::shape_polygonz:
             {
-                geometry_type * poly = shape_.read_polygonz();
-                feature->add_geometry(poly);
+                shape_.read_polygon(feature->paths());
                 ++count_;
                 break;
             }
             }
         }
-        
+        // FIXME
         feature->set_id(shape_.id_);
         if (attr_ids_.size())
         {
             shape_.dbf().move_to(shape_.id_);
-            std::set<int>::const_iterator itr=attr_ids_.begin();
-            std::set<int>::const_iterator end=attr_ids_.end();
-            try 
+            std::vector<int>::const_iterator itr = attr_ids_.begin();
+            std::vector<int>::const_iterator end = attr_ids_.end();
+            try
             {
-                for ( ; itr!=end; ++itr)
-                {                
-                    shape_.dbf().add_attribute(*itr,*tr_,*feature);
+                for (; itr!=end; ++itr)
+                {
+                    shape_.dbf().add_attribute(*itr, *tr_, *feature);
                 }
             }
             catch (...)
             {
-                std::clog << "Shape Plugin: error processing attributes" << std::endl;
+                MAPNIK_LOG_ERROR(shape) << "Shape Plugin: error processing attributes";
             }
         }
         return feature;
     }
     else
     {
+        MAPNIK_LOG_DEBUG(shape) << "shape_index_featureset: " << count_ << " features";
 
-#ifdef MAPNIK_DEBUG
-        std::clog << "Shape Plugin: " << count_ << " features" << std::endl;
-#endif
         return feature_ptr();
     }
 }
@@ -269,4 +212,3 @@ shape_index_featureset<filterT>::~shape_index_featureset() {}
 
 template class shape_index_featureset<mapnik::filter_in_box>;
 template class shape_index_featureset<mapnik::filter_at_point>;
-

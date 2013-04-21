@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,21 +19,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
-//$Id: map.hpp 39 2005-04-10 20:39:53Z pavlenko $
 
-#ifndef MAP_HPP
-#define MAP_HPP
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
+#ifndef MAPNIK_MAP_HPP
+#define MAPNIK_MAP_HPP
 
 // mapnik
 #include <mapnik/enumeration.hpp>
 #include <mapnik/feature_type_style.hpp>
 #include <mapnik/datasource.hpp>
 #include <mapnik/layer.hpp>
-#include <mapnik/metawriter.hpp>
 #include <mapnik/params.hpp>
 
 // boost
@@ -41,17 +35,20 @@
 
 namespace mapnik
 {
+
+class CoordTransform;
+
 class MAPNIK_DECL Map
-{       
+{
 public:
 
-    enum aspect_fix_mode 
+    enum aspect_fix_mode
     {
         // grow the width or height of the specified geo bbox to fill the map size. default behaviour.
         GROW_BBOX,
         // grow the width or height of the map to accomodate the specified geo bbox.
         GROW_CANVAS,
-        // shrink the width or height of the specified geo bbox to fill the map size. 
+        // shrink the width or height of the specified geo bbox to fill the map size.
         SHRINK_BBOX,
         // shrink the width or height of the map to accomodate the specified geo bbox.
         SHRINK_CANVAS,
@@ -61,12 +58,12 @@ public:
         ADJUST_BBOX_HEIGHT,
         // adjust the width of the map, leave height and geo bbox unchanged
         ADJUST_CANVAS_WIDTH,
-        //adjust the height of the map, leave width and geo bbox unchanged 
+        //adjust the height of the map, leave width and geo bbox unchanged
         ADJUST_CANVAS_HEIGHT,
-        // 
+        //
         aspect_fix_mode_MAX
     };
-        
+
 private:
     static const unsigned MIN_MAPSIZE=16;
     static const unsigned MAX_MAPSIZE=MIN_MAPSIZE<<10;
@@ -77,23 +74,21 @@ private:
     boost::optional<color> background_;
     boost::optional<std::string> background_image_;
     std::map<std::string,feature_type_style> styles_;
-    std::map<std::string,metawriter_ptr> metawriters_;
     std::map<std::string,font_set> fontsets_;
     std::vector<layer> layers_;
     aspect_fix_mode aspectFixMode_;
     box2d<double> current_extent_;
     boost::optional<box2d<double> > maximum_extent_;
     std::string base_path_;
-    parameters extra_attr_;
-        
+    parameters extra_params_;
+
 public:
 
     typedef std::map<std::string,feature_type_style>::const_iterator const_style_iterator;
     typedef std::map<std::string,feature_type_style>::iterator style_iterator;
     typedef std::map<std::string,font_set>::const_iterator const_fontset_iterator;
     typedef std::map<std::string,font_set>::iterator fontset_iterator;
-    typedef std::map<std::string,metawriter_ptr>::const_iterator const_metawriter_iterator;
-        
+
     /*! \brief Default constructor.
      *
      *  Creates a map with these parameters:
@@ -119,20 +114,20 @@ public:
     /*! \brief Assignment operator
      *
      *  TODO: to be documented
-     *  
+     *
      */
     Map& operator=(const Map& rhs);
-        
+
     /*! \brief Get all styles
      * @return Const reference to styles
      */
-    std::map<std::string,feature_type_style> const& styles() const; 
-        
-    /*! \brief Get all styles 
+    std::map<std::string,feature_type_style> const& styles() const;
+
+    /*! \brief Get all styles
      * @return Non-constant reference to styles
      */
     std::map<std::string,feature_type_style> & styles();
-        
+
     /*! \brief Get first iterator in styles.
      *  @return Constant style iterator.
      */
@@ -172,40 +167,6 @@ public:
      */
     boost::optional<feature_type_style const&> find_style(std::string const& name) const;
 
-    /*! \brief Insert a metawriter in the map.
-     *  @param name The name of the writer.
-     *  @param style A pointer to the writer to insert.
-     *  @return true If success.
-     *  @return false If no success.
-     */
-    bool insert_metawriter(std::string const& name, metawriter_ptr const& writer);
-
-    /*! \brief Remove a metawriter from the map.
-     *  @param name The name of the writer.
-     */
-    void remove_metawriter(const std::string& name);
-
-    /*! \brief Find a metawriter.
-     *  @param name The name of the writer.
-     *  @return The writer if found. If not found return 0.
-     */
-    metawriter_ptr find_metawriter(std::string const& name) const;
-
-    /*! \brief Get all metawriters.
-     *  @return Const reference to metawriters.
-     */
-    std::map<std::string,metawriter_ptr> const& metawriters() const;
-
-    /*! \brief Get first iterator in metawriters.
-     *  @return Constant metawriter iterator.
-     */
-    const_metawriter_iterator begin_metawriters() const;
-
-    /*! \brief Get last iterator in metawriters.
-     *  @return Constant metawriter iterator.
-     */
-    const_metawriter_iterator end_metawriters() const;
-        
     /*! \brief Insert a fontset into the map.
      *  @param name The name of the fontset.
      *  @param style The fontset to insert.
@@ -213,12 +174,12 @@ public:
      *  @return false If failure.
      */
     bool insert_fontset(std::string const& name, font_set const& fontset);
-       
+
     /*! \brief Find a fontset.
      *  @param name The name of the fontset.
      *  @return The fontset if found. If not found return the default map fontset.
      */
-    font_set const& find_fontset(std::string const& name) const;
+    boost::optional<font_set const&> find_fontset(std::string const& name) const;
 
     /*! \brief Get all fontsets
      * @return Const reference to fontsets
@@ -250,7 +211,7 @@ public:
      *  @return Non-constant layer.
      */
     layer& getLayer(size_t index);
-        
+
     /*! \brief Remove a layer.
      *  @param index layer number.
      */
@@ -304,31 +265,31 @@ public:
      *  @param c Background color.
      */
     void set_background(const color& c);
-    
-    /*! \brief Get the map background color 
+
+    /*! \brief Get the map background color
      *  @return Background color as boost::optional
      *  object
      */
     boost::optional<color> const& background() const;
-    
+
     /*! \brief Set the map background image filename.
      *  @param c Background image filename.
      */
     void set_background_image(std::string const& image_filename);
-    
+
     /*! \brief Get the map background image
      *  @return Background image path as std::string
      *  object
      */
     boost::optional<std::string> const& background_image() const;
-    
-    /*! \brief Set buffer size 
+
+    /*! \brief Set buffer size
      *  @param buffer_size Buffer size in pixels.
      */
-        
+
     void set_buffer_size(int buffer_size);
-        
-    /*! \brief Get the map buffer size 
+
+    /*! \brief Get the map buffer size
      *  @return Buffer size as int
      */
     int buffer_size() const;
@@ -336,11 +297,13 @@ public:
     /*! \brief Set the map maximum extent.
      *  @param box The bounding box for the maximum extent.
      */
-    void set_maximum_extent(box2d<double>const& box);
-        
+    void set_maximum_extent(box2d<double> const& box);
+
     /*! \brief Get the map maximum extent as box2d<double>
-    */
+     */
     boost::optional<box2d<double> > const& maximum_extent() const;
+
+    void reset_maximum_extent();
 
     /*! \brief Get the map base path where paths should be relative to.
      */
@@ -356,7 +319,7 @@ public:
      */
     void zoom(double factor);
 
-    /*! \brief Zoom the map to a bounding box. 
+    /*! \brief Zoom the map to a bounding box.
      *
      *  Aspect is handled automatic if not fitting to width/height.
      *  @param box The bounding box where to zoom.
@@ -380,16 +343,16 @@ public:
      *  @return The current buffered bounding box.
      */
     box2d<double> get_buffered_extent() const;
-        
+
     /*!
      * @return The Map Scale.
      */
     double scale() const;
-        
+
     double scale_denominator() const;
 
     CoordTransform view_transform() const;
-        
+
     /*!
      * @brief Query a Map layer (by layer index) for features
      *
@@ -416,49 +379,31 @@ public:
      */
     featureset_ptr query_map_point(unsigned index, double x, double y) const;
 
-    /*!
-     * @brief Resolve names to object references for metawriters.
-     */
-    void init_metawriters();
-        
     ~Map();
 
     inline void set_aspect_fix_mode(aspect_fix_mode afm) { aspectFixMode_ = afm; }
     inline aspect_fix_mode get_aspect_fix_mode() const { return aspectFixMode_; }
 
     /*!
-     * @brief Metawriter properties.
-     *
-     * These properties are defined by the user and are substituted in filenames,
-     * sepcial columns in tables, etc.
+     * @brief Get extra, arbitrary Parameters attached to the Map
      */
-    metawriter_property_map metawriter_output_properties;
+    parameters const& get_extra_parameters() const;
 
     /*!
-     * @brief Set a metawriter property.
+     * @brief Get non-const extra, arbitrary Parameters attached to the Map
      */
-    void set_metawriter_property(std::string name, std::string value);
+    parameters& get_extra_parameters();
 
     /*!
-     * @brief Get a metawriter property.
+     * @brief Set extra, arbitary Parameters of the Map
      */
-    std::string get_metawriter_property(std::string name) const;
-
-    /*!
-     * @brief Get extra properties that can be carried on the Map
-     */
-    parameters const& get_extra_attributes() const;
-
-    /*!
-     * @brief Set extra properties that can be carried on the Map
-     */
-    void set_extra_attributes(parameters& params);
+    void set_extra_parameters(parameters& params);
 
 private:
     void fixAspectRatio();
 };
-   
+
 DEFINE_ENUM(aspect_fix_mode_e,Map::aspect_fix_mode);
 }
 
-#endif //MAP_HPP
+#endif // MAPNIK_MAP_HPP

@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,16 +19,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
-//$Id: image_symbolizer.hpp 39 2005-04-10 20:39:53Z pavlenko $
 
 #ifndef MAPNIK_POINT_SYMBOLIZER_HPP
 #define MAPNIK_POINT_SYMBOLIZER_HPP
 
 // mapnik
-#include <mapnik/symbolizer.hpp> 
+#include <mapnik/symbolizer.hpp>
 #include <mapnik/enumeration.hpp>
- 
-namespace mapnik 
+
+namespace mapnik
 {
 
 enum point_placement_enum {
@@ -39,10 +38,10 @@ enum point_placement_enum {
 
 DEFINE_ENUM( point_placement_e, point_placement_enum );
 
-struct MAPNIK_DECL point_symbolizer : 
+struct MAPNIK_DECL point_symbolizer :
         public symbolizer_with_image, public symbolizer_base
-{       
-    explicit point_symbolizer();
+{
+    point_symbolizer();
     point_symbolizer(path_expression_ptr file);
     point_symbolizer(point_symbolizer const& rhs);
     void set_allow_overlap(bool overlap);
@@ -51,7 +50,7 @@ struct MAPNIK_DECL point_symbolizer :
     point_placement_e get_point_placement() const;
     void set_ignore_placement(bool ignore_placement);
     bool get_ignore_placement() const;
-        
+
 private:
     bool overlap_;
     point_placement_e point_p_;

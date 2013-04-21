@@ -20,11 +20,12 @@
 # $Id$
 
 
+Import ('plugin_base')
 Import ('env')
 
 prefix = env['PREFIX']
 
-plugin_env = env.Clone()
+plugin_env = plugin_base.Clone()
 
 ogr_src = Split(
   """
@@ -46,6 +47,7 @@ plugin_env['LIBS'].append('boost_filesystem%s' % env['BOOST_APPEND'])
 if env['RUNTIME_LINK'] == 'static':
     cmd = 'gdal-config --dep-libs'
     plugin_env.ParseConfig(cmd)
+    plugin_env['LIBS'].append('proj')
 
 if env.get('BOOST_LIB_VERSION_FROM_HEADER'):
     boost_version_from_header = int(env['BOOST_LIB_VERSION_FROM_HEADER'].split('_')[1])

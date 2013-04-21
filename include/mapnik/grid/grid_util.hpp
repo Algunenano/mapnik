@@ -1,5 +1,5 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
  * Copyright (C) 2011 Artem Pavlenko
@@ -26,6 +26,9 @@
 // mapnik
 #include <mapnik/grid/grid.hpp>
 
+// boost
+#include <boost/concept_check.hpp>
+
 namespace mapnik {
 
 /*
@@ -33,8 +36,8 @@ namespace mapnik {
  */
 
 static inline void scale_grid(mapnik::grid::data_type & target,
-                        const mapnik::grid::data_type & source,
-                        double x_off_f, double y_off_f)
+                              const mapnik::grid::data_type & source,
+                              double x_off_f, double y_off_f)
 {
 
     int source_width=source.width();
@@ -45,12 +48,20 @@ static inline void scale_grid(mapnik::grid::data_type & target,
 
     if (source_width<1 || source_height<1 ||
         target_width<1 || target_height<1) return;
-    int x=0,y=0,xs=0,ys=0;
+    int x = 0;
+    int y = 0;
+    int xs = 0;
+    int ys = 0;
     int tw2 = target_width/2;
     int th2 = target_height/2;
     int offs_x = rint((source_width-target_width-x_off_f*2*source_width)/2);
     int offs_y = rint((source_height-target_height-y_off_f*2*source_height)/2);
-    unsigned yprt, yprt1, xprt, xprt1;
+    unsigned yprt = 0;
+    unsigned yprt1 = 0;
+    unsigned xprt = 0;
+    unsigned xprt1 = 0;
+    boost::ignore_unused_variable_warning(yprt1);
+    boost::ignore_unused_variable_warning(xprt1);
 
     //no scaling or subpixel offset
     if (target_height == source_height && target_width == source_width && offs_x == 0 && offs_y == 0){
@@ -90,7 +101,7 @@ static inline void scale_grid(mapnik::grid::data_type & target,
             mapnik::grid::value_type b = source(xs1,ys);
             mapnik::grid::value_type c = source(xs,ys1);
             mapnik::grid::value_type d = source(xs1,ys1);
-            
+
             if ((a > 0) && (b > 0))
                 target(x,y) = b;
             else if ((c > 0) && (d > 0))

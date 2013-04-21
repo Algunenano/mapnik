@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2007 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,46 +19,56 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
-//$Id$
 
 #ifndef GDAL_DATASOURCE_HPP
 #define GDAL_DATASOURCE_HPP
 
 // mapnik
 #include <mapnik/datasource.hpp>
+#include <mapnik/params.hpp>
+#include <mapnik/query.hpp>
+#include <mapnik/feature.hpp>
+#include <mapnik/box2d.hpp>
+#include <mapnik/coord.hpp>
+#include <mapnik/feature_layer_desc.hpp>
 
 // boost
-#include <boost/shared_ptr.hpp>
+#include <boost/optional.hpp>
+
+// stl
+#include <vector>
+#include <string>
 
 // gdal
 #include <gdal_priv.h>
 
-class gdal_datasource : public mapnik::datasource 
+class gdal_datasource : public mapnik::datasource
 {
-    public:
-        gdal_datasource(mapnik::parameters const& params, bool bind=true);
-        virtual ~gdal_datasource ();
-        int type() const;
-        static std::string name();
-        mapnik::featureset_ptr features( mapnik::query const& q) const;
-        mapnik::featureset_ptr features_at_point(mapnik::coord2d const& pt) const;
-        mapnik::box2d<double> envelope() const;
-        mapnik::layer_descriptor get_descriptor() const;
-        void bind() const;
-    private:
-        mutable mapnik::box2d<double> extent_;
-        std::string dataset_name_;
-        mutable int band_;
-        mapnik::layer_descriptor desc_;
-        mutable unsigned width_;
-        mutable unsigned height_;
-        mutable double dx_;
-        mutable double dy_;
-        mutable int nbands_;
-        mutable bool shared_dataset_;
-        double filter_factor_;
-        inline GDALDataset *open_dataset() const;
+public:
+    gdal_datasource(mapnik::parameters const& params, bool bind = true);
+    virtual ~gdal_datasource();
+    mapnik::datasource::datasource_t type() const;
+    static const char * name();
+    mapnik::featureset_ptr features(mapnik::query const& q) const;
+    mapnik::featureset_ptr features_at_point(mapnik::coord2d const& pt) const;
+    mapnik::box2d<double> envelope() const;
+    boost::optional<mapnik::datasource::geometry_t> get_geometry_type() const;
+    mapnik::layer_descriptor get_descriptor() const;
+    void bind() const;
+private:
+    GDALDataset* open_dataset() const;
+    mutable mapnik::box2d<double> extent_;
+    std::string dataset_name_;
+    mutable int band_;
+    mapnik::layer_descriptor desc_;
+    mutable unsigned width_;
+    mutable unsigned height_;
+    mutable double dx_;
+    mutable double dy_;
+    mutable int nbands_;
+    mutable bool shared_dataset_;
+    double filter_factor_;
+    boost::optional<double> nodata_value_;
 };
-
 
 #endif // GDAL_DATASOURCE_HPP

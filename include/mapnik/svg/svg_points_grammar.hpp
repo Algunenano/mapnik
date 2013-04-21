@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2010 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -49,17 +49,17 @@ namespace mapnik { namespace svg {
             using qi::_1;
             using qi::_2;
             using qi::double_;
-        
+
             start = coord[move_to_(_1,false)] // move_to
                 >> *(-lit(',') >> coord [ line_to_(_1,false) ] ); // *line_to
-        
+
             coord = double_ >> -lit(',') >> double_;
         }
-    
+
         // rules
         qi::rule<Iterator,SkipType> start;
         qi::rule<Iterator,vector2<double,double>(),SkipType> coord;
-    
+
         // commands
         function<move_to<PathType> > move_to_;
         function<line_to<PathType> > line_to_;

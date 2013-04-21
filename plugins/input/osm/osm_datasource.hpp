@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,16 +20,27 @@
  *
  *****************************************************************************/
 
-// $Id$
-
 #ifndef OSM_DATASOURCE_HPP
 #define OSM_DATASOURCE_HPP
 
+// mapnik
 #include <mapnik/datasource.hpp>
+#include <mapnik/params.hpp>
+#include <mapnik/query.hpp>
+#include <mapnik/feature.hpp>
 #include <mapnik/box2d.hpp>
+#include <mapnik/coord.hpp>
+#include <mapnik/feature_layer_desc.hpp>
+
+// boost
+#include <boost/optional.hpp>
+#include <boost/shared_ptr.hpp>
+
+// stl
+#include <vector>
+#include <string>
 
 #include "osm.h"
-
 
 using mapnik::datasource;
 using mapnik::parameters;
@@ -41,26 +52,23 @@ using mapnik::box2d;
 
 class osm_datasource : public datasource
 {
-   public:
-      osm_datasource(const parameters &params, bool bind=true);
-      virtual ~osm_datasource();
-    
-    // these must be overridden
-      int type() const;
-      featureset_ptr features(const query& q) const;
-      featureset_ptr features_at_point(coord2d const& pt) const;
-      box2d<double> envelope() const;
-      layer_descriptor get_descriptor() const;   
-    static std::string name();
+public:
+    osm_datasource(const parameters& params, bool bind = true);
+    virtual ~osm_datasource();
+    mapnik::datasource::datasource_t type() const;
+    static const char * name();
+    featureset_ptr features(const query& q) const;
+    featureset_ptr features_at_point(coord2d const& pt) const;
+    box2d<double> envelope() const;
+    boost::optional<mapnik::datasource::geometry_t> get_geometry_type() const;
+    layer_descriptor get_descriptor() const;
     void bind() const;
-   private:
-      osm_datasource(const osm_datasource&);
-      osm_datasource& operator=(const osm_datasource&);
-   private:
-      mutable box2d<double> extent_;
-      mutable osm_dataset * osm_data_;
-    int type_;
+
+private:
+    mutable box2d<double> extent_;
+    mutable osm_dataset* osm_data_;
+    mapnik::datasource::datasource_t type_;
     mutable layer_descriptor desc_;
 };
 
-#endif //OSM_DATASOURCE_HPP
+#endif // OSM_DATASOURCE_HPP

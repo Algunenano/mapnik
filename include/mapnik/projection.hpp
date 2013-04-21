@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,10 +20,8 @@
  *
  *****************************************************************************/
 
-//$Id$
-
-#ifndef PROJECTION_HPP
-#define PROJECTION_HPP
+#ifndef MAPNIK_PROJECTION_HPP
+#define MAPNIK_PROJECTION_HPP
 
 // mapnik
 #include <mapnik/box2d.hpp>
@@ -35,22 +33,22 @@
 #if defined(MAPNIK_THREADSAFE) && PJ_VERSION < 480
 #include <boost/thread/mutex.hpp>
 #endif
-
 #include <boost/utility.hpp>
+
 // stl
 #include <string>
 #include <iostream>
 #include <stdexcept>
 
 namespace mapnik {
-    
+
 class proj_init_error : public std::runtime_error
 {
 public:
     proj_init_error(std::string const& params)
         : std::runtime_error("failed to initialize projection with: '" + params + "'") {}
 };
-    
+
 class MAPNIK_DECL projection
 {
     friend class proj_transform;
@@ -58,23 +56,23 @@ public:
     explicit projection(std::string const& params = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs");
     projection(projection const& rhs);
     ~projection();
-        
+
     projection& operator=(projection const& rhs);
     bool operator==(const projection& other) const;
     bool operator!=(const projection& other) const;
     bool is_initialized() const;
     bool is_geographic() const;
     std::string const& params() const;
-      
+
     void forward(double & x, double &y ) const;
     void inverse(double & x,double & y) const;
 
     std::string expanded() const;
-        
+
 private:
-    void init(); 
+    void init();
     void swap (projection& rhs);
-       
+
 private:
     std::string params_;
     projPJ proj_;
@@ -85,6 +83,7 @@ private:
     static boost::mutex mutex_;
 #endif
 };
+
 }
 
-#endif //PROJECTION_HPP
+#endif // MAPNIK_PROJECTION_HPP

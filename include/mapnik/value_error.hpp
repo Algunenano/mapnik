@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,8 +20,8 @@
  *
  *****************************************************************************/
 
-#ifndef MAPNIK_VALUE_ERROR_INCLUDED
-#define MAPNIK_VALUE_ERROR_INCLUDED
+#ifndef MAPNIK_VALUE_ERROR_HPP
+#define MAPNIK_VALUE_ERROR_HPP
 
 #include <iostream>
 #include <sstream>
@@ -31,20 +31,22 @@ namespace mapnik {
 class value_error : public std::exception
 {
 public:
-    value_error() {}
+    value_error() :
+        what_() {}
 
-    value_error( const std::string & what ) :
+    value_error( std::string const& what ) :
         what_( what )
     {
     }
+
     virtual ~value_error() throw() {};
 
     virtual const char * what() const throw()
     {
-        return what_.c_str();    
+        return what_.c_str();
     }
 
-    void append_context(const std::string & ctx) const
+    void append_context(std::string const& ctx) const
     {
         what_ += " " + ctx;
     }
@@ -54,4 +56,4 @@ protected:
 };
 }
 
-#endif // MAPNIK_VALUE_ERROR_INCLUDED
+#endif // MAPNIK_VALUE_ERROR_HPP

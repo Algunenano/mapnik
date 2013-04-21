@@ -1,5 +1,5 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
  * Copyright (C) 2011 Artem Pavlenko
@@ -20,8 +20,6 @@
  *
  *****************************************************************************/
 
-//$Id$
-
 #ifndef MAPNIK_SEGMENT_HPP
 #define MAPNIK_SEGMENT_HPP
 
@@ -41,4 +39,4 @@ static bool y_order(segment_t const& first,segment_t const& second)
 
 }
 
-#endif //MAPNIK_SEGMENT_HPP
+#endif // MAPNIK_SEGMENT_HPP

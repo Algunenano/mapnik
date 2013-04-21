@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,26 +20,24 @@
  *
  *****************************************************************************/
 
-//$Id$
-
-#ifndef DISTANCE_HPP
-#define DISTANCE_HPP
+#ifndef MAPNIK_DISTANCE_HPP
+#define MAPNIK_DISTANCE_HPP
 
 #include <mapnik/coord.hpp>
 
 namespace mapnik
 {
 struct ellipsoid;
-    
-// great-circle distance 
-    
+
+// great-circle distance
+
 class great_circle_distance
 {
 public:
     double operator() (coord2d const& pt0, coord2d const& pt1) const;
 };
-    
-// vincenty distance 
+
+// vincenty distance
 /*
   class vincenty_distance : boost::noncopyble
   {
@@ -52,4 +50,4 @@ public:
 */
 }
 
-#endif // GEO_UTILS_HPP
+#endif // MAPNIK_DISTANCE_HPP

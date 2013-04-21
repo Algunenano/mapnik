@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,14 +20,11 @@
  *
  *****************************************************************************/
 
-//$Id: graphics.hpp 39 2005-04-10 20:39:53Z pavlenko $
-
-#ifndef GRAPHICS_HPP
-#define GRAPHICS_HPP
+#ifndef MAPNIK_GRAPHICS_HPP
+#define MAPNIK_GRAPHICS_HPP
 
 // mapnik
 #include <mapnik/color.hpp>
-#include <mapnik/gamma.hpp>
 #include <mapnik/image_data.hpp>
 #include <mapnik/box2d.hpp>
 #include <mapnik/image_view.hpp>
@@ -48,96 +45,6 @@
 
 namespace mapnik
 {
-
-struct Multiply
-{
-    inline static void mergeRGB(unsigned const &r0, unsigned const &g0, unsigned const &b0,
-                                unsigned &r1, unsigned &g1, unsigned &b1)
-    {
-        r1 = r1*r0/255;
-        g1 = g1*g0/255;
-        b1 = b1*b0/255;
-    }
-};
-struct Multiply2
-{
-    inline static void mergeRGB(unsigned const &r0, unsigned const &g0, unsigned const &b0,
-                                unsigned &r1, unsigned &g1, unsigned &b1)
-    {
-        r1 = r1*r0/128;
-        if (r1>255) r1=255;
-        g1 = g1*g0/128;
-        if (g1>255) g1=255;
-        b1 = b1*b0/128;
-        if (b1>255) b1=255;
-    }
-};
-struct Divide
-{
-    inline static void mergeRGB(unsigned const &r0, unsigned const &g0, unsigned const &b0,
-                                unsigned &r1, unsigned &g1, unsigned &b1)
-    {
-        r1 = r0*256/(r1+1);
-        g1 = g0*256/(g1+1);
-        b1 = b0*256/(b1+1);
-    }
-};
-struct Divide2
-{
-    inline static void mergeRGB(unsigned const &r0, unsigned const &g0, unsigned const &b0,
-                                unsigned &r1, unsigned &g1, unsigned &b1)
-    {
-        r1 = r0*128/(r1+1);
-        g1 = g0*128/(g1+1);
-        b1 = b0*128/(b1+1);
-    }
-};
-struct Screen
-{
-    inline static void mergeRGB(unsigned const &r0, unsigned const &g0, unsigned const &b0,
-                                unsigned &r1, unsigned &g1, unsigned &b1)
-    {
-        r1 = 255 - (255-r0)*(255-r1)/255;
-        g1 = 255 - (255-g0)*(255-g1)/255;
-        b1 = 255 - (255-b0)*(255-b1)/255;
-    }
-};
-struct HardLight
-{
-    inline static void mergeRGB(unsigned const &r0, unsigned const &g0, unsigned const &b0,
-                                unsigned &r1, unsigned &g1, unsigned &b1)
-    {
-        r1 = (r1>128)?255-(255-r0)*(255-2*(r1-128))/256:r0*r1*2/256;
-        g1 = (g1>128)?255-(255-g0)*(255-2*(g1-128))/256:g0*g1*2/256;
-        b1 = (b1>128)?255-(255-b0)*(255-2*(b1-128))/256:b0*b1*2/256;
-    }
-};
-struct MergeGrain
-{
-    inline static void mergeRGB(unsigned const &r0, unsigned const &g0, unsigned const &b0,
-                                unsigned &r1, unsigned &g1, unsigned &b1)
-    {
-        r1 = (r1+r0>128)?r1+r0-128:0;
-        if (r1>255) r1=255;
-        g1 = (g1+g0>128)?g1+g0-128:0;
-        if (g1>255) g1=255;
-        b1 = (b1+b0>128)?b1+b0-128:0;
-        if (b1>255) b1=255;
-    }
-};
-struct MergeGrain2
-{
-    inline static void mergeRGB(unsigned const &r0, unsigned const &g0, unsigned const &b0,
-                                unsigned &r1, unsigned &g1, unsigned &b1)
-    {
-        r1 = (2*r1+r0>256)?2*r1+r0-256:0;
-        if (r1>255) r1=255;
-        g1 = (2*g1+g0>256)?2*g1+g0-256:0;
-        if (g1>255) g1=255;
-        b1 = (2*b1+b0>256)?2*b1+b0-256:0;
-        if (b1>255) b1=255;
-    }
-};
 
 class MAPNIK_DECL image_32
 {
@@ -166,20 +73,24 @@ public:
     }
 
     boost::optional<color> const& get_background() const;
-    
+
     void set_background(const color& c);
+
+    void premultiply();
+
+    void demultiply();
 
     void set_grayscale_to_alpha();
 
     void set_color_to_alpha(color const& c);
 
     void set_alpha(float opacity);
-    
+
     inline const image_data_32& data() const
     {
         return data_;
     }
-    
+
     inline image_data_32& data()
     {
         return data_;
@@ -226,7 +137,7 @@ public:
         {
             unsigned rgba0 = data_(x,y);
 #ifdef MAPNIK_BIG_ENDIAN
-            unsigned a1 = (int)((rgba1 & 0xff) * opacity) & 0xff; // adjust for desired opacity
+            unsigned a1 = (unsigned)((rgba1 & 0xff) * opacity) & 0xff; // adjust for desired opacity
             a1 = (t*a1) / 255;
             if (a1 == 0) return;
             unsigned r1 = (rgba1 >> 24) & 0xff;
@@ -246,7 +157,7 @@ public:
             a0 = a0 >> 8;
             data_(x,y)= (a0)| (b0 << 8) |  (g0 << 16) | (r0 << 24) ;
 #else
-            unsigned a1 = (int)(((rgba1 >> 24) & 0xff) * opacity) & 0xff; // adjust for desired opacity
+            unsigned a1 = (unsigned)(((rgba1 >> 24) & 0xff) * opacity) & 0xff; // adjust for desired opacity
             a1 = (t*a1) / 255;
             if (a1 == 0) return;
             unsigned r1 = rgba1 & 0xff;
@@ -268,7 +179,9 @@ public:
 #endif
         }
     }
-
+    
+    void composite_pixel(unsigned op, int x,int y,unsigned c, unsigned cover, double opacity);
+    
     inline unsigned width() const
     {
         return width_;
@@ -437,7 +350,7 @@ public:
                     unsigned r0 = rgba0 & 0xff ;
                     unsigned g0 = (rgba0 >> 8 ) & 0xff;
                     unsigned b0 = (rgba0 >> 16) & 0xff;
-                    
+
                     unsigned atmp = a1 + a0 - ((a1 * a0 + 255) >> 8);
                     if (atmp)
                     {
@@ -446,7 +359,7 @@ public:
                         b0 = byte((b1 * a1 + (b0 * a0) - ((b0 * a0 * a1 + 255) >> 8)) / atmp);
                     }
                     a0 = byte(atmp);
-                    
+
                     row_to[x] = (a0 << 24)| (b0 << 16) |  (g0 << 8) | (r0) ;
 #endif
                 }
@@ -520,4 +433,5 @@ public:
     }
 };
 }
-#endif //GRAPHICS_HPP
+
+#endif // MAPNIK_GRAPHICS_HPP

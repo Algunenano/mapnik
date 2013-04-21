@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,10 +20,8 @@
  *
  *****************************************************************************/
 
-//$Id$
-
-#ifndef FONT_SET_HPP
-#define FONT_SET_HPP
+#ifndef MAPNIK_FONT_SET_HPP
+#define MAPNIK_FONT_SET_HPP
 
 // mapnik
 #include <mapnik/config.hpp>
@@ -37,8 +35,8 @@ namespace mapnik
 class MAPNIK_DECL font_set
 {
 public:
-    font_set(); 
-    font_set(std::string const& name); 
+    font_set();
+    font_set(std::string const& name);
     font_set(font_set const& rhs);
     font_set& operator=(font_set const& rhs);
     unsigned size() const;
@@ -52,4 +50,4 @@ private:
 };
 }
 
-#endif //FONT_SET_HPP
+#endif // MAPNIK_FONT_SET_HPP

@@ -2,8 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
- * Copyright (C) 2006 10East Corp.
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,92 +20,76 @@
  *
  *****************************************************************************/
 
-//$Id$
+#ifndef MAPNIK_PLACEMENT_FINDER_HPP
+#define MAPNIK_PLACEMENT_FINDER_HPP
 
-#ifndef __PLACEMENT_FINDER__
-#define __PLACEMENT_FINDER__
-
-#include <mapnik/ctrans.hpp>
-#include <mapnik/label_collision_detector.hpp>
-#include <mapnik/text_symbolizer.hpp>
-#include <mapnik/shield_symbolizer.hpp>
+// mapnik
 #include <mapnik/geometry.hpp>
-#include <mapnik/text_path.hpp>
-#include <mapnik/text_placements.hpp>
+#include <mapnik/text_properties.hpp>
+#include <mapnik/text_placements/base.hpp>
+#include <mapnik/symbolizer_helpers.hpp>
+#include <mapnik/label_collision_detector.hpp>
+#include <mapnik/ctrans.hpp>
 
+
+// agg
+#include "agg_conv_clip_polyline.h"
+
+
+// stl
 #include <queue>
 
 namespace mapnik
 {
-typedef text_path placement_element;
 
-struct placement : boost::noncopyable
-{
-    placement(string_info & info_, shield_symbolizer const& sym, double scale_factor,  unsigned w, unsigned h, bool has_dimensions_= false);
+class text_placement_info;
+class string_info;
+class text_path;
 
-    placement(string_info & info_, text_symbolizer const& sym, double scale_factor);
+typedef agg::conv_clip_polyline<geometry_type> clipped_geometry_type;
+typedef coord_transform<CoordTransform,clipped_geometry_type> ClippedPathType;
+typedef coord_transform<CoordTransform,geometry_type> PathType;
 
-    ~placement();
-
-    string_info & info; // should only be used for finding placement. doesn't necessarily match placements.vertex() values
-
-    double scale_factor_;
-    label_placement_e label_placement;
-
-    std::queue< box2d<double> > envelopes;
-
-    //output
-    boost::ptr_vector<placement_element> placements;
-
-    int wrap_width;
-    bool wrap_before; // wraps text at wrap_char immediately before current word
-    unsigned char wrap_char;
-    int text_ratio;
-
-    int label_spacing; // distance between repeated labels on a single geometry
-    unsigned label_position_tolerance; //distance the label can be moved on the line to fit, if 0 the default is used
-    bool force_odd_labels; //Always try render an odd amount of labels
-
-    double max_char_angle_delta;
-    double minimum_distance;
-    double minimum_padding;
-    double minimum_path_length;
-    bool avoid_edges;
-    bool has_dimensions;
-    bool allow_overlap;
-    std::pair<double, double> dimensions;
-    bool collect_extents;
-    box2d<double> extents;
-
-    // additional boxes attached to the text labels which must also be
-    // placed in order for the text placement to succeed. e.g: shields.
-    std::vector<box2d<double> > additional_boxes;
-};
-
+typedef label_collision_detector4 DetectorType;
 
 
 template <typename DetectorT>
 class placement_finder : boost::noncopyable
 {
 public:
-    placement_finder(DetectorT & detector);
-    placement_finder(DetectorT & detector, box2d<double> const& extent);
-    
-    //Try place a single label at the given point
-    void find_point_placement(placement & p, text_placement_info_ptr po, double pos_x, double pos_y, double angle=0.0, unsigned line_spacing=0, unsigned character_spacing=0);
+    placement_finder(Feature const& feature,
+                     text_placement_info const& placement_info,
+                     string_info const& info,
+                     DetectorT & detector,
+                     box2d<double> const& extent);
 
-    //Iterate over the given path, placing point labels with respect to label_spacing
+    /** Try place a single label at the given point. */
+    void find_point_placement(double pos_x, double pos_y, double angle=0.0);
+
+    /** Iterate over the given path, placing point labels with respect to label_spacing. */
     template <typename T>
-    void find_point_placements(placement & p, text_placement_info_ptr po, T & path);
+    void find_point_placements(T & path);
 
-    //Iterate over the given path, placing line-following labels with respect to label_spacing
+    /** Iterate over the given path, placing line-following labels with respect to label_spacing. */
     template <typename T>
-    void find_line_placements(placement & p, text_placement_info_ptr po, T & path);
+    void find_line_placements(T & path);
 
-    void update_detector(placement & p);
+    /** Add placements to detector. */
+    void update_detector();
 
-    void clear();
-    
+    /** Remove old placements. */
+    void clear_placements();
+
+    inline placements_type const& get_results() { return placements_; }
+
+    std::vector<box2d<double> > & additional_boxes() { return additional_boxes_;}
+    std::vector<box2d<double> > const& additional_boxes() const { return additional_boxes_;}
+
+    void set_collect_extents(bool collect) { collect_extents_ = collect; }
+    bool get_collect_extents() const { return collect_extents_; }
+
+    box2d<double> const& get_extents() const { return extents_; }
+
 private:
     ///Helpers for find_line_placement
 
@@ -118,15 +101,14 @@ private:
     //             otherwise it will autodetect the orientation.
     //             If >= 50% of the characters end up upside down, it will be retried the other way.
     //             RETURN: 1/-1 depending which way up the string ends up being.
-    std::auto_ptr<placement_element> get_placement_offset(placement & p,
-                                                          const std::vector<vertex2d> & path_positions,
-                                                          const std::vector<double> & path_distances,
-                                                          int & orientation, unsigned index, double distance);
+    std::auto_ptr<text_path> get_placement_offset(std::vector<vertex2d> const& path_positions,
+                                                  std::vector<double> const& path_distances,
+                                                  int & orientation, unsigned index, double distance);
 
-    ///Tests wether the given placement_element be placed without a collision
+    ///Tests whether the given text_path be placed without a collision
     // Returns true if it can
     // NOTE: This edits p.envelopes so it can be used afterwards (you must clear it otherwise)
-    bool test_placement(placement & p, const std::auto_ptr<placement_element> & current_placement, const int & orientation);
+    bool test_placement(std::auto_ptr<text_path> const& current_placement, int orientation);
 
     ///Does a line-circle intersect calculation
     // NOTE: Follow the strict pre conditions
@@ -134,18 +116,55 @@ private:
     //                 This means there is exactly one intersect point
     // Result is returned in ix, iy
     void find_line_circle_intersection(
-        const double &cx, const double &cy, const double &radius,
-        const double &x1, const double &y1, const double &x2, const double &y2,
-        double &ix, double &iy);
+        double cx, double cy, double radius,
+        double x1, double y1, double x2, double y2,
+        double & ix, double & iy);
+
+    void find_line_breaks();
+    void init_string_size();
+    void init_alignment();
+    void adjust_position(text_path *current_placement);
+    void add_line(double width, double height, bool first_line);
 
     ///General Internals
-
-
-
     DetectorT & detector_;
     box2d<double> const& dimensions_;
+    string_info const& info_;
+    text_symbolizer_properties const& p;
+    text_placement_info const& pi;
+    /** Length of the longest line after linebreaks.
+     * Before find_line_breaks() this is the total length of the string.
+     */
+    double string_width_;
+    /** Height of the string after linebreaks.
+     * Before find_line_breaks() this is the total length of the string.
+     */
+    double string_height_;
+    /** Height of the tallest font in the first line not including line spacing.
+     * Used to determine the correct offset for the first line.
+     */
+    double first_line_space_;
+    vertical_alignment_e valign_;
+    horizontal_alignment_e halign_;
+    justify_alignment_e jalign_;
+    std::vector<unsigned> line_breaks_;
+    std::vector<std::pair<double, double> > line_sizes_;
+    std::queue< box2d<double> > envelopes_;
+    /** Used to return all placements found. */
+    placements_type placements_;
+    /** Bounding box of all texts placed. */
+    box2d<double> extents_;
+    /** Collect a bounding box of all texts placed. */
+    bool collect_extents_;
+
+    /** Additional boxes to take into account when finding placement.
+     * Used for finding line placements where multiple placements are returned.
+     * Boxes are relative to starting point of current placement.
+     * Only used for point placements!
+     */
+    std::vector<box2d<double> > additional_boxes_;
 };
 }
 
-#endif
 
+#endif // MAPNIK_PLACEMENT_FINDER_HPP

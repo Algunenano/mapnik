@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2007 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,11 +19,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
-//$Id$
 
 #include "rasterlite_featureset.hpp"
 
 // mapnik
+#include <mapnik/debug.hpp>
 #include <mapnik/image_util.hpp>
 #include <mapnik/feature_factory.hpp>
 
@@ -36,16 +36,17 @@ using mapnik::coord2d;
 using mapnik::box2d;
 using mapnik::Feature;
 using mapnik::feature_ptr;
-using mapnik::CoordTransform;
 using mapnik::geometry_type;
 using mapnik::query;
 using mapnik::feature_factory;
 
 
-rasterlite_featureset::rasterlite_featureset(void* dataset, rasterlite_query q)
-   : dataset_(dataset),
-     gquery_(q),
-     first_(true)
+rasterlite_featureset::rasterlite_featureset(void* dataset,
+                                             rasterlite_query q)
+    : dataset_(dataset),
+      gquery_(q),
+      first_(true),
+      ctx_(boost::make_shared<mapnik::context_type>())
 {
     rasterliteSetBackgroundColor(dataset_, 255, 0, 255);
     rasterliteSetTransparentColor(dataset_, 255, 0, 255);
@@ -53,9 +54,7 @@ rasterlite_featureset::rasterlite_featureset(void* dataset, rasterlite_query q)
 
 rasterlite_featureset::~rasterlite_featureset()
 {
-#ifdef MAPNIK_DEBUG
-    std::clog << "Rasterlite Plugin: closing dataset" << std::endl;
-#endif
+    MAPNIK_LOG_DEBUG(rasterlite) << "rasterlite_featureset: Closing";
 
     rasterliteClose(dataset_);
 }
@@ -67,11 +66,15 @@ feature_ptr rasterlite_featureset::next()
         first_ = false;
 
         query *q = boost::get<query>(&gquery_);
-        if(q) {
+        if (q)
+        {
             return get_feature(*q);
-        } else {
+        }
+        else
+        {
             coord2d *p = boost::get<coord2d>(&gquery_);
-            if(p) {
+            if (p)
+            {
                 return get_feature_at_point(*p);
             }
         }
@@ -82,16 +85,14 @@ feature_ptr rasterlite_featureset::next()
 
 feature_ptr rasterlite_featureset::get_feature(mapnik::query const& q)
 {
-#ifdef MAPNIK_DEBUG
-    std::clog << "Rasterlite Plugin: get_feature" << std::endl;
-#endif
+    MAPNIK_LOG_DEBUG(rasterlite) << "rasterlite_featureset: Running get_feature";
 
-    feature_ptr feature(feature_factory::create(1));
+    feature_ptr feature(feature_factory::create(ctx_,1));
 
     double x0, y0, x1, y1;
     rasterliteGetExtent (dataset_, &x0, &y0, &x1, &y1);
 
-    box2d<double> raster_extent(x0,y0,x1,y1); 
+    box2d<double> raster_extent(x0, y0, x1, y1);
     box2d<double> intersect = raster_extent.intersect(q.get_bbox());
 
     const int width = static_cast<int>(boost::get<0>(q.resolution()) * intersect.width() + 0.5);
@@ -100,24 +101,29 @@ feature_ptr rasterlite_featureset::get_feature(mapnik::query const& q)
     const double pixel_size = (intersect.width() >= intersect.height()) ?
         (intersect.width() / (double) width) : (intersect.height() / (double) height);
 
-#ifdef MAPNIK_DEBUG         
-    std::clog << "Rasterlite Plugin: Raster extent=" << raster_extent << std::endl;
-    std::clog << "Rasterlite Plugin: View extent=" << q.get_bbox() << std::endl;
-    std::clog << "Rasterlite Plugin: Intersect extent=" << intersect << std::endl;
-    std::clog << "Rasterlite Plugin: Query resolution=" << boost::get<0>(q.resolution()) 
-        << "," << boost::get<1>(q.resolution())  << std::endl;
-    std::clog << "Rasterlite Plugin: Size=" << width << " " << height << std::endl;
-    std::clog << "Rasterlite Plugin: Pixel Size=" << pixel_size << std::endl;
-#endif
+    MAPNIK_LOG_DEBUG(rasterlite) << "rasterlite_featureset: Raster extent=" << raster_extent;
+    MAPNIK_LOG_DEBUG(rasterlite) << "rasterlite_featureset: View extent=" << q.get_bbox();
+    MAPNIK_LOG_DEBUG(rasterlite) << "rasterlite_featureset: Intersect extent=" << intersect;
+    MAPNIK_LOG_DEBUG(rasterlite) << "rasterlite_featureset: Query resolution=" << boost::get<0>(q.resolution())  << "," << boost::get<1>(q.resolution());
+    MAPNIK_LOG_DEBUG(rasterlite) << "rasterlite_featureset: Size=" << width << " " << height;
+    MAPNIK_LOG_DEBUG(rasterlite) << "rasterlite_featureset: Pixel Size=" << pixel_size;
 
     if (width > 0 && height > 0)
     {
         int size = 0;
-        void *raster = 0;
+        void* raster = 0;
 
         if (rasterliteGetRawImageByRect(dataset_,
-            intersect.minx(), intersect.miny(), intersect.maxx(), intersect.maxy(),
-            pixel_size, width, height, GAIA_RGBA_ARRAY, &raster, &size) == RASTERLITE_OK)
+                                        intersect.minx(),
+                                        intersect.miny(),
+                                        intersect.maxx(),
+                                        intersect.maxy(),
+                                        pixel_size,
+                                        width,
+                                        height,
+                                        GAIA_RGBA_ARRAY,
+                                        &raster,
+                                        &size) == RASTERLITE_OK)
         {
             if (size > 0)
             {
@@ -133,26 +139,20 @@ feature_ptr rasterlite_featureset::get_feature(mapnik::query const& q)
 
                 free (raster);
 
-#ifdef MAPNIK_DEBUG         
-                std::clog << "Rasterlite Plugin: done" << std::endl;
-#endif
+                MAPNIK_LOG_DEBUG(rasterlite) << "rasterlite_featureset: Done";
             }
             else
             {
-#ifdef MAPNIK_DEBUG         
-                std::clog << "Rasterlite Plugin: error=" << rasterliteGetLastError (dataset_) << std::endl;
-#endif
+                MAPNIK_LOG_ERROR(rasterlite) << "Rasterlite Plugin: Error " << rasterliteGetLastError (dataset_);
             }
         }
-      
+
         return feature;
     }
     return feature_ptr();
 }
 
-
 feature_ptr rasterlite_featureset::get_feature_at_point(mapnik::coord2d const& pt)
 {
     return feature_ptr();
 }
-

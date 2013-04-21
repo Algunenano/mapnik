@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2010 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,7 @@
 #define MAPNIK_SVG_RENDERER_HPP
 
 // mapnik
+#include <mapnik/debug.hpp>
 #include <mapnik/svg/svg_path_attributes.hpp>
 #include <mapnik/gradient.hpp>
 #include <mapnik/box2d.hpp>
@@ -86,7 +87,7 @@ public:
             u = 0;
         else if (u > 1)
             u = 1;
-        return u*d;
+        return static_cast<int>(u*d);
     }
 private:
     double x1_;
@@ -98,32 +99,32 @@ private:
 
 };
 
-template <typename VertexSource, typename AttributeSource, typename ScanlineRenderer, typename PixelFormat> 
+template <typename VertexSource, typename AttributeSource, typename ScanlineRenderer, typename PixelFormat>
 class svg_renderer : boost::noncopyable
 {
+public:
     typedef agg::conv_curve<VertexSource>            curved_type;
     typedef agg::conv_stroke<curved_type>            curved_stroked_type;
-    typedef agg::conv_transform<curved_stroked_type> curved_stroked_trans_type;    
+    typedef agg::conv_transform<curved_stroked_type> curved_stroked_trans_type;
     typedef agg::conv_transform<curved_type>         curved_trans_type;
     typedef agg::conv_contour<curved_trans_type>     curved_trans_contour_type;
-    typedef agg::renderer_base<PixelFormat> renderer_base;
-    
-public:
+    typedef agg::renderer_base<PixelFormat>          renderer_base;
+
     svg_renderer(VertexSource & source, AttributeSource const& attributes)
         : source_(source),
           curved_(source_),
           curved_stroked_(curved_),
           attributes_(attributes) {}
-    
+
     template <typename Rasterizer, typename Scanline, typename Renderer>
     void render_gradient(Rasterizer& ras,
-            Scanline& sl,
-            Renderer& ren,
-            const gradient &grad,
-            agg::trans_affine const& mtx,
-            double opacity,
-            const box2d<double> &symbol_bbox,
-            const box2d<double> &path_bbox)
+                         Scanline& sl,
+                         Renderer& ren,
+                         const gradient &grad,
+                         agg::trans_affine const& mtx,
+                         double opacity,
+                         const box2d<double> &symbol_bbox,
+                         const box2d<double> &path_bbox)
     {
         typedef agg::gamma_lut<agg::int8u, agg::int8u> gamma_lut_type;
         typedef agg::gradient_lut<agg::color_interpolator<agg::rgba8>, 1024> color_func_type;
@@ -141,12 +142,11 @@ public:
         BOOST_FOREACH ( mapnik::stop_pair const& st, grad.get_stop_array() )
         {
             mapnik::color const& stop_color = st.second;
-            unsigned r= stop_color.red();
-            unsigned g= stop_color.green();
-            unsigned b= stop_color.blue();
-            unsigned a= stop_color.alpha();
-            //std::clog << "r: " << r << " g: " << g << " b: " << b << "a: " << a << "\n";
-            m_gradient_lut.add_color(st.first, agg::rgba8(r, g, b, int(a * opacity)));
+            unsigned r = stop_color.red();
+            unsigned g = stop_color.green();
+            unsigned b = stop_color.blue();
+            unsigned a = stop_color.alpha();
+            m_gradient_lut.add_color(st.first, agg::rgba8_pre(r, g, b, int(a * opacity)));
         }
         m_gradient_lut.build_lut();
 
@@ -181,9 +181,9 @@ public:
         {
             typedef agg::gradient_radial_focus gradient_adaptor_type;
             typedef agg::span_gradient<agg::rgba8,
-                                       interpolator_type,
-                                       gradient_adaptor_type,
-                                       color_func_type> span_gradient_type;
+                interpolator_type,
+                gradient_adaptor_type,
+                color_func_type> span_gradient_type;
 
             // the agg radial gradient assumes it is centred on 0
             transform.translate(-x2,-y2);
@@ -201,9 +201,9 @@ public:
             gradient_adaptor_type gradient_adaptor(radius,(x1-x2),(y1-y2));
 
             span_gradient_type    span_gradient(span_interpolator,
-                                              gradient_adaptor,
-                                              m_gradient_lut,
-                                              0, radius);
+                                                gradient_adaptor,
+                                                m_gradient_lut,
+                                                0, radius);
 
             render_scanlines_aa(ras, sl, ren, m_alloc, span_gradient);
         }
@@ -211,9 +211,9 @@ public:
         {
             typedef linear_gradient_from_segment gradient_adaptor_type;
             typedef agg::span_gradient<agg::rgba8,
-                                       interpolator_type,
-                                       gradient_adaptor_type,
-                                       color_func_type> span_gradient_type;
+                interpolator_type,
+                gradient_adaptor_type,
+                color_func_type> span_gradient_type;
 
             // scale everything up since agg turns things into integers a bit too soon
             int scaleup=255;
@@ -228,32 +228,32 @@ public:
             gradient_adaptor_type gradient_adaptor(x1,y1,x2,y2);
 
             span_gradient_type    span_gradient(span_interpolator,
-                                              gradient_adaptor,
-                                              m_gradient_lut,
-                                              0, scaleup);
+                                                gradient_adaptor,
+                                                m_gradient_lut,
+                                                0, scaleup);
 
             render_scanlines_aa(ras, sl, ren, m_alloc, span_gradient);
         }
     }
 
     template <typename Rasterizer, typename Scanline, typename Renderer>
-    void render(Rasterizer& ras, 
+    void render(Rasterizer& ras,
                 Scanline& sl,
-                Renderer& ren, 
-                agg::trans_affine const& mtx, 
+                Renderer& ren,
+                agg::trans_affine const& mtx,
                 double opacity,
-                const box2d<double> &symbol_bbox)
-    
+                box2d<double> const& symbol_bbox)
+
     {
         using namespace agg;
-        
+
         trans_affine transform;
         curved_stroked_trans_type curved_stroked_trans(curved_stroked_,transform);
         curved_trans_type         curved_trans(curved_,transform);
         curved_trans_contour_type curved_trans_contour(curved_trans);
-        
+
         curved_trans_contour.auto_detect_orientation(true);
-        
+
         for(unsigned i = 0; i < attributes_.size(); ++i)
         {
             mapnik::svg::path_attributes const& attr = attributes_[i];
@@ -271,14 +271,15 @@ public:
             //curved_.approximation_method(curve_inc);
             curved_.approximation_scale(scl);
             curved_.angle_tolerance(0.0);
-            
+
             rgba8 color;
 
             if (attr.fill_flag || attr.fill_gradient.get_gradient_type() != NO_GRADIENT)
             {
                 ras.reset();
 
-                if(fabs(curved_trans_contour.width()) < 0.0001)
+                // https://github.com/mapnik/mapnik/issues/1129
+                if(fabs(curved_trans_contour.width()) <= 1)
                 {
                     ras.add_path(curved_trans, attr.index);
                 }
@@ -290,14 +291,15 @@ public:
 
                 if(attr.fill_gradient.get_gradient_type() != NO_GRADIENT)
                 {
-                    render_gradient(ras, sl, ren, attr.fill_gradient, transform, attr.opacity * opacity, symbol_bbox, path_bbox);
+                    render_gradient(ras, sl, ren, attr.fill_gradient, transform, attr.fill_opacity * opacity, symbol_bbox, path_bbox);
                 }
                 else
                 {
                     ras.filling_rule(attr.even_odd_flag ? fill_even_odd : fill_non_zero);
                     color = attr.fill_color;
-                    color.opacity(color.opacity() * attr.opacity * opacity);
+                    color.opacity(color.opacity() * attr.fill_opacity * opacity);
                     ScanlineRenderer ren_s(ren);
+                    color.premultiply();
                     ren_s.color(color);
                     render_scanlines(ras, sl, ren_s);
                 }
@@ -313,7 +315,7 @@ public:
                 curved_stroked_.inner_join(inner_round);
                 curved_stroked_.approximation_scale(scl);
 
-                // If the *visual* line width is considerable we 
+                // If the *visual* line width is considerable we
                 // turn on processing of curve cusps.
                 //---------------------
                 if(attr.stroke_width * scl > 1.0)
@@ -325,14 +327,15 @@ public:
 
                 if(attr.stroke_gradient.get_gradient_type() != NO_GRADIENT)
                 {
-                    render_gradient(ras, sl, ren, attr.stroke_gradient, transform, attr.opacity * opacity, symbol_bbox, path_bbox);
+                    render_gradient(ras, sl, ren, attr.stroke_gradient, transform, attr.stroke_opacity * opacity, symbol_bbox, path_bbox);
                 }
                 else
                 {
                     ras.filling_rule(fill_non_zero);
                     color = attr.stroke_color;
-                    color.opacity(color.opacity() * attr.opacity * opacity);
+                    color.opacity(color.opacity() * attr.stroke_opacity * opacity);
                     ScanlineRenderer ren_s(ren);
+                    color.premultiply();
                     ren_s.color(color);
                     render_scanlines(ras, sl, ren_s);
                 }
@@ -341,24 +344,24 @@ public:
     }
 
     template <typename Rasterizer, typename Scanline, typename Renderer>
-    void render_id(Rasterizer& ras, 
-                Scanline& sl,
-                Renderer& ren, 
-                int feature_id,
-                agg::trans_affine const& mtx, 
-                double opacity,
-                const box2d<double> &symbol_bbox)
-    
+    void render_id(Rasterizer& ras,
+                   Scanline& sl,
+                   Renderer& ren,
+                   int feature_id,
+                   agg::trans_affine const& mtx,
+                   double opacity,
+                   const box2d<double> &symbol_bbox)
+
     {
         using namespace agg;
-        
+
         trans_affine transform;
         curved_stroked_trans_type curved_stroked_trans(curved_stroked_,transform);
         curved_trans_type         curved_trans(curved_,transform);
         curved_trans_contour_type curved_trans_contour(curved_trans);
-        
+
         curved_trans_contour.auto_detect_orientation(true);
-        
+
         for(unsigned i = 0; i < attributes_.size(); ++i)
         {
             mapnik::svg::path_attributes const& attr = attributes_[i];
@@ -376,14 +379,14 @@ public:
             //curved_.approximation_method(curve_inc);
             curved_.approximation_scale(scl);
             curved_.angle_tolerance(0.0);
-            
-            mapnik::gray16 color(feature_id);
+
+            mapnik::gray32 color(feature_id);
 
             if (attr.fill_flag || attr.fill_gradient.get_gradient_type() != NO_GRADIENT)
             {
                 ras.reset();
 
-                if(fabs(curved_trans_contour.width()) < 0.0001)
+                if(fabs(curved_trans_contour.width()) <= 1)
                 {
                     ras.add_path(curved_trans, attr.index);
                 }
@@ -409,7 +412,7 @@ public:
                 curved_stroked_.inner_join(inner_round);
                 curved_stroked_.approximation_scale(scl);
 
-                // If the *visual* line width is considerable we 
+                // If the *visual* line width is considerable we
                 // turn on processing of curve cusps.
                 //---------------------
                 if(attr.stroke_width * scl > 1.0)
@@ -426,9 +429,9 @@ public:
             }
         }
     }
-    
+
 private:
-    
+
     VertexSource &  source_;
     curved_type          curved_;
     curved_stroked_type  curved_stroked_;

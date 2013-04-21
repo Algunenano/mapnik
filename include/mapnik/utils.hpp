@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,11 +20,10 @@
  *
  *****************************************************************************/
 
-//$Id: utils.hpp 39 2005-04-10 20:39:53Z pavlenko $
+#ifndef MAPNIK_UTILS_HPP
+#define MAPNIK_UTILS_HPP
 
-#ifndef UTILS_HPP
-#define UTILS_HPP
-
+// boost
 #ifdef MAPNIK_THREADSAFE
 #include <boost/thread/mutex.hpp>
 #endif
@@ -44,7 +43,7 @@ namespace mapnik
 #ifdef MAPNIK_THREADSAFE
 using boost::mutex;
 #endif
-   
+
 template <typename T>
 class CreateUsingNew
 {
@@ -78,23 +77,23 @@ private:
     };
 
 public:
-        
+
     static T* create()
     {
         static MaxAlign staticMemory;
         return new(&staticMemory) T;
     }
-#ifdef __SUNPRO_CC        
+#ifdef __SUNPRO_CC
     // Sun C++ Compiler doesn't handle `volatile` keyword same as GCC.
     static void destroy(T* obj)
 #else
-        static void destroy(volatile T* obj)
+    static void destroy(volatile T* obj)
 #endif
     {
         obj->~T();
     }
 };
-    
+
 template <typename T,
           template <typename U> class CreatePolicy=CreateStatic> class singleton
 {
@@ -111,21 +110,19 @@ template <typename T,
     static bool destroyed_;
     singleton(const singleton &rhs);
     singleton& operator=(const singleton&);
+
     static void onDeadReference()
     {
         throw std::runtime_error("dead reference!");
     }
-                  
+
     static void DestroySingleton()
     {
         CreatePolicy<T>::destroy(pInstance_);
         pInstance_ = 0;
-        destroyed_=true;
-#ifdef MAPNIK_DEBUG
-        std::clog << " destroyed singleton \n";
-#endif
+        destroyed_ = true;
     }
-                  
+
 protected:
 #ifdef MAPNIK_THREADSAFE
     static mutex mutex_;
@@ -134,21 +131,21 @@ protected:
 public:
     static  T* instance()
     {
-        if (!pInstance_)
+        if (! pInstance_)
         {
 #ifdef MAPNIK_THREADSAFE
             mutex::scoped_lock lock(mutex_);
-#endif                        
-            if (!pInstance_)
+#endif
+            if (! pInstance_)
             {
-                           
                 if (destroyed_)
                 {
                     onDeadReference();
                 }
                 else
                 {
-                    pInstance_=CreatePolicy<T>::create();
+                    pInstance_ = CreatePolicy<T>::create();
+
                     // register destruction
                     std::atexit(&DestroySingleton);
                 }
@@ -161,13 +158,12 @@ public:
 template <typename T,
           template <typename U> class CreatePolicy> mutex singleton<T,CreatePolicy>::mutex_;
 #endif
-    
+
 template <typename T,
           template <typename U> class CreatePolicy> T* singleton<T,CreatePolicy>::pInstance_=0;
 template <typename T,
           template <typename U> class CreatePolicy> bool singleton<T,CreatePolicy>::destroyed_=false;
-   
+
 }
 
-
-#endif //UTILS_HPP
+#endif // MAPNIK_UTILS_HPP

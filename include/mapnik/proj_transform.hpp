@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,10 +20,8 @@
  *
  *****************************************************************************/
 
-//$Id$
-
-#ifndef PROJ_TRANSFORM_HPP
-#define PROJ_TRANSFORM_HPP
+#ifndef MAPNIK_PROJ_TRANSFORM_HPP
+#define MAPNIK_PROJ_TRANSFORM_HPP
 
 // mapnik
 #include <mapnik/projection.hpp>
@@ -33,13 +31,13 @@
 #include <boost/utility.hpp>
 
 namespace mapnik {
-    
+
 class MAPNIK_DECL proj_transform : private boost::noncopyable
 {
 public:
-    proj_transform(projection const& source, 
+    proj_transform(projection const& source,
                    projection const& dest);
-        
+
     bool equal() const;
     bool forward (double& x, double& y , double& z) const;
     bool backward (double& x, double& y , double& z) const;
@@ -51,7 +49,7 @@ public:
     bool backward (box2d<double> & box, int points) const;
     mapnik::projection const& source() const;
     mapnik::projection const& dest() const;
-        
+
 private:
     projection const source_;
     projection const dest_;
@@ -62,4 +60,4 @@ private:
 };
 }
 
-#endif // PROJ_TRANSFORM_HPP
+#endif // MAPNIK_PROJ_TRANSFORM_HPP

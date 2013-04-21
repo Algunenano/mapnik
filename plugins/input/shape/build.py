@@ -20,11 +20,12 @@
 # $Id$
 
 
+Import ('plugin_base')
 Import ('env')
 
 prefix = env['PREFIX']
 
-plugin_env = env.Clone()
+plugin_env = plugin_base.Clone()
 
 shape_src = Split(
   """
@@ -33,6 +34,7 @@ shape_src = Split(
         shape_featureset.cpp
         shape_index_featureset.cpp
         shape_io.cpp
+        shape_utils.cpp
   """
         )
 

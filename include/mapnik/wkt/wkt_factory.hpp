@@ -1,5 +1,5 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
  * Copyright (C) 2011 Artem Pavlenko
@@ -23,13 +23,36 @@
 #ifndef MAPNIK_WKT_FACTORY_HPP
 #define MAPNIK_WKT_FACTORY_HPP
 
-#include <string>
+// mapnik
+#include <mapnik/config.hpp>
 #include <mapnik/geometry.hpp>
+#include <mapnik/wkt/wkt_grammar.hpp>
+// boost
+#include <boost/utility.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/version.hpp>
 
-namespace mapnik { 
+// stl
+#include <string>
 
-bool from_wkt(std::string const& wkt, boost::ptr_vector<geometry_type> & paths);
+namespace mapnik {
+
+MAPNIK_DECL bool from_wkt(std::string const& wkt, boost::ptr_vector<geometry_type> & paths);
+
+#if BOOST_VERSION >= 104700
+
+class wkt_parser : boost::noncopyable
+{
+    typedef std::string::const_iterator iterator_type;
+public:
+    wkt_parser();
+    bool parse(std::string const& wkt, boost::ptr_vector<geometry_type> & paths);
+private:
+    boost::scoped_ptr<mapnik::wkt::wkt_collection_grammar<iterator_type> > grammar_;
+};
+
+#endif
 
 }
 

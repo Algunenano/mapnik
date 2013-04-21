@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2010 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,31 +19,30 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
-//$Id$
 
 // mapnik
 #include <mapnik/svg_renderer.hpp>
 
 namespace mapnik
 {
-    /*!
-     * @brief Collect presentation attributes found in line symbolizer.
-     */
-    template <typename T>
-    void svg_renderer<T>::process(line_symbolizer const& sym,
-          Feature const& feature,
-          proj_transform const& prj_trans)
-    {
-        path_attributes_.set_stroke_color(sym.get_stroke().get_color());
-        path_attributes_.set_stroke_opacity(sym.get_stroke().get_opacity());
-        path_attributes_.set_stroke_width(sym.get_stroke().get_width());
-        path_attributes_.set_stroke_linecap(sym.get_stroke().get_line_cap());
-        path_attributes_.set_stroke_linejoin(sym.get_stroke().get_line_join());
-        path_attributes_.set_stroke_dasharray(sym.get_stroke().get_dash_array());
-        path_attributes_.set_stroke_dashoffset(sym.get_stroke().dash_offset());
-    }
+/*!
+ * @brief Collect presentation attributes found in line symbolizer.
+ */
+template <typename T>
+void svg_renderer<T>::process(line_symbolizer const& sym,
+                              Feature const& feature,
+                              proj_transform const& prj_trans)
+{
+    path_attributes_.set_stroke_color(sym.get_stroke().get_color());
+    path_attributes_.set_stroke_opacity(sym.get_stroke().get_opacity());
+    path_attributes_.set_stroke_width(sym.get_stroke().get_width());
+    path_attributes_.set_stroke_linecap(sym.get_stroke().get_line_cap());
+    path_attributes_.set_stroke_linejoin(sym.get_stroke().get_line_join());
+    path_attributes_.set_stroke_dasharray(sym.get_stroke().get_dash_array());
+    path_attributes_.set_stroke_dashoffset(sym.get_stroke().dash_offset());
+}
 
-    template void svg_renderer<std::ostream_iterator<char> >::process(line_symbolizer const& sym,
-                      Feature const& feature,
-                      proj_transform const& prj_trans);
+template void svg_renderer<std::ostream_iterator<char> >::process(line_symbolizer const& sym,
+                                                                  Feature const& feature,
+                                                                  proj_transform const& prj_trans);
 }

@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,16 +19,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  *****************************************************************************/
-//$Id: line_symbolizer.hpp 39 2005-04-10 20:39:53Z pavlenko $
 
-#ifndef LINE_SYMBOLIZER_HPP
-#define LINE_SYMBOLIZER_HPP
+#ifndef MAPNIK_LINE_SYMBOLIZER_HPP
+#define MAPNIK_LINE_SYMBOLIZER_HPP
 
+// mapnik
 #include <mapnik/stroke.hpp>
 #include <mapnik/symbolizer.hpp>
 #include <mapnik/enumeration.hpp>
 
-namespace mapnik 
+namespace mapnik
 {
 
 enum line_rasterizer_enum {
@@ -39,23 +39,30 @@ enum line_rasterizer_enum {
 
 DEFINE_ENUM( line_rasterizer_e, line_rasterizer_enum );
 
+
 struct MAPNIK_DECL line_symbolizer : public symbolizer_base
 {
     explicit line_symbolizer()
         : symbolizer_base(),
-          stroke_(),
-          rasterizer_p_(RASTERIZER_FULL) {}
-        
+        stroke_(),
+        offset_(0.0),
+        rasterizer_p_(RASTERIZER_FULL)
+        {}
+    
     line_symbolizer(stroke const& stroke)
         : symbolizer_base(),
-          stroke_(stroke),
-          rasterizer_p_(RASTERIZER_FULL) {}
-        
+        stroke_(stroke),
+        offset_(0.0),
+        rasterizer_p_(RASTERIZER_FULL)
+        {}
+
     line_symbolizer(color const& pen,float width=1.0)
         : symbolizer_base(),
-          stroke_(pen,width),
-          rasterizer_p_(RASTERIZER_FULL) {}
-        
+        stroke_(pen,width),
+        offset_(0.0),
+        rasterizer_p_(RASTERIZER_FULL)
+        {}
+
     stroke const& get_stroke() const
     {
         return stroke_;
@@ -65,12 +72,22 @@ struct MAPNIK_DECL line_symbolizer : public symbolizer_base
     {
         stroke_ = stk;
     }
-        
+    
+    void set_offset(double val)
+    {
+        offset_ = val;
+    }
+    
+    double offset() const
+    {
+        return offset_;
+    }
+
     void set_rasterizer(line_rasterizer_e rasterizer_p)
     {
         rasterizer_p_ = rasterizer_p;
     }
-    
+
     line_rasterizer_e get_rasterizer() const
     {
         return rasterizer_p_;
@@ -78,8 +95,9 @@ struct MAPNIK_DECL line_symbolizer : public symbolizer_base
 
 private:
     stroke stroke_;
+    double offset_;
     line_rasterizer_e rasterizer_p_;
 };
 }
 
-#endif //LINE_SYMBOLIZER_HPP
+#endif // MAPNIK_LINE_SYMBOLIZER_HPP

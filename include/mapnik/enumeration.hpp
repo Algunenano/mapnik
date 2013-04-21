@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,11 +20,14 @@
  *
  *****************************************************************************/
 
-#ifndef MAPNIK_ENUMERATION_INCLUDED
-#define MAPNIK_ENUMERATION_INCLUDED
+#ifndef MAPNIK_ENUMERATION_HPP
+#define MAPNIK_ENUMERATION_HPP
 
+// mapnik
 #include <mapnik/config.hpp>
+#include <mapnik/debug.hpp>
 
+// stl
 #include <vector>
 #include <bitset>
 #include <iostream>
@@ -35,9 +38,10 @@ namespace mapnik {
 class illegal_enum_value : public std::exception
 {
 public:
-    illegal_enum_value() {}
+    illegal_enum_value():
+        what_() {}
 
-    illegal_enum_value( const std::string & what ) :
+    illegal_enum_value( std::string const& what ) :
         what_( what )
     {
     }
@@ -45,7 +49,7 @@ public:
 
     virtual const char * what() const throw()
     {
-        return what_.c_str();    
+        return what_.c_str();
     }
 
 protected:
@@ -61,16 +65,16 @@ protected:
  * are provided to help with instanciation.
  *
  * @par Limitations:
- *    - The enum must start at zero. 
- *    - The enum must be consecutive. 
+ *    - The enum must start at zero.
+ *    - The enum must be consecutive.
  *    - The enum must be terminated with a special token consisting of the enum's
  *      name plus "_MAX".
  *    - The corresponding char pointer array must be terminated with an empty string.
  *    - The names must only consist of characters and digits (<i>a-z, A-Z, 0-9</i>),
  *      underscores (<i>_</i>) and dashes (<i>-</i>).
- * 
  *
- * @warning At the moment the verify() method is called during static initialization.
+ *
+ * @warning At the moment the verify_mapnik_enum() method is called during static initialization.
  * It quits the application with exit code 1 if any error is detected. The other solution
  * i thought of is to do the checks at compile time (using boost::mpl).
  *
@@ -101,7 +105,7 @@ protected:
  * @endcode
  * And here is how to use the resulting type Fruit
  * @code
- * 
+ *
  * int
  * main(int argc, char * argv[]) {
  *      fruit f(APPLE);
@@ -114,11 +118,11 @@ protected:
  *              cerr << "Hmmm ... yummy " << f << endl;
  *              break;
  *      }
- *      
+ *
  *      f = CHERRY;
  *
  *      fruit_enum native_enum = f;
- *      
+ *
  *      f.from_string("passion_fruit");
  *
  *      for (unsigned i = 0; i < fruit::MAX; ++i) {
@@ -136,21 +140,27 @@ template <class ENUM, int THE_MAX>
 class MAPNIK_DECL enumeration {
 public:
     typedef ENUM native_type;
-    enumeration() {};
-    enumeration( ENUM v ) : value_(v) {} 
-    enumeration( const enumeration & other ) : value_(other.value_) {} 
-        
+
+    enumeration()
+      :  value_() {}
+
+    enumeration( ENUM v )
+      :  value_(v) {}
+
+    enumeration( const enumeration & other )
+      : value_(other.value_) {}
+
     /** Assignment operator for native enum values. */
     void operator=(ENUM v)
-        {
-            value_ = v;
-        }
+    {
+        value_ = v;
+    }
 
     /** Assignment operator. */
     void operator=(const enumeration & other)
-        {
-            value_ = other.value_;
-        }
+    {
+        value_ = other.value_;
+    }
 
     /** Conversion operator for native enum values. */
     operator ENUM() const
@@ -158,18 +168,20 @@ public:
         return value_;
     }
 
-    enum Max 
+    enum Max
     {
         MAX = THE_MAX
     };
+
     ENUM max() const
     {
         return THE_MAX;
     }
-    /** Converts @p str to an enum. 
+
+    /** Converts @p str to an enum.
      * @throw illegal_enum_value @p str is not a legal identifier.
      * */
-    void from_string(const std::string & str)
+    void from_string(std::string const& str)
     {
         for (unsigned i = 0; i < THE_MAX; ++i)
         {
@@ -179,7 +191,7 @@ public:
                 return;
             }
         }
-        throw illegal_enum_value(std::string("Illegal enumeration value '") + 
+        throw illegal_enum_value(std::string("Illegal enumeration value '") +
                                  str + "' for enum " + our_name_);
     }
 
@@ -208,7 +220,7 @@ public:
                 is.unget();
                 break;
             }
-        } 
+        }
 
         try
         {
@@ -229,11 +241,11 @@ public:
     }
 
     /** Prints the string identifier to the output stream @p os. */
-    std::ostream & print(std::ostream & os = std::cerr) const 
+    std::ostream & print(std::ostream & os = std::cerr) const
     {
         return os << our_strings_[value_];
     }
-        
+
     /** Static helper function to iterate over valid identifiers. */
     static const char * get_string(unsigned i)
     {
@@ -243,32 +255,36 @@ public:
     /** Performs some simple checks and quits the application if
      * any error is detected. Tries to print helpful error messages.
      */
-    static bool verify(const char * filename, unsigned line_no)
+    static bool verify_mapnik_enum(const char * filename, unsigned line_no)
     {
         for (unsigned i = 0; i < THE_MAX; ++i)
         {
             if (our_strings_[i] == 0 )
             {
-                std::cerr << "### FATAL: Not enough strings for enum "
-                          << our_name_ << " defined in file '" << filename 
-                          << "' at line " << line_no << std::endl;
+                MAPNIK_LOG_ERROR(enumeration)
+                        << "### FATAL: Not enough strings for enum "
+                        << our_name_ << " defined in file '" << filename
+                        << "' at line " << line_no;
                 //std::exit(1);
             }
         }
         if ( std::string("") != our_strings_[THE_MAX])
         {
-            std::cerr << "### FATAL: The string array for enum " << our_name_ 
-                      << " defined in file '" << filename << "' at line " << line_no
-                      << " has too many items or is not terminated with an "
-                      << "empty string." << std::endl;
+            MAPNIK_LOG_ERROR(enumeration)
+                    << "### FATAL: The string array for enum " << our_name_
+                    << " defined in file '" << filename << "' at line " << line_no
+                    << " has too many items or is not terminated with an "
+                    << "empty string";
             //std::exit(1);
         }
         return true;
     }
-    static const std::string & get_full_qualified_name()
+
+    static std::string const& get_full_qualified_name()
     {
         return our_name_;
     }
+
     static std::string get_name()
     {
         std::string::size_type idx = our_name_.find_last_of(":");
@@ -279,14 +295,15 @@ public:
             return our_name_.substr( idx + 1 );
         }
     }
+
 private:
     ENUM value_;
     static const char ** our_strings_ ;
     static std::string our_name_ ;
-    static bool  our_verified_flag_; 
+    static bool  our_verified_flag_;
 };
 
-/** ostream operator for enumeration 
+/** ostream operator for enumeration
  * @relates mapnik::enumeration
  */
 template <class ENUM, int THE_MAX>
@@ -297,7 +314,7 @@ operator<<(std::ostream & os, const mapnik::enumeration<ENUM, THE_MAX> & e)
     return os;
 }
 
-/** istream operator for enumeration 
+/** istream operator for enumeration
  * @relates mapnik::enumeration
  */
 template <class ENUM, int THE_MAX>
@@ -313,16 +330,16 @@ operator>>(std::istream & is, mapnik::enumeration<ENUM, THE_MAX> & e)
 /** Helper macro. Creates a typedef.
  * @relates mapnik::enumeration
  */
-#define DEFINE_ENUM( name, e)                           \
+#define DEFINE_ENUM( name, e)                   \
     typedef enumeration<e, e ## _MAX> name
 
-/** Helper macro. Runs the verify() method during static initialization.
+/** Helper macro. Runs the verify_mapnik_enum() method during static initialization.
  * @relates mapnik::enumeration
  */
 
 #define IMPLEMENT_ENUM( name, strings )                                 \
     template <> const char ** name ::our_strings_ = strings;            \
     template <> std::string name ::our_name_ = #name;                   \
-    template <> bool name ::our_verified_flag_( name ::verify(__FILE__, __LINE__));
+    template <> bool name ::our_verified_flag_( name ::verify_mapnik_enum(__FILE__, __LINE__));
 
-#endif // MAPNIK_ENUMERATION_INCLUDED
+#endif // MAPNIK_ENUMERATION_HPP

@@ -72,7 +72,7 @@ def handle_attr_changes(sym):
         if sym.attrib.get('text_transform'):
             sym.attrib.pop('text_transform')
     
-    # http://trac.mapnik.org/ticket/807
+    # https://github.com/mapnik/mapnik/issues/807
     justify_alignment = sym.attrib.get('justify_alignment',sym.attrib.get('justify-alignment'))
     if justify_alignment and justify_alignment == "middle":
         sym.attrib['justify-alignment'] = 'center'    
@@ -202,9 +202,6 @@ def upgrade(input_xml,output_xml=None,indent_xml=True):
                     fixup_sym_attributes(sym)
                     underscore2dash(sym)
                 for sym in rule.findall('BuildingSymbolizer') or []:
-                    fixup_sym_attributes(sym)
-                    underscore2dash(sym)
-                for sym in rule.findall('GlyphSymbolizer') or []:
                     fixup_sym_attributes(sym)
                     underscore2dash(sym)
                 for sym in rule.findall('MarkersSymbolizer') or []:

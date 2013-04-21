@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2010 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,39 +20,53 @@
  *
  *****************************************************************************/
 
-//$Id$
-
 #ifndef MAPNIK_ATTRIBUTE_HPP
 #define MAPNIK_ATTRIBUTE_HPP
 
 // mapnik
 #include <mapnik/value.hpp>
+#include <mapnik/geometry.hpp>
+
 // stl
 #include <string>
 
 namespace mapnik {
-
-static mapnik::value _null_value;
 
 struct attribute
 {
     std::string name_;
     explicit attribute(std::string const& name)
         : name_(name) {}
-    
+
     template <typename V ,typename F>
     V const& value(F const& f) const
     {
-        typedef typename F::const_iterator const_iterator;
-        const_iterator itr = f.find(name_);
-        if (itr != f.end())
-        {
-            return itr->second;
-        }
-        return _null_value;
+        return f.get(name_);
     }
+
     std::string const& name() const { return name_;}
 };
+
+struct geometry_type_attribute
+{
+    template <typename V, typename F>
+    V value(F const& f) const
+    {
+        int type = 0;
+        geometry_container::const_iterator itr = f.paths().begin();
+        geometry_container::const_iterator end = f.paths().end();
+        for ( ; itr != end; ++itr)
+        {
+            if (type != 0 && itr->type() != type)
+            {
+                return 4; // Collection
+            }
+            type = itr->type();
+        }
+        return type;
+    }
+};
+
 }
 
 #endif // MAPNIK_ATTRIBUTE_HPP

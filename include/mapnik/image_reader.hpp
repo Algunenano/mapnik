@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,25 +20,25 @@
  *
  *****************************************************************************/
 
-//$Id: image_reader.hpp 39 2005-04-10 20:39:53Z pavlenko $
+#ifndef MAPNIK_IMAGE_READER_HPP
+#define MAPNIK_IMAGE_READER_HPP
 
-#ifndef IMAGE_READER_HPP
-#define IMAGE_READER_HPP
 // mapnik
 #include <mapnik/image_data.hpp>
 #include <mapnik/config.hpp>
+
 // stl
 #include <stdexcept>
 #include <string>
 
-namespace mapnik 
+namespace mapnik
 {
 class image_reader_exception : public std::exception
 {
 private:
     std::string message_;
 public:
-    image_reader_exception(const std::string& message) 
+    image_reader_exception(const std::string& message)
         : message_(message) {}
 
     ~image_reader_exception() throw() {}
@@ -60,7 +60,7 @@ struct MAPNIK_DECL image_reader
 bool register_image_reader(const std::string& type,image_reader* (*)(const std::string&));
 MAPNIK_DECL image_reader* get_image_reader(const std::string& file,const std::string& type);
 MAPNIK_DECL image_reader* get_image_reader(const std::string& file);
-   
+
 }
 
-#endif //IMAGE_READER_HPP
+#endif // MAPNIK_IMAGE_READER_HPP

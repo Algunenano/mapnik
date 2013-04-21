@@ -1,8 +1,8 @@
 /*****************************************************************************
- * 
+ *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2006 Artem Pavlenko
+ * Copyright (C) 2011 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,18 +20,20 @@
  *
  *****************************************************************************/
 
-//$Id$
-#ifndef UNICODE_HPP
-#define UNICODE_HPP
+#ifndef MAPNIK_UNICODE_HPP
+#define MAPNIK_UNICODE_HPP
 
 //mapnik
 #include <mapnik/config.hpp>
+
 // icu
 #include <unicode/unistr.h>
 #include <unicode/ucnv.h>
+
 // boost
 #include <boost/utility.hpp>
 #include <boost/cstdint.hpp>
+
 // stl
 #include <string>
 
@@ -41,12 +43,12 @@ class MAPNIK_DECL transcoder : private boost::noncopyable
 {
 public:
     explicit transcoder (std::string const& encoding);
-    UnicodeString transcode(const char* data, boost::int32_t length = -1) const;  
-    ~transcoder(); 
+    UnicodeString transcode(const char* data, boost::int32_t length = -1) const;
+    ~transcoder();
 private:
     bool ok_;
     UConverter * conv_;
 };
 }
 
-#endif // UNICODE_HPP
+#endif // MAPNIK_UNICODE_HPP
