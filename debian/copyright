@@ -12,14 +12,11 @@ Copyright: © 2006-2009, Dominic Hargreaves <dom@earth.li>
  © 2010-2011, David Paleino <dapal@debian.org>
 License: GPL-2+
 
-Files: agg/*
-Copyright: © 2002-2005, Maxim "McSeem" Shemanarev
-License: other
- Permission to copy, use, modify, sell and distribute this software
- is granted provided this copyright notice appears in all copies.
- This software is provided "as is" without express or implied
- warranty, and with no claim as to its suitability for any purpose.
-
+Files: deps/agg/*
+Copyright: © 2002-2005, Maxim Shemanarev (McSeem)
+License: agg or BSD-3-clause
+Comment: upstream mapnik forgot to update deps/agg/copying, see
+ https://github.com/mapnik/mapnik/issues/1982
 
 Files: *
 Copyright: © 2006-2009, Artem Pavlenko
@@ -59,3 +56,38 @@ License: GPL-2+
  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 Comment: on Debian systems, the complete text of the GNU General Public
  License v2 can be found in `/usr/share/common-licenses/GPL-2'.
+
+License: agg
+ Permission to copy, use, modify, sell and distribute this software 
+ is granted provided this copyright notice appears in all copies. 
+ This software is provided "as is" without express or implied
+ warranty, and with no claim as to its suitability for any purpose.
+
+License: BSD-3-clause
+ Redistribution and use in source and binary forms, with or without 
+ modification, are permitted provided that the following conditions 
+ are met:
+ .
+   1. Redistributions of source code must retain the above copyright 
+      notice, this list of conditions and the following disclaimer. 
+ .
+   2. Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in 
+      the documentation and/or other materials provided with the 
+      distribution. 
+ .
+   3. The name of the author may not be used to endorse or promote 
+      products derived from this software without specific prior 
+      written permission. 
+ .
+ THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
+ IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, 
+ INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES 
+ (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
+ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, 
+ STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+ IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ POSSIBILITY OF SUCH DAMAGE.
