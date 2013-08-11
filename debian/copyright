@@ -1,4 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Contact: https://github.com/mapnik/mapnik/issues
 Source: https://github.com/mapnik/mapnik/
  Repackaged to remove some third-party software, see debian/README.source.
 
