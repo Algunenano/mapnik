@@ -1,11 +1,6 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Source: https://github.com/mapnik/mapnik/
- Repackaged to remove the following third-party software:
- - SCons 1.2.0
- - SCons 2.1.0.alpha.20101125
- - DejaVu fonts 2.33
- - unifont-5.1
- - TinyXML
+ Repackaged to remove some third-party software, see debian/README.source.
 
 Files: debian/*
 Copyright: © 2006-2009, Dominic Hargreaves <dom@earth.li>

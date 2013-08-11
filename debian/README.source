@@ -7,10 +7,12 @@ mapnik for Debian
   - SCons 1.2.0
   - SCons 2.1.0.alpha.20101125
   - DejaVu fonts 2.33
+  - Unifont 5.1
   - TinyXML
 
  To obtain the tarball used to build this package, run:
 
    $ debian/rules get-orig-source
 
- -- David Paleino <dapal@debian.org>  Tue, 27 Sep 2011 01:01:16 +0200
+ -- Jérémy Lal <kapouer@melix.org>  Sun, 11 Aug 2013 13:08:39 +0200
+
