@@ -81,18 +81,19 @@ override_dh_auto_test:
 		--with python2
 
 get-orig-source:
-	uscan \
+	mkdir -p ../tarballs && uscan \
 		--verbose \
 		--force-download \
 		--download-version $(UPVER) \
 		--rename \
-		--destdir .
+		--destdir ../tarballs
 
-	tar xvf mapnik_$(UPVER).orig.tar.gz
 	@rm -vrf mapnik_$(UPVER).orig.tar.gz
+	tar xvf ../tarballs/mapnik_$(UPVER).orig.tar.gz
 	@echo Removing third-party sources from orig.tar.gz
 	@rm -rf mapnik-$(UPVER)/fonts/dejavu*
 	@rm -rf mapnik-$(UPVER)/scons/
 	tar cf $(TARNAME) mapnik-$(UPVER)/
 	gzip -9 $(TARNAME)
 	rm -rf mapnik-$(UPVER)/
+	mv $(TARNAME) ../tarballs/$(TARNAME)
