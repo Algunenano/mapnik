@@ -1,4 +1,10 @@
-Format: http://anonscm.debian.org/viewvc/dep/web/deps/dep5.mdwn?revision=174
+Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Source: https://github.com/mapnik/mapnik/
+ Repackaged to remove the following third-party software:
+ - SCons 1.2.0
+ - SCons 2.1.0.alpha.20101125
+ - DejaVu fonts 2.33
+ - TinyXML
 
 Files: debian/*
 Copyright: © 2006-2009, Dominic Hargreaves <dom@earth.li>
@@ -21,7 +27,6 @@ License: GPL-2 with exception
  fonts are released under the terms of the GNU GPL version 2, with the
  exception that embedding the font in a document does not in itself bind that
  document to the terms of the GPL.
-X-Comment: see fonts/unifont_license.txt
 
 Files: *
 Copyright: © 2006-2009, Artem Pavlenko
@@ -42,7 +47,7 @@ License: LGPL-2.1+
  You should have received a copy of the GNU Lesser General Public
  License along with this package; if not, write to the Free Software
  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
-X-Comment: on Debian systems, the complete text of the GNU Lesser General
+Comment: on Debian systems, the complete text of the GNU Lesser General
  Public License v2.1 can be found in `/usr/share/common-licenses/LGPL-2.1'.
 
 License: GPL-2+
@@ -59,5 +64,5 @@ License: GPL-2+
  You should have received a copy of the GNU General Public License along
  with this program; if not, write to the Free Software Foundation, Inc.,
  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-X-Comment: on Debian systems, the complete text of the GNU General Public
+Comment: on Debian systems, the complete text of the GNU General Public
  License v2 can be found in `/usr/share/common-licenses/GPL-2'.
