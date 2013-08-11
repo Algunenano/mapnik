@@ -93,6 +93,15 @@ get-orig-source:
 	@rm -r mapnik-$(UPVER)/fonts/dejavu*
 	@rm mapnik-$(UPVER)/fonts/unifont*
 	@rm -r mapnik-$(UPVER)/scons/
+	@rm deps/agg/include/agg_conv_gpc.h
+	@rm tests/data/fonts/DejaVuSansMono-BoldOblique.ttf
+	@rm tests/data/fonts/XB\ Zar.ttf
+	@rm tests/data/fonts/LICENCE.txt
+	@rm tests/data/csv/10m-land.csv
+	@rm tests/data/raster/*
+	@rm tests/data/shp/ne_110m*
+	@rm tests/data/shp/world_merc*
+	@rm tests/data/shp/new_zealand/ne_50m*
 	tar cf $(TARNAME) mapnik-$(UPVER)/
 	gzip -9 $(TARNAME)
 	rm -rf mapnik-$(UPVER)/
