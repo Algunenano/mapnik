@@ -4,8 +4,9 @@ Source: https://github.com/mapnik/mapnik/
  Repackaged to remove some third-party software, see debian/README.source.
 
 Files: debian/*
-Copyright: © 2006-2009, Dominic Hargreaves <dom@earth.li>
- © 2010-2011, David Paleino <dapal@debian.org>
+Copyright: 2006-2009 Dominic Hargreaves <dom@earth.li>
+ 2010-2011 David Paleino <dapal@debian.org>
+ 2013 Jérémy Lal <kapouer@melix.org>
 License: GPL-2+
 
 Files: boost/*
