@@ -4,6 +4,7 @@ Source: https://github.com/mapnik/mapnik/
  - SCons 1.2.0
  - SCons 2.1.0.alpha.20101125
  - DejaVu fonts 2.33
+ - unifont-5.1
  - TinyXML
 
 Files: debian/*
@@ -19,14 +20,6 @@ License: other
  This software is provided "as is" without express or implied
  warranty, and with no claim as to its suitability for any purpose.
 
-Files: fonts/unifont-5.1.20080907.ttf
-Copyright: ©
-License: GPL-2 with exception
- My software and is released under the terms of the GNU General Public License
- (GNU GPL) version 2.0, or (at your option) a later version. The precompiled
- fonts are released under the terms of the GNU GPL version 2, with the
- exception that embedding the font in a document does not in itself bind that
- document to the terms of the GPL.
 
 Files: *
 Copyright: © 2006-2009, Artem Pavlenko
