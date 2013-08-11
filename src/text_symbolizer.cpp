@@ -34,6 +34,15 @@
 namespace mapnik
 {
 
+static const char * halo_rasterizer_strings[] = {
+    "full",
+    "fast",
+    ""
+};
+
+IMPLEMENT_ENUM( halo_rasterizer_e, halo_rasterizer_strings )
+
+
 static const char * label_placement_strings[] = {
     "point",
     "line",
@@ -92,7 +101,8 @@ IMPLEMENT_ENUM( text_transform_e, text_transform_strings )
 
 text_symbolizer::text_symbolizer(text_placements_ptr placements)
 : symbolizer_base(),
-    placement_options_(placements)
+    placement_options_(placements),
+    halo_rasterizer_(HALO_RASTERIZER_FULL)
 {
 
 }
@@ -101,7 +111,8 @@ text_symbolizer::text_symbolizer(expression_ptr name, std::string const& face_na
                                  float size, color const& fill,
                                  text_placements_ptr placements)
     : symbolizer_base(),
-      placement_options_(placements)
+      placement_options_(placements),
+      halo_rasterizer_(HALO_RASTERIZER_FULL)
 {
     set_name(name);
     set_face_name(face_name);
@@ -112,7 +123,8 @@ text_symbolizer::text_symbolizer(expression_ptr name, std::string const& face_na
 text_symbolizer::text_symbolizer(expression_ptr name, float size, color const& fill,
                                  text_placements_ptr placements)
     : symbolizer_base(),
-      placement_options_(placements)
+      placement_options_(placements),
+      halo_rasterizer_(HALO_RASTERIZER_FULL)
 {
     set_name(name);
     set_text_size(size);
@@ -121,7 +133,9 @@ text_symbolizer::text_symbolizer(expression_ptr name, float size, color const& f
 
 text_symbolizer::text_symbolizer(text_symbolizer const& rhs)
     : symbolizer_base(rhs),
-      placement_options_(rhs.placement_options_) /*TODO: Copy options! */
+      placement_options_(rhs.placement_options_),
+      halo_rasterizer_(rhs.halo_rasterizer_)
+      /*TODO: Copy options! */
 {
 }
 
@@ -130,9 +144,7 @@ text_symbolizer& text_symbolizer::operator=(text_symbolizer const& other)
     if (this == &other)
         return *this;
     placement_options_ = other.placement_options_; /*TODO: Copy options? */
-
-    MAPNIK_LOG_DEBUG(text_symbolizer) << "text_symbolizer: TODO - Metawriter (text_symbolizer::operator=)";
-
+    halo_rasterizer_ = other.halo_rasterizer_;
     return *this;
 }
 
@@ -173,27 +185,27 @@ void text_symbolizer::set_fontset(font_set const& fontset)
     placement_options_->defaults.format.fontset = fontset;
 }
 
-font_set const& text_symbolizer::get_fontset() const
+boost::optional<font_set> const& text_symbolizer::get_fontset() const
 {
     return placement_options_->defaults.format.fontset;
 }
 
-unsigned  text_symbolizer::get_text_ratio() const
+double text_symbolizer::get_text_ratio() const
 {
     return placement_options_->defaults.text_ratio;
 }
 
-void  text_symbolizer::set_text_ratio(unsigned ratio)
+void  text_symbolizer::set_text_ratio(double ratio)
 {
     placement_options_->defaults.text_ratio = ratio;
 }
 
-unsigned  text_symbolizer::get_wrap_width() const
+double text_symbolizer::get_wrap_width() const
 {
     return placement_options_->defaults.wrap_width;
 }
 
-void  text_symbolizer::set_wrap_width(unsigned width)
+void text_symbolizer::set_wrap_width(double width)
 {
     placement_options_->defaults.wrap_width = width;
 }
@@ -238,32 +250,32 @@ void  text_symbolizer::set_text_transform(text_transform_e convert)
     placement_options_->defaults.format.text_transform = convert;
 }
 
-unsigned  text_symbolizer::get_line_spacing() const
+double text_symbolizer::get_line_spacing() const
 {
     return placement_options_->defaults.format.line_spacing;
 }
 
-void  text_symbolizer::set_line_spacing(unsigned spacing)
+void  text_symbolizer::set_line_spacing(double spacing)
 {
     placement_options_->defaults.format.line_spacing = spacing;
 }
 
-unsigned  text_symbolizer::get_character_spacing() const
+double text_symbolizer::get_character_spacing() const
 {
     return placement_options_->defaults.format.character_spacing;
 }
 
-void  text_symbolizer::set_character_spacing(unsigned spacing)
+void  text_symbolizer::set_character_spacing(double spacing)
 {
     placement_options_->defaults.format.character_spacing = spacing;
 }
 
-unsigned  text_symbolizer::get_label_spacing() const
+double text_symbolizer::get_label_spacing() const
 {
     return placement_options_->defaults.label_spacing;
 }
 
-void  text_symbolizer::set_label_spacing(unsigned spacing)
+void  text_symbolizer::set_label_spacing(double spacing)
 {
     placement_options_->defaults.label_spacing = spacing;
 }
@@ -298,12 +310,12 @@ void text_symbolizer::set_max_char_angle_delta(double angle)
     placement_options_->defaults.max_char_angle_delta = angle;
 }
 
-void text_symbolizer::set_text_size(float size)
+void text_symbolizer::set_text_size(double size)
 {
     placement_options_->defaults.format.text_size = size;
 }
 
-float text_symbolizer::get_text_size() const
+double text_symbolizer::get_text_size() const
 {
     return placement_options_->defaults.format.text_size;
 }
@@ -336,6 +348,16 @@ void  text_symbolizer::set_halo_radius(double radius)
 double text_symbolizer::get_halo_radius() const
 {
     return placement_options_->defaults.format.halo_radius;
+}
+
+void text_symbolizer::set_halo_rasterizer(halo_rasterizer_e rasterizer_p)
+{
+    halo_rasterizer_ = rasterizer_p;
+}
+
+halo_rasterizer_e text_symbolizer::get_halo_rasterizer() const
+{
+    return halo_rasterizer_;
 }
 
 void  text_symbolizer::set_label_placement(label_placement_e label_p)

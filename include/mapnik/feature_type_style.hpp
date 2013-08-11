@@ -24,18 +24,22 @@
 #define MAPNIK_FEATURE_TYPE_STYLE_HPP
 
 // mapnik
+#include <mapnik/config.hpp>
 #include <mapnik/rule.hpp>
-#include <mapnik/feature.hpp>
 #include <mapnik/enumeration.hpp>
 #include <mapnik/image_filter_types.hpp>
+#include <mapnik/image_compositing.hpp>
 
 // boost
 #include <boost/optional.hpp>
+
 // stl
 #include <vector>
 
 namespace mapnik
 {
+
+class rule;
 
 enum filter_mode_enum {
     FILTER_ALL,
@@ -46,7 +50,6 @@ enum filter_mode_enum {
 DEFINE_ENUM( filter_mode_e, filter_mode_enum );
 
 typedef std::vector<rule> rules;
-typedef std::vector<rule*> rule_ptrs;
 
 class MAPNIK_DECL feature_type_style
 {
@@ -58,11 +61,6 @@ private:
     std::vector<filter::filter_type> direct_filters_;
     // comp-op
     boost::optional<composite_mode_e> comp_op_;
-    // The rule_ptrs vectors are only valid for the scale_denom_validity_.
-    double scale_denom_validity_;
-    rule_ptrs if_rules_;
-    rule_ptrs else_rules_;
-    rule_ptrs also_rules_;
     float opacity_;
 public:
     feature_type_style();
@@ -72,17 +70,14 @@ public:
     feature_type_style& operator=(feature_type_style const& rhs);
 
     void add_rule(rule const& rule);
-
     rules const& get_rules() const;
-    rule_ptrs const& get_if_rules(double scale_denom);
-    rule_ptrs const& get_else_rules(double scale_denom);
-    rule_ptrs const& get_also_rules(double scale_denom);
-
     rules& get_rules_nonconst();
     
-    void set_filter_mode(filter_mode_e mode);
+    bool active(double scale_denom) const;
 
+    void set_filter_mode(filter_mode_e mode);
     filter_mode_e get_filter_mode() const;
+
     // filters
     std::vector<filter::filter_type> const& image_filters() const;
     std::vector<filter::filter_type> & image_filters();    
@@ -95,9 +90,6 @@ public:
     float get_opacity() const;
 
     ~feature_type_style() {}
-
-private:
-    void update_rule_cache(double scale_denom);
 
 };
 }

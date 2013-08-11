@@ -3,17 +3,15 @@
 // boost.test
 #include <boost/test/included/unit_test.hpp>
 
-// boost.spirit
-#include <boost/spirit/include/karma.hpp>
-
 // boost.filesystem
 #include <boost/filesystem.hpp>
 
 // mapnik
 #include <mapnik/map.hpp>
-#include <mapnik/svg_renderer.hpp>
+#include <mapnik/rule.hpp>
+#include <mapnik/feature_type_style.hpp>
+#include <mapnik/svg/output/svg_renderer.hpp>
 #include <mapnik/datasource_cache.hpp>
-#include <mapnik/font_engine_freetype.hpp>
 #include <mapnik/expression.hpp>
 #include <mapnik/color_factory.hpp>
 
@@ -21,14 +19,14 @@
 #include <fstream>
 #include <iterator>
 
-namespace filesystem = boost::filesystem;
+namespace fs = boost::filesystem;
 using namespace mapnik;
 
 void prepare_map(Map& m)
 {
     const std::string mapnik_dir("/usr/local/lib/mapnik/");
     std::cout << " looking for 'shape.input' plugin in... " << mapnik_dir << "input/" << "\n";
-    datasource_cache::instance()->register_datasources(mapnik_dir + "input/");
+    datasource_cache::instance().register_datasources(mapnik_dir + "input/");
 
     // create styles
 
@@ -135,7 +133,7 @@ void prepare_map(Map& m)
         p["file"]="../../../demo/data/boundaries";
 
         layer lyr("Provinces");
-        lyr.set_datasource(datasource_cache::instance()->create(p));
+        lyr.set_datasource(datasource_cache::instance().create(p));
         lyr.add_style("provinces");
         m.addLayer(lyr);
     }
@@ -146,7 +144,7 @@ void prepare_map(Map& m)
         p["type"]="shape";
         p["file"]="../../../demo/data/qcdrainage";
         layer lyr("Quebec Hydrography");
-        lyr.set_datasource(datasource_cache::instance()->create(p));
+        lyr.set_datasource(datasource_cache::instance().create(p));
         lyr.add_style("drainage");
         m.addLayer(lyr);
     }
@@ -157,7 +155,7 @@ void prepare_map(Map& m)
         p["file"]="../../../demo/data/ontdrainage";
 
         layer lyr("Ontario Hydrography");
-        lyr.set_datasource(datasource_cache::instance()->create(p));
+        lyr.set_datasource(datasource_cache::instance().create(p));
         lyr.add_style("drainage");
         m.addLayer(lyr);
     }
@@ -168,7 +166,7 @@ void prepare_map(Map& m)
         p["type"]="shape";
         p["file"]="../../../demo/data/boundaries_l";
         layer lyr("Provincial borders");
-        lyr.set_datasource(datasource_cache::instance()->create(p));
+        lyr.set_datasource(datasource_cache::instance().create(p));
         lyr.add_style("provlines");
         m.addLayer(lyr);
     }
@@ -179,7 +177,7 @@ void prepare_map(Map& m)
         p["type"]="shape";
         p["file"]="../../../demo/data/roads";
         layer lyr("Roads");
-        lyr.set_datasource(datasource_cache::instance()->create(p));
+        lyr.set_datasource(datasource_cache::instance().create(p));
         lyr.add_style("smallroads");
         lyr.add_style("road-border");
         lyr.add_style("road-fill");
@@ -205,10 +203,10 @@ void render_to_file(Map const& m, const std::string output_filename)
 
         output_stream.close();
 
-        filesystem::path output_filename_path =
-            filesystem::system_complete(filesystem::path(".")) / filesystem::path(output_filename);
+        fs::path output_filename_path =
+            fs::system_complete(fs::path(".")) / fs::path(output_filename);
 
-        BOOST_CHECK_MESSAGE(filesystem::exists(output_filename_path),
+        BOOST_CHECK_MESSAGE(fs::exists(output_filename_path),
                             "File '"+output_filename_path.string()+"' was created.");
     }
     else
@@ -220,7 +218,7 @@ void render_to_file(Map const& m, const std::string output_filename)
 BOOST_AUTO_TEST_CASE(path_element_test_case_1)
 {
     Map m(800,600);
-    m.set_background(color_factory::from_string("steelblue"));
+    m.set_background(parse_color("steelblue"));
 
     prepare_map(m);
 

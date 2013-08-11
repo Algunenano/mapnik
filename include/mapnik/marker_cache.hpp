@@ -26,9 +26,9 @@
 // mapnik
 #include <mapnik/utils.hpp>
 #include <mapnik/config.hpp>
+#include <mapnik/noncopyable.hpp>
 
 // boost
-#include <boost/utility.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/optional.hpp>
@@ -43,21 +43,21 @@ typedef boost::shared_ptr<marker> marker_ptr;
 
 class MAPNIK_DECL marker_cache :
         public singleton <marker_cache, CreateUsingNew>,
-        private boost::noncopyable
+        private mapnik::noncopyable
 {
     friend class CreateUsingNew<marker_cache>;
 private:
     marker_cache();
     ~marker_cache();
-    static bool insert_marker(std::string const& key, marker_ptr path);
-    static boost::unordered_map<std::string,marker_ptr> marker_cache_;
-    static bool insert_svg(std::string const& name, std::string const& svg_string);
-    static boost::unordered_map<std::string,std::string> svg_cache_;
+    bool insert_marker(std::string const& key, marker_ptr path);
+    boost::unordered_map<std::string,marker_ptr> marker_cache_;
+    bool insert_svg(std::string const& name, std::string const& svg_string);
+    boost::unordered_map<std::string,std::string> svg_cache_;
 public:
-    static std::string known_svg_prefix_;
-    static bool is_uri(std::string const& path);
-    static boost::optional<marker_ptr> find(std::string const& key, bool update_cache = false);
-    static void clear();
+    std::string known_svg_prefix_;
+    bool is_uri(std::string const& path);
+    boost::optional<marker_ptr> find(std::string const& key, bool update_cache = false);
+    void clear();
 };
 
 }

@@ -1,9 +1,9 @@
 #include <boost/version.hpp>
 #include <boost/detail/lightweight_test.hpp>
-#include <boost/filesystem/convenience.hpp>
 #include <boost/make_shared.hpp>
 #include <iostream>
 #include <mapnik/projection.hpp>
+#include <mapnik/markers_symbolizer.hpp>
 #include <mapnik/map.hpp>
 #include <mapnik/save_map.hpp>
 #include <mapnik/graphics.hpp>
@@ -18,14 +18,23 @@
 #include <mapnik/config_error.hpp>
 #include <mapnik/datasource_cache.hpp>
 #include <mapnik/params.hpp>
+#include <mapnik/util/fs.hpp>
+#include <vector>
+#include <algorithm>
 
-extern "C" {
-#include <sqlite3.h>
-}
+#include "utils.hpp"
 
-int main( int, char*[] )
+int main(int argc, char** argv)
 {
+    std::vector<std::string> args;
+    for (int i=1;i<argc;++i)
+    {
+        args.push_back(argv[i]);
+    }
+    bool quiet = std::find(args.begin(), args.end(), "-q")!=args.end();
+
     try {
+        BOOST_TEST(set_working_dir(args));
         mapnik::projection srs("foo");
         // to avoid unused variable warning
         srs.params();
@@ -37,23 +46,19 @@ int main( int, char*[] )
     mapnik::Map map(256,256);
     mapnik::rule r;
     r.set_filter(mapnik::parse_expression("[foo]='bar'"));
+    r.append(mapnik::markers_symbolizer());
     mapnik::feature_type_style style;
     style.add_rule(r);
     map.insert_style("style",style);
 
     std::string csv_plugin("./plugins/input/csv.input");
-    if (boost::filesystem::exists(csv_plugin)) {
+    if (mapnik::util::exists(csv_plugin)) {
         try {
-            mapnik::datasource_cache::instance()->register_datasource(csv_plugin);
+            mapnik::datasource_cache::instance().register_datasource(csv_plugin);
             mapnik::parameters p;
             p["type"]="csv";
             p["inline"]="x,y\n0,0";
-            mapnik::datasource_ptr ds = mapnik::datasource_cache::instance()->create(p);
-            //mapnik::datasource_ptr ds = boost::make_shared<mapnik::memory_datasource>();
-            //mapnik::context_ptr ctx = boost::make_shared<mapnik::context_type>();
-            //mapnik::feature_ptr feature(mapnik::feature_factory::create(ctx, 1));
-            //mapnik::memory_datasource *mem_ds = dynamic_cast<mapnik::memory_datasource *>(ds.get());
-            //mem_ds->push(feature);
+            mapnik::datasource_ptr ds = mapnik::datasource_cache::instance().create(p);
             mapnik::layer l("layer");
             l.set_datasource(ds);
             l.add_style("style");
@@ -64,7 +69,7 @@ int main( int, char*[] )
             mapnik::agg_renderer<mapnik::image_32> ren(m,im);
             //std::clog << mapnik::save_map_to_string(m) << "\n";
             BOOST_TEST(true);
-            // should throw here
+            // should throw here with "CSV Plugin: no attribute 'foo'. Valid attributes are: x,y."
             ren.apply();
             BOOST_TEST(false);
         } catch (...) {
@@ -73,40 +78,22 @@ int main( int, char*[] )
     }
 
     std::string shape_plugin("./plugins/input/shape.input");
-    if (boost::filesystem::exists(shape_plugin)) {
+    if (mapnik::util::exists(shape_plugin)) {
         try {
-            mapnik::datasource_cache::instance()->register_datasource(shape_plugin);
+            mapnik::datasource_cache::instance().register_datasource(shape_plugin);
             mapnik::parameters p2;
             p2["type"]="shape";
             p2["file"]="foo";
-            mapnik::datasource_cache::instance()->create(p2);
+            mapnik::datasource_cache::instance().create(p2);
             BOOST_TEST(false);
         } catch (...) {
             BOOST_TEST(true);
         }
     }
-    
-    /*
-    // not working, oddly segfaults valgrind
-    try {
-        sqlite3_initialize();
-        // http://stackoverflow.com/questions/11107703/sqlite3-sigsegvs-with-valgrind
-        sqlite3_config(SQLITE_CONFIG_HEAP, malloc (1024*1024), 1024*1024, 64);
-        mapnik::datasource_cache::instance()->register_datasource("./plugins/input/sqlite.input");
-        mapnik::parameters p;
-        p["type"]="sqlite";
-        p["file"]="tests/data/sqlite/world.sqlite";
-        p["table"]="world_merc";
-        mapnik::datasource_cache::instance()->create(p);
-        sqlite3_shutdown();
-        BOOST_TEST(true);
-    } catch (...) {
-        BOOST_TEST(false);
-    }
-    */
 
     if (!::boost::detail::test_errors()) {
-        std::clog << "C++ exceptions: \x1b[1;32m✓ \x1b[0m\n";
+        if (quiet) std::clog << "\x1b[1;32m.\x1b[0m";
+        else std::clog << "C++ exceptions: \x1b[1;32m✓ \x1b[0m\n";
 #if BOOST_VERSION >= 104600
         ::boost::detail::report_errors_remind().called_report_errors_function = true;
 #endif
