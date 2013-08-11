@@ -32,11 +32,10 @@
 #include <mapnik/image_util.hpp>
 #include <mapnik/graphics.hpp>
 #include <mapnik/svg/svg_path_adapter.hpp>
-#include <mapnik/svg/svg_renderer.hpp>
+#include <mapnik/svg/svg_renderer_agg.hpp>
 #include <mapnik/svg/svg_path_attributes.hpp>
 
 #include <boost/algorithm/string.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <boost/program_options.hpp>
 
 #include "agg_rasterizer_scanline_aa.h"
@@ -127,7 +126,7 @@ int main (int argc,char** argv)
             }
 
             boost::optional<mapnik::marker_ptr> marker_ptr =
-                mapnik::marker_cache::instance()->find(svg_name, false);
+                mapnik::marker_cache::instance().find(svg_name, false);
             if (!marker_ptr)
             {
                 std::clog << "svg2png error: could not open: '" << svg_name << "'\n";
@@ -142,7 +141,7 @@ int main (int argc,char** argv)
                 continue;
             }
 
-            typedef agg::pixfmt_rgba32_plain pixfmt;
+            typedef agg::pixfmt_rgba32_pre pixfmt;
             typedef agg::renderer_base<pixfmt> renderer_base;
             typedef agg::renderer_scanline_aa_solid<renderer_base> renderer_solid;
             agg::rasterizer_scanline_aa<> ras_ptr;
@@ -170,15 +169,16 @@ int main (int argc,char** argv)
 
             mapnik::svg::vertex_stl_adapter<mapnik::svg::svg_path_storage> stl_storage((*marker.get_vector_data())->source());
             mapnik::svg::svg_path_adapter svg_path(stl_storage);
-            mapnik::svg::svg_renderer<mapnik::svg::svg_path_adapter,
+            mapnik::svg::svg_renderer_agg<mapnik::svg::svg_path_adapter,
                 agg::pod_bvector<mapnik::svg::path_attributes>,
                 renderer_solid,
-                agg::pixfmt_rgba32_plain > svg_renderer_this(svg_path,
-                                                             (*marker.get_vector_data())->attributes());
+                agg::pixfmt_rgba32_pre > svg_renderer_this(svg_path,
+                                                           (*marker.get_vector_data())->attributes());
 
             svg_renderer_this.render(ras_ptr, sl, renb, mtx, opacity, bbox);
 
             boost::algorithm::ireplace_last(svg_name,".svg",".png");
+            im.demultiply();
             mapnik::save_to_file<mapnik::image_data_32>(im.data(),svg_name,"png");
             if (auto_open)
             {

@@ -26,9 +26,9 @@
 // mapnik (should not depend on anything that need to use this)
 #include <mapnik/config.hpp>
 #include <mapnik/utils.hpp>
+#include <mapnik/noncopyable.hpp>
 
 // boost
-#include <boost/utility.hpp>
 #include <boost/unordered_map.hpp>
 #ifdef MAPNIK_THREADSAFE
 #include <boost/thread/mutex.hpp>
@@ -50,7 +50,7 @@ namespace mapnik {
     */
     class MAPNIK_DECL logger :
         public singleton<logger,CreateStatic>,
-        private boost::noncopyable
+        private mapnik::noncopyable
     {
     public:
         enum severity_type
@@ -79,7 +79,7 @@ namespace mapnik {
         }
 
         // per object security levels
-        static severity_type get_object_severity(const std::string& object_name)
+        static severity_type get_object_severity(std::string const& object_name)
         {
             severity_map::iterator it = object_severity_level_.find(object_name);
             if (object_name.empty() || it == object_severity_level_.end())
@@ -92,7 +92,7 @@ namespace mapnik {
             }
         }
 
-        static void set_object_severity(const std::string& object_name,
+        static void set_object_severity(std::string const& object_name,
                                         const severity_type& security_level)
         {
 #ifdef MAPNIK_THREADSAFE
@@ -119,7 +119,7 @@ namespace mapnik {
             return format_;
         }
 
-        static void set_format(const std::string& format)
+        static void set_format(std::string const& format)
         {
 #ifdef MAPNIK_THREADSAFE
             boost::mutex::scoped_lock lock(format_mutex_);
@@ -131,7 +131,7 @@ namespace mapnik {
         static std::string str();
 
         // output
-        static void use_file(const std::string& filepath);
+        static void use_file(std::string const& filepath);
         static void use_console();
 
     private:
@@ -186,7 +186,7 @@ namespace mapnik {
                  class Ch = char,
                  class Tr = std::char_traits<Ch>,
                  class A = std::allocator<Ch> >
-        class base_log : public boost::noncopyable
+        class base_log : public mapnik::noncopyable
         {
         public:
             typedef OutputPolicy<Ch, Tr, A> output_policy;
@@ -245,7 +245,7 @@ namespace mapnik {
                  class Ch = char,
                  class Tr = std::char_traits<Ch>,
                  class A = std::allocator<Ch> >
-        class base_log_always : public boost::noncopyable
+        class base_log_always : public mapnik::noncopyable
         {
         public:
             typedef OutputPolicy<Ch, Tr, A> output_policy;

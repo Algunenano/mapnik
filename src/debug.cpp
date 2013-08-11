@@ -25,16 +25,17 @@
 
 // stl
 #include <ctime>
+#include <stdexcept>
 
 #ifndef MAPNIK_LOG_FORMAT
-#define MAPNIK_LOG_FORMAT "Mapnik LOG> %Y-%m-%d %H:%M:%S:"
+  #define MAPNIK_LOG_FORMAT  Mapnik LOG> %Y-%m-%d %H:%M:%S:
 #endif
 
 #ifndef MAPNIK_DEFAULT_LOG_SEVERITY
   #ifdef MAPNIK_DEBUG
-    #define MAPNIK_DEFAULT_LOG_SEVERITY 1
+    #define MAPNIK_DEFAULT_LOG_SEVERITY 0
   #else
-    #define MAPNIK_DEFAULT_LOG_SEVERITY 3
+    #define MAPNIK_DEFAULT_LOG_SEVERITY 2
   #endif
 #endif
 
@@ -60,14 +61,10 @@ logger::severity_type logger::severity_level_ =
     #if MAPNIK_DEFAULT_LOG_SEVERITY == 0
         logger::debug
     #elif MAPNIK_DEFAULT_LOG_SEVERITY == 1
-        logger::info
-    #elif MAPNIK_DEFAULT_LOG_SEVERITY == 2
         logger::warn
-    #elif MAPNIK_DEFAULT_LOG_SEVERITY == 3
+    #elif MAPNIK_DEFAULT_LOG_SEVERITY == 2
         logger::error
-    #elif MAPNIK_DEFAULT_LOG_SEVERITY == 4
-        logger::fatal
-    #elif MAPNIK_DEFAULT_LOG_SEVERITY == 5
+    #elif MAPNIK_DEFAULT_LOG_SEVERITY == 3
         logger::none
     #else
         #error "Wrong default log severity level specified!"
@@ -114,7 +111,7 @@ std::ofstream logger::file_output_;
 std::string logger::file_name_;
 std::streambuf* logger::saved_buf_ = 0;
 
-void logger::use_file(const std::string& filepath)
+void logger::use_file(std::string const& filepath)
 {
     // save clog rdbuf
     if (saved_buf_ == 0)

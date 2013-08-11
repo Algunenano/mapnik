@@ -29,7 +29,6 @@
 // mapnik
 #include <mapnik/datasource.hpp>
 #include <mapnik/params.hpp>
-#include <mapnik/sql_utils.hpp>
 #include <mapnik/timer.hpp>
 
 // boost
@@ -51,7 +50,7 @@ class sqlite_connection
 {
 public:
 
-    sqlite_connection (const std::string& file)
+    sqlite_connection (std::string const& file)
         : db_(0),
           file_(file)
     {
@@ -63,7 +62,6 @@ public:
 #endif
         const int rc = sqlite3_open_v2 (file_.c_str(), &db_, mode, 0);
 #else
-#warning "Mapnik's sqlite plugin is compiling against a version of sqlite older than 3.5.x which may make rendering slow..."
         const int rc = sqlite3_open (file_.c_str(), &db_);
 #endif
         if (rc != SQLITE_OK)
@@ -77,14 +75,13 @@ public:
         sqlite3_busy_timeout(db_,5000);
     }
 
-    sqlite_connection (const std::string& file, int flags)
+    sqlite_connection (std::string const& file, int flags)
         : db_(0),
           file_(file)
     {
 #if SQLITE_VERSION_NUMBER >= 3005000
         const int rc = sqlite3_open_v2 (file_.c_str(), &db_, flags, 0);
 #else
-#warning "Mapnik's sqlite plugin is compiling against a version of sqlite older than 3.5.x which may make rendering slow..."
         const int rc = sqlite3_open (file_.c_str(), &db_);
 #endif
         if (rc != SQLITE_OK)
@@ -104,7 +101,7 @@ public:
         }
     }
 
-    void throw_sqlite_error(const std::string& sql)
+    void throw_sqlite_error(std::string const& sql)
     {
         std::ostringstream s;
         s << "Sqlite Plugin: ";
@@ -119,7 +116,7 @@ public:
         throw mapnik::datasource_exception (s.str());
     }
 
-    boost::shared_ptr<sqlite_resultset> execute_query(const std::string& sql)
+    boost::shared_ptr<sqlite_resultset> execute_query(std::string const& sql)
     {
 #ifdef MAPNIK_STATS
         mapnik::progress_timer __stats__(std::clog, std::string("sqlite_resultset::execute_query ") + sql);
@@ -135,7 +132,7 @@ public:
         return boost::make_shared<sqlite_resultset>(stmt);
     }
 
-    void execute(const std::string& sql)
+    void execute(std::string const& sql)
     {
 #ifdef MAPNIK_STATS
         mapnik::progress_timer __stats__(std::clog, std::string("sqlite_resultset::execute ") + sql);
@@ -148,7 +145,7 @@ public:
         }
     }
 
-    int execute_with_code(const std::string& sql)
+    int execute_with_code(std::string const& sql)
     {
 #ifdef MAPNIK_STATS
         mapnik::progress_timer __stats__(std::clog, std::string("sqlite_resultset::execute_with_code ") + sql);
@@ -163,6 +160,12 @@ public:
         return db_;
     }
 
+    bool load_extension(std::string const& ext_path)
+    {
+        sqlite3_enable_load_extension(db_, 1);
+        int result = sqlite3_load_extension(db_, ext_path.c_str(), 0 , 0);
+        return (result == SQLITE_OK)? true : false;
+    }
 
 private:
 

@@ -17,7 +17,7 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
-# $Id$
+# 
 
 import os
 from copy import copy
@@ -38,8 +38,8 @@ source = Split(
 program_env['CXXFLAGS'] = copy(env['LIBMAPNIK_CXXFLAGS'])
 
 if env['HAS_CAIRO']:
-    program_env.PrependUnique(CPPPATH=env['CAIROMM_CPPPATHS'])
-    program_env.Append(CXXFLAGS = '-DHAVE_CAIRO')
+    program_env.PrependUnique(CPPPATH=env['CAIRO_CPPPATHS'])
+    program_env.Append(CPPDEFINES = '-DHAVE_CAIRO')
 
 program_env.PrependUnique(CPPPATH=['#plugins/input/postgis'])
 

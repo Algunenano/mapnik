@@ -31,10 +31,10 @@
 #include <mapnik/svg/svg_path_attributes.hpp>
 #include <mapnik/image_util.hpp>
 #include <mapnik/image_reader.hpp>
+#include <mapnik/util/fs.hpp>
 
 // boost
 #include <boost/assert.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/make_shared.hpp>
 
@@ -45,11 +45,8 @@
 namespace mapnik
 {
 
-boost::unordered_map<std::string, marker_ptr> marker_cache::marker_cache_;
-boost::unordered_map<std::string, std::string> marker_cache::svg_cache_;
-std::string marker_cache::known_svg_prefix_ = "shape://";
-
 marker_cache::marker_cache()
+    : known_svg_prefix_("shape://")
 {
     insert_svg("ellipse",
                "<?xml version='1.0' standalone='no'?>"
@@ -154,6 +151,7 @@ boost::optional<marker_ptr> marker_cache::find(std::string const& uri,
             double lox,loy,hix,hiy;
             svg.bounding_rect(&lox, &loy, &hix, &hiy);
             marker_path->set_bounding_box(lox,loy,hix,hiy);
+            marker_path->set_dimensions(svg.width(),svg.height());
             marker_ptr mark(boost::make_shared<marker>(marker_path));
             result.reset(mark);
             if (update_cache)
@@ -164,8 +162,7 @@ boost::optional<marker_ptr> marker_cache::find(std::string const& uri,
         // otherwise assume file-based
         else
         {
-            boost::filesystem::path path(uri);
-            if (!exists(path))
+            if (!mapnik::util::exists(uri))
             {
                 MAPNIK_LOG_ERROR(marker_cache) << "Marker does not exist: " << uri;
                 return result;
@@ -183,6 +180,7 @@ boost::optional<marker_ptr> marker_cache::find(std::string const& uri,
                 double lox,loy,hix,hiy;
                 svg.bounding_rect(&lox, &loy, &hix, &hiy);
                 marker_path->set_bounding_box(lox,loy,hix,hiy);
+                marker_path->set_dimensions(svg.width(),svg.height());
                 marker_ptr mark(boost::make_shared<marker>(marker_path));
                 result.reset(mark);
                 if (update_cache)
@@ -201,11 +199,12 @@ boost::optional<marker_ptr> marker_cache::find(std::string const& uri,
                     BOOST_ASSERT(width > 0 && height > 0);
                     mapnik::image_ptr image(boost::make_shared<mapnik::image_data_32>(width,height));
                     reader->read(0,0,*image);
-                    // ensure images are premultiplied
-                    // TODO - don't need to multiply jpegs
-                    agg::rendering_buffer buffer(image->getBytes(),image->width(),image->height(),image->width() * 4);
-                    agg::pixfmt_rgba32 pixf(buffer);
-                    pixf.premultiply();
+                    if (!reader->premultiplied_alpha())
+                    {
+                        agg::rendering_buffer buffer(image->getBytes(),image->width(),image->height(),image->width() * 4);
+                        agg::pixfmt_rgba32 pixf(buffer);
+                        pixf.premultiply();
+                    }
                     marker_ptr mark(boost::make_shared<marker>(image));
                     result.reset(mark);
                     if (update_cache)
@@ -223,10 +222,6 @@ boost::optional<marker_ptr> marker_cache::find(std::string const& uri,
     catch (std::exception const& ex)
     {
         MAPNIK_LOG_ERROR(marker_cache) << "Exception caught while loading: '" << uri << "' (" << ex.what() << ")";
-    }
-    catch (...)
-    {
-        MAPNIK_LOG_ERROR(marker_cache) << "Exception caught while loading: '" << uri << "'";
     }
     return result;
 }
