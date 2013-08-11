@@ -1,7 +1,30 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Contact: https://github.com/mapnik/mapnik/issues
 Source: https://github.com/mapnik/mapnik/
- Repackaged to remove some third-party software, see debian/README.source.
+ Repackaged to exclude non-DFSG files in
+ ./deps/agg/include/agg_conv_gpc.h (from non-free software)
+ ./tests/data/fonts/XB\ Zar.ttf (cannot find upstream)
+ ./tests/data/fonts/LICENCE.txt (refers to a dead url)
+ Conveniently, remove unused software to simplify this file maintenance:
+ ./scons
+ ./fonts/dejavu*
+ ./fonts/unifont*
+ ./tests/data/fonts/DejaVuSansMono-BoldOblique.ttf
+ ./tests/data/csv/10m-land.csv
+ ./tests/data/raster/*
+ ./tests/data/shp/ne_110m*
+ ./tests/data/shp/world_merc*
+ ./tests/data/shp/new_zealand/ne_50m*
+
+Files: *
+Copyright: 2006-2013 Artem Pavlenko
+ 2005-2012 Jean-Francois Doyon
+ 2010 Robert Coup
+ 2006 10East Corp.
+ 2008 Tom Hughes
+ 2009 Dane Springmeyer
+ 2011 Hermann Kraus
+License: LGPL-2.1+
 
 Files: debian/*
 Copyright: 2006-2009 Dominic Hargreaves <dom@earth.li>
@@ -9,26 +32,67 @@ Copyright: 2006-2009 Dominic Hargreaves <dom@earth.li>
  2013 Jérémy Lal <kapouer@melix.org>
 License: GPL-2+
 
-Files: boost/*
-Copyright: 2008 Federico J. Fernandez,
- 2004-2007 2007 Christian Henning
+Files: boost/geometry/*
+Copyright: 2008 Federico J. Fernandez
+License: BSL-1.0
+
+Files: boost/gil/*
+Copyright: 2004-2007 Christian Henning
+License: BSL-1.0
+
+Files: include/mapnik/hash_variant.cpp
+Copyright: 2011 Antony Polukhin
 License: BSL-1.0
 
 Files: deps/agg/*
-Copyright: © 2002-2005, Maxim Shemanarev (McSeem)
+Copyright: 2002-2005 Maxim Shemanarev (McSeem)
+ 2005 Tony Juricic
 License: agg or BSD-3-clause
 Comment: upstream mapnik forgot to update deps/agg/copying, see
  https://github.com/mapnik/mapnik/issues/1982
 
-Files: *
-Copyright: © 2006-2009, Artem Pavlenko
- © 2006-2009, Jean-Francois Doyon
-License: LGPL-2.1+
+Files: deps/agg/include/agg_conv_clipper.h,
+ deps/clipper/src/clipper.cpp,
+ deps/clipper/include/clipper.hpp
+Copyright: 2010-2013 Angus Johnson
+License: BSL-1.0
+
+Files: deps/mapnik/sparsehash/*
+Copyright: 2005-2010 Google Inc.
+License: BSD-3-clause
+
 Files: demo/data/*
 Copyright: Her Majesty the Queen in Right of Canada, Department of
  Natural Resources. All rights reserved.
 License: Geogratis 
 
+Files: src/miniz.c
+Copyright: none (Public Domain)
+License: public-domain
+ This is free and unencumbered software released into the public domain.
+ .
+ Anyone is free to copy, modify, publish, use, compile, sell, or
+ distribute this software, either in source code form or as a compiled
+ binary, for any purpose, commercial or non-commercial, and by any
+ means.
+ .
+ In jurisdictions that recognize copyright laws, the author or authors
+ of this software dedicate any and all copyright interest in the
+ software to the public domain. We make this dedication for the benefit
+ of the public at large and to the detriment of our heirs and
+ successors. We intend this dedication to be an overt act of
+ relinquishment in perpetuity of all present and future rights to this
+ software under copyright law.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ OTHER DEALINGS IN THE SOFTWARE.
+ .
+ For more information, please refer to <http://unlicense.org/>
 
 License: LGPL-2.1+
  This package is free software; you can redistribute it and/or
