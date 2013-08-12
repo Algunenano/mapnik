@@ -20,12 +20,12 @@ mapnik (2.2.0+ds1-1) UNRELEASED; urgency=low
 
   [ Jérémy Lal ]
   * New upstream version 2.2
-  * Copyright: entire tarball review. Switch to copyright 1.0 format.
-  * DFSG-exclusions:
-    + deps/agg/include/agg_conv_gpc.h
-    + tests/data/fonts/XB\ Zar.ttf
-  * Conveniently exclude some big data files used in tests, or files
-    with undocumented licenses.
+  * Copyright:
+    + entire tarball review
+    + switch to copyright 1.0 format
+    + DFSG-exclude tests/data/fonts/XB\ Zar.ttf (missing license)
+    + conveniently exclude scons, fonts, and some test files to the
+      sake of copyright simplification.
 
  -- David Paleino <dapal@debian.org>  Sun, 21 Apr 2013 10:40:52 +0200
 
