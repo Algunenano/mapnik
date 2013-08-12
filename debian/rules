@@ -93,7 +93,6 @@ get-orig-source:
 	@rm -r mapnik-$(UPVER)/fonts/dejavu*
 	@rm mapnik-$(UPVER)/fonts/unifont*
 	@rm -r mapnik-$(UPVER)/scons/
-	@rm mapnik-$(UPVER)/deps/agg/include/agg_conv_gpc.h
 	@rm mapnik-$(UPVER)/tests/data/fonts/DejaVuSansMono-BoldOblique.ttf
 	@rm mapnik-$(UPVER)/tests/data/fonts/XB\ Zar.ttf
 	@rm mapnik-$(UPVER)/tests/data/fonts/LICENCE.txt
