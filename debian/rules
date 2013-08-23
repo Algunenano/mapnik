@@ -15,7 +15,7 @@ SCONS_FLAGS := INPUT_PLUGINS=csv,gdal,geojson,ogr,osm,postgis,python,raster,rast
 SCONS_FLAGS += PROJ_INCLUDES=/usr/include PROJ_LIBS=/usr/lib
 SCONS_FLAGS += SYSTEM_FONTS=/usr/share/fonts
 SCONS_FLAGS += XMLPARSER=libxml2
-SCONS_FLAGS += PREFIX=/usr LIB_DIR_NAME=/mapnik/2.0
+SCONS_FLAGS += PREFIX=/usr LIB_DIR_NAME=/mapnik/2.2 MAPNIK_LIB_NAME=libmapnik2-
 
 override_dh_auto_configure:
 	scons $(SCONS_FLAGS) \

@@ -43,7 +43,7 @@ Homepage: http://www.mapnik.org/
 Vcs-Git: git://anonscm.debian.org/pkg-grass/mapnik.git
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-grass/mapnik.git
 
-Package: libmapnik2-2.0
+Package: libmapnik2-2.2
 Architecture: any
 Depends:
  ${shlibs:Depends}
@@ -94,7 +94,7 @@ Breaks: libmapnik-dev (<< 2.0.0+ds1-1~)
 Replaces: libmapnik-dev (<< 2.0.0+ds1-1~)
 Depends:
  ${misc:Depends}
- , libmapnik2-2.0 (= ${binary:Version})
+ , libmapnik2-2.2 (= ${binary:Version})
  , libc6-dev | libc-dev
  , libboost-thread-dev
  , libboost-filesystem-dev
