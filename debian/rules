@@ -11,7 +11,7 @@ endif
 TARNAME := mapnik_$(UPVER)+ds1.orig.tar
 
 # scons flags
-SCONS_FLAGS := INPUT_PLUGINS=gdal,geos,kismet,ogr,osm,postgis,raster,rasterlite,shape,sqlite
+SCONS_FLAGS := INPUT_PLUGINS=csv,gdal,geojson,ogr,osm,postgis,python,raster,rasterlite,shape,sqlite
 SCONS_FLAGS += PROJ_INCLUDES=/usr/include PROJ_LIBS=/usr/lib
 SCONS_FLAGS += SYSTEM_FONTS=/usr/share/fonts
 SCONS_FLAGS += XMLPARSER=libxml2
