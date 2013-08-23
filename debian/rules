@@ -65,10 +65,13 @@ override_dh_auto_clean:
 	find -name '*.pyc' -exec rm -f {} \;
 	find -name '.sconsign*' -exec rm -f {} \;
 	find -name '*.o' -exec rm -f {} \;
+	find -name '*.a' -exec rm -f {} \;
+	find -name '*.os' -exec rm -f {} \;
 	rm -rf .sconf_temp config.log bindings/python/mapnik/paths.py \
 		utils/shapeindex/shapeindex config.py config.cache \
-		docs/api_docs/python/*
-
+		docs/api_docs/python/* src/libmapnik*.so* workspace/All.files \
+		tests/cpp_tests/agg_blend_src_over_test-bin \
+		plugins/input/*.input bindings/python/mapnik/_mapnik.so
 	dh_clean
 
 override_dh_installexamples:
