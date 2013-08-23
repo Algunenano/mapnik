@@ -73,8 +73,6 @@ override_dh_auto_clean:
 		plugins/input/*.input bindings/python/mapnik/_mapnik.so
 	dh_clean
 
-override_dh_installexamples:
-
 override_dh_auto_test:
 	# currently nothing
 
