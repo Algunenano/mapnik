@@ -43,7 +43,7 @@ Homepage: http://www.mapnik.org/
 Vcs-Git: git://anonscm.debian.org/pkg-grass/mapnik.git
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-grass/mapnik.git
 
-Package: libmapnik-2.2
+Package: libmapnik2.2
 Architecture: any
 Depends:
  ${shlibs:Depends}
@@ -95,7 +95,7 @@ Breaks: libmapnik2-dev (<< 2.2.0+ds1-1~)
 Replaces: libmapnik2-dev (<< 2.2.0+ds1-1~)
 Depends:
  ${misc:Depends}
- , libmapnik-2.2 (= ${binary:Version})
+ , libmapnik2.2 (= ${binary:Version})
  , libc6-dev | libc-dev
  , libboost-thread-dev
  , libboost-filesystem-dev
@@ -198,7 +198,6 @@ Architecture: all
 Depends:
  ${misc:Depends}
  , python-mapnik
-Provides: ${python:Provides}
 Description: C++/Python toolkit for developing GIS applications (dummy)
  Mapnik is an OpenSource C++/Python toolkit for developing GIS
  (Geographic Information Systems) applications. At the core is a C++
