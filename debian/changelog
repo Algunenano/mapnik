@@ -28,7 +28,7 @@ mapnik (2.2.0+ds1-1) unstable; urgency=low
     + entire tarball review
     + switch to copyright 1.0 format
     + DFSG-exclude tests/data/fonts/XB\ Zar.ttf (missing license)
-    + conveniently exclude scons, fonts, and some test files to the
+    + conveniently exclude scons, fonts, and some test files for the
       sake of copyright simplification.
   * rules:
     + update input plugins list, remove geos, kismet and add csv,
