@@ -18,7 +18,7 @@ Build-Depends:
  , libboost-program-options-dev
  , libpng-dev
  , libjpeg-dev
- , libtiff4-dev
+ , libtiff-dev
  , zlib1g-dev
  , libfreetype6-dev
  , libpq-dev
@@ -103,7 +103,7 @@ Depends:
  , libboost-iostreams-dev
  , libpng-dev
  , libjpeg-dev
- , libtiff4-dev
+ , libtiff-dev
  , zlib1g-dev
  , libfreetype6-dev
  , libpq-dev
