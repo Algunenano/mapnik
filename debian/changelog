@@ -38,6 +38,7 @@ mapnik (2.2.0+ds1-1) unstable; urgency=low
     + call epydoc directly instead of fiddling with build script
     + pass hardening build flags to mapnik SConstruct,
       thanks to YunQiang Su.
+  * patch: 1001 patch to link mapnik lib to dl.
 
  -- Jérémy Lal <kapouer@melix.org>  Tue, 27 Aug 2013 10:16:08 +0200
 
