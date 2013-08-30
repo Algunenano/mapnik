@@ -1,15 +1,14 @@
 Description: link mapnik against dl
 Author: Jérémy Lal <kapouer@melix.org>
-Forwarded: not yet
-Last-Update: 2013-08-29
+Forwarded: https://github.com/mapnik/mapnik/pull/1998
+Last-Update: 2013-08-30
 --- a/src/build.py
 +++ b/src/build.py
-@@ -57,7 +57,7 @@
- system = 'boost_system%s' % env['BOOST_APPEND']
+@@ -106,6 +106,7 @@
+             mapnik_lib_link_flag += ' -Wl,-h,%s' %  mapnik_libname
+     else: # Linux and others
+         mapnik_lib_link_flag += ' -Wl,-rpath-link,. -Wl,-soname,%s' % mapnik_libname
++	lib_env['LIBS'].append('dl')
  
- # clear out and re-set libs for this env
--lib_env['LIBS'] = ['freetype','z',env['ICU_LIB_NAME'],filesystem,system,regex]
-+lib_env['LIBS'] = ['freetype','z',env['ICU_LIB_NAME'],filesystem,system,regex,'dl']
- 
- if env['PROJ']:
-    lib_env['LIBS'].append('proj')
+ source = Split(
+     """
