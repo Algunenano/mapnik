@@ -1,3 +1,9 @@
+mapnik (2.2.0+ds1-2) unstable; urgency=low
+
+  * Build documentation in -indep target. (Closes: #721579)
+
+ -- Jérémy Lal <kapouer@melix.org>  Sun, 08 Sep 2013 13:34:41 +0200
+
 mapnik (2.2.0+ds1-1) unstable; urgency=low
 
   [ Andrew Harvey ]
