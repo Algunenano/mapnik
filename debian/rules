@@ -49,22 +49,22 @@ override_dh_auto_install:
 			install ; \
 	done
 
-override_dh_install:
+override_dh_install-arch:
 	dh_install
-
 	mv $(CURDIR)/debian/mapnik-utils/usr/bin/upgrade_map_xml.py \
 		$(CURDIR)/debian/mapnik-utils/usr/bin/upgrade-map-xml
 
+override_dh_install-indep:
 	# build Python API documentation
 	# and trick epydoc into loading the shlib too
 	LD_LIBRARY_PATH=$(CURDIR)/debian/libmapnik2.2/usr/lib/ epydoc --no-private \
-    --no-frames \
-    --no-sourcecode \
-    --name mapnik \
-    --url http://mapnik.org \
-    --css $(CURDIR)/utils/epydoc_config/mapnik_epydoc.css \
-    $(CURDIR)/bindings/python/mapnik \
-    -o $(CURDIR)/debian/mapnik-doc/usr/share/doc/mapnik-doc/python
+		--no-frames \
+		--no-sourcecode \
+		--name mapnik \
+		--url http://mapnik.org \
+		--css $(CURDIR)/utils/epydoc_config/mapnik_epydoc.css \
+		$(CURDIR)/bindings/python/mapnik \
+		-o $(CURDIR)/debian/mapnik-doc/usr/share/doc/mapnik-doc/python
 
 override_dh_auto_clean:
 	scons --clean $(SCONS_FLAGS)
