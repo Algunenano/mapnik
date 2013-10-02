@@ -1,3 +1,9 @@
+mapnik (2.2.0+ds1-3) unstable; urgency=low
+
+  * Honour DEB_BUILD_OPTIONS parallel, defaults to 1. 
+
+ -- Jérémy Lal <kapouer@melix.org>  Wed, 02 Oct 2013 21:55:37 +0200
+
 mapnik (2.2.0+ds1-2) unstable; urgency=low
 
   * Build documentation in -indep target. (Closes: #721579)
