@@ -84,8 +84,7 @@ override_dh_auto_test:
 	# currently nothing
 
 %:
-	dh $@ \
-		--with python2
+	dh $@ --with python2
 
 get-orig-source:
 	mkdir -p ../tarballs
