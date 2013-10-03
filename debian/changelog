@@ -1,3 +1,10 @@
+mapnik (2.2.0+ds1-4) unstable; urgency=low
+
+  * Disable completely parallel builds. It might be responsible
+    for memory exhaustion on s390, mipsel, mips.
+
+ -- Jérémy Lal <kapouer@melix.org>  Thu, 03 Oct 2013 14:24:42 +0200
+
 mapnik (2.2.0+ds1-3) unstable; urgency=low
 
   * Honour DEB_BUILD_OPTIONS parallel, defaults to 1. 
