@@ -10,13 +10,9 @@ endif
 
 TARNAME := mapnik_$(UPVER)+ds1.orig.tar
 
-NJOBS := -j1
-ifneq (,$(filter parallel=%,$(subst $(COMMA), ,$(DEB_BUILD_OPTIONS))))
-NJOBS := -j$(subst parallel=,,$(filter parallel=%,$(subst $(COMMA), ,$(DEB_BUILD_OPTIONS))))
-endif
-
 # scons flags
-SCONS_FLAGS := $(NJOBS)
+# Disable parallel build - it exhausts memory on s390, mipsel, mips
+SCONS_FLAGS := -j1
 SCONS_FLAGS += INPUT_PLUGINS=csv,gdal,geojson,ogr,osm,postgis,python,raster,rasterlite,shape,sqlite
 SCONS_FLAGS += PROJ_INCLUDES=/usr/include PROJ_LIBS=/usr/lib
 SCONS_FLAGS += SYSTEM_FONTS=/usr/share/fonts
