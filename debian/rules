@@ -13,6 +13,8 @@ TARNAME := mapnik_$(UPVER)+ds1.orig.tar
 # scons flags
 # Disable parallel build - it exhausts memory on s390, mipsel, mips
 SCONS_FLAGS := -j1
+# -O2
+SCONS_FLAGS += OPTIMIZATION=2
 SCONS_FLAGS += INPUT_PLUGINS=csv,gdal,geojson,ogr,osm,postgis,python,raster,rasterlite,shape,sqlite
 SCONS_FLAGS += PROJ_INCLUDES=/usr/include PROJ_LIBS=/usr/lib
 SCONS_FLAGS += SYSTEM_FONTS=/usr/share/fonts
