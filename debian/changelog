@@ -1,3 +1,10 @@
+mapnik (2.2.0+ds1-5) unstable; urgency=low
+
+  * Set gcc optimization flag to -O2 instead of -O3.
+  * Add 2001 patch to remove gcc -ftemplate-depth-300 flag.
+
+ -- Jérémy Lal <kapouer@melix.org>  Sat, 12 Oct 2013 16:24:50 +0200
+
 mapnik (2.2.0+ds1-4) unstable; urgency=low
 
   * Disable completely parallel builds. It might be responsible
