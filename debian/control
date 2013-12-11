@@ -28,7 +28,7 @@ Build-Depends:
  , pkg-config
  , python-cairo-dev
  , libpq-dev
- , libgdal1-dev
+ , libgdal-dev
  , libsqlite3-dev
  , libcurl4-gnutls-dev
  , librasterlite-dev
