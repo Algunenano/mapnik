@@ -2,6 +2,7 @@ mapnik (2.2.0+ds1-6) unstable; urgency=medium
 
   * Team upload.
   * Changed libgdal1-dev in libgdal-dev.
+  * Priority set to optional for all packages.
 
  -- Francesco Paolo Lovergine <frankie@debian.org>  Wed, 11 Dec 2013 18:12:19 +0100
 

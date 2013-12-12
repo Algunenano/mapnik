@@ -64,7 +64,6 @@ Description: C++/Python toolkit for developing GIS applications (libraries)
 
 Package: libmapnik2-dev
 Section: oldlibs
-Priority: extra
 Architecture: all
 Depends:
  libmapnik-dev
@@ -187,7 +186,6 @@ Description: C++/Python toolkit for developing GIS applications (Python)
 
 Package: python-mapnik2
 Section: oldlibs
-Priority: extra
 Architecture: all
 Depends:
  ${misc:Depends}
