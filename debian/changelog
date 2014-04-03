@@ -1,3 +1,10 @@
+mapnik (2.2.0+ds1-7) unstable; urgency=medium
+
+  * Add 1002 patch - backport upstream attempt to reduce memory usage
+    during compilation.
+
+ -- Jérémy Lal <kapouer@melix.org>  Fri, 04 Apr 2014 00:00:33 +0200
+
 mapnik (2.2.0+ds1-6) unstable; urgency=medium
 
   * Team upload.
