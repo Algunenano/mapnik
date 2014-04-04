@@ -1,9 +1,9 @@
 mapnik (2.2.0+ds1-7) unstable; urgency=medium
 
-  * Add 1002 patch - backport upstream attempt to reduce memory usage
-    during compilation.
+  * Add 1002 upstream patch to reduce memory usage during compilation
+    using BOOST_SPIRIT_NO_PREDEFINED_TERMINALS (see #742149).
 
- -- Jérémy Lal <kapouer@melix.org>  Fri, 04 Apr 2014 00:00:33 +0200
+ -- Jérémy Lal <kapouer@melix.org>  Fri, 04 Apr 2014 02:32:21 +0200
 
 mapnik (2.2.0+ds1-6) unstable; urgency=medium
 
@@ -29,7 +29,7 @@ mapnik (2.2.0+ds1-4) unstable; urgency=low
 
 mapnik (2.2.0+ds1-3) unstable; urgency=low
 
-  * Honour DEB_BUILD_OPTIONS parallel, defaults to 1. 
+  * Honour DEB_BUILD_OPTIONS parallel, defaults to 1.
 
  -- Jérémy Lal <kapouer@melix.org>  Wed, 02 Oct 2013 21:55:37 +0200
 
