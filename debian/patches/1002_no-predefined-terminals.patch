@@ -1355,3 +1355,29 @@ Last-Update: 2014-04-03
  #define BOOST_TEST_MODULE root_element_test
  
  /*
+--- a/src/text_placements/simple.cpp
++++ b/src/text_placements/simple.cpp
+@@ -39,9 +39,7 @@
+ namespace qi = boost::spirit::qi;
+ namespace phoenix = boost::phoenix;
+ using phoenix::push_back;
+-using boost::spirit::ascii::space;
+ using phoenix::ref;
+-using qi::_1;
+ 
+ bool text_placement_info_simple::next()
+ {
+@@ -141,9 +139,12 @@
+ 
+     } direction_name;
+ 
++    boost::spirit::ascii::space_type space;
++    qi::_1_type _1;
++    qi::float_type float_;
+     std::string::iterator first = positions.begin(),  last = positions.end();
+     qi::phrase_parse(first, last,
+-                     (direction_name[push_back(phoenix::ref(direction_), _1)] % ',') >> *(',' >> qi::float_[push_back(phoenix::ref(text_sizes_), _1)]),
++                     (direction_name[push_back(phoenix::ref(direction_), _1)] % ',') >> *(',' >> float_[push_back(phoenix::ref(text_sizes_), _1)]),
+                      space
+         );
+     if (first != last)
