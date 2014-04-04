@@ -22,10 +22,10 @@ SCONS_FLAGS += XMLPARSER=libxml2
 SCONS_FLAGS += DEMO=False
 SCONS_FLAGS += CPP_TESTS=False
 SCONS_FLAGS += PREFIX=/usr LIB_DIR_NAME=/mapnik/2.2
-SCONS_FLAGS += CUSTOM_CXXFLAGS="$(shell dpkg-buildflags --get CXXFLAGS)"
-SCONS_FLAGS += CUSTOM_CFLAGS="$(shell dpkg-buildflags --get CFLAGS)"
-SCONS_FLAGS += CUSTOM_LDFLAGS="$(shell dpkg-buildflags --get LDFLAGS)"
-SCONS_FLAGS += CUSTOM_DEFINES="$(shell dpkg-buildflags --get CPPFLAGS)"
+SCONS_FLAGS += CUSTOM_CXXFLAGS="$(shell dpkg-buildflags --get CXXFLAGS) -g0"
+SCONS_FLAGS += CUSTOM_CFLAGS="$(shell dpkg-buildflags --get CFLAGS) -g0"
+SCONS_FLAGS += CUSTOM_LDFLAGS="$(shell dpkg-buildflags --get LDFLAGS) -g0"
+SCONS_FLAGS += CUSTOM_DEFINES="$(shell dpkg-buildflags --get CPPFLAGS) -g0"
 
 override_dh_auto_configure:
 	scons $(SCONS_FLAGS) \
