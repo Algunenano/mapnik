@@ -4,12 +4,6 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
-ifndef UPVER
-UPVER := $(shell dpkg-parsechangelog | grep ^Version | cut -d' ' -f2 | cut -d- -f1 | cut -d+ -f1)
-endif
-
-TARNAME := mapnik_$(UPVER)+ds1.orig.tar
-
 # scons flags
 # Disable parallel build - it exhausts memory on s390, mipsel, mips
 SCONS = $(shell which scons)
@@ -82,28 +76,3 @@ debian/stamps/test-python%:
 %:
 	dh $@ --with python2
 
-get-orig-source:
-	mkdir -p ../tarballs
-	uscan \
-		--verbose \
-		--force-download \
-		--download-version $(UPVER) \
-		--rename \
-		--destdir ../tarballs
-	tar xvf ../tarballs/mapnik_$(UPVER).orig.tar.gz
-	@echo Removing third-party sources from orig.tar.gz
-	@rm -r mapnik-$(UPVER)/fonts/dejavu*
-	@rm mapnik-$(UPVER)/fonts/unifont*
-	@rm -r mapnik-$(UPVER)/scons/
-	@rm mapnik-$(UPVER)/tests/data/fonts/DejaVuSansMono-BoldOblique.ttf
-	@rm mapnik-$(UPVER)/tests/data/fonts/XB\ Zar.ttf
-	@rm mapnik-$(UPVER)/tests/data/fonts/LICENCE.txt
-	@rm mapnik-$(UPVER)/tests/data/csv/10m-land.csv
-	@rm mapnik-$(UPVER)/tests/data/raster/*
-	@rm mapnik-$(UPVER)/tests/data/shp/ne_110m*
-	@rm mapnik-$(UPVER)/tests/data/shp/world_merc*
-	@rm mapnik-$(UPVER)/tests/data/shp/new_zealand/ne_50m*
-	tar cf $(TARNAME) mapnik-$(UPVER)/
-	rm -rf mapnik-$(UPVER)/
-	gzip -9 $(TARNAME)
-	mv $(TARNAME).gz ../tarballs/
