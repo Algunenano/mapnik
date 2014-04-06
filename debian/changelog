@@ -1,9 +1,19 @@
 mapnik (2.2.0+ds1-7) unstable; urgency=medium
 
+  * Standards-Version 3.9.5
+  * Set priority of python-mapnik2, libmapnik2-dev to oldlibs/extra.
   * Add 1002 upstream patch to reduce memory usage during compilation
-    using BOOST_SPIRIT_NO_PREDEFINED_TERMINALS (see #742149).
+    using BOOST_SPIRIT_NO_PREDEFINED_TERMINALS (#742149).
+  * Disable debugging symbols to save memory during compilation.
+    This and the previous change should be enough to close: #742149.
+  * Build multiple python versions using scons properly, so that scons
+    doesn't build everything twice.
+  * Copyright:
+    + use Files-Excluded, now repackaging is done by uscan
+    + add section for debian/rules technique taken from fife package
+  * Watch github directly, no need for githubredir.
 
- -- Jérémy Lal <kapouer@melix.org>  Fri, 04 Apr 2014 02:32:21 +0200
+ -- Jérémy Lal <kapouer@melix.org>  Sun, 06 Apr 2014 15:35:41 +0200
 
 mapnik (2.2.0+ds1-6) unstable; urgency=medium
 
