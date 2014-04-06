@@ -12,6 +12,7 @@ TARNAME := mapnik_$(UPVER)+ds1.orig.tar
 
 # scons flags
 # Disable parallel build - it exhausts memory on s390, mipsel, mips
+SCONS = $(shell which scons)
 SCONS_FLAGS := -j1
 # -O2
 SCONS_FLAGS += OPTIMIZATION=2
@@ -27,31 +28,30 @@ SCONS_FLAGS += CUSTOM_CFLAGS="$(shell dpkg-buildflags --get CFLAGS) -g0"
 SCONS_FLAGS += CUSTOM_LDFLAGS="$(shell dpkg-buildflags --get LDFLAGS) -g0"
 SCONS_FLAGS += CUSTOM_DEFINES="$(shell dpkg-buildflags --get CPPFLAGS) -g0"
 
-override_dh_auto_configure:
-	scons $(SCONS_FLAGS) \
-		CCFLAGS="$(CFLAGS)" \
-		configure
+PYVERS = $(shell pyversions -r -v)
 
-override_dh_auto_build:
-	set -e; \
-	for ver in $(shell pyversions -r -v); do \
-		scons $(SCONS_FLAGS) \
-			BOOST_PYTHON_LIB=boost_python-py$$(echo $$ver | sed 's@\.@@') \
-			PYTHON=/usr/bin/python$$ver ; \
-	done
+override_dh_auto_configure: $(PYVERS:%=debian/stamps/configure-python%)
+debian/stamps/configure-python%:
+	-mkdir build-python$*
+	-mkdir debian/stamps
+	cp -r bindings boost demo deps fonts include plugins src tests utils workspace SConstruct build-python$*
+	touch $@
+	python$* $(SCONS) -C build-python$* configure \
+		$(SCONS_FLAGS) \
+		CCFLAGS="$(CFLAGS)" \
+		BOOST_PYTHON_LIB=boost_python-py$$(echo $* | sed 's@\.@@') \
+		DESTDIR=$(CURDIR)/debian/tmp
+
+override_dh_auto_build:	$(PYVERS:%=debian/stamps/build-python%)
+debian/stamps/build-python%:
+	python$* $(SCONS) -C build-python$*
 
 override_dh_prep:
 	dh_prep -Xdebian/tmp
 
-override_dh_auto_install:
-	for ver in $(shell pyversions -r -v); do \
-		scons $(SCONS_FLAGS) \
-			CCFLAGS="$(CFLAGS)" \
-			BOOST_PYTHON_LIB=boost_python-py$$(echo $$ver | sed 's@\.@@') \
-			PYTHON=/usr/bin/python$$ver \
-			DESTDIR=$(CURDIR)/debian/tmp \
-			install ; \
-	done
+override_dh_auto_install:	$(PYVERS:%=debian/stamps/install-python%)
+debian/stamps/install-python%:
+	python$* $(SCONS) -C build-python$* install
 
 override_dh_install-arch:
 	dh_install
@@ -71,21 +71,13 @@ override_dh_install-indep:
 		-o $(CURDIR)/debian/mapnik-doc/usr/share/doc/mapnik-doc/python
 
 override_dh_auto_clean:
-	scons --clean $(SCONS_FLAGS)
-	find -name '*.pyc' -exec rm -f {} \;
-	find -name '.sconsign*' -exec rm -f {} \;
-	find -name '*.o' -exec rm -f {} \;
-	find -name '*.a' -exec rm -f {} \;
-	find -name '*.os' -exec rm -f {} \;
-	rm -rf .sconf_temp config.log bindings/python/mapnik/paths.py \
-		utils/shapeindex/shapeindex config.py config.cache \
-		docs/api_docs/python/* src/libmapnik*.so* workspace/All.files \
-		tests/cpp_tests/agg_blend_src_over_test-bin \
-		plugins/input/*.input bindings/python/mapnik/_mapnik.so
+	rm -rf build-python*
+	rm -rf debian/stamps
 	dh_clean
 
-override_dh_auto_test:
-	# currently nothing
+override_dh_auto_test:	$(PYVERS:%=debian/stamps/test-python%)
+debian/stamps/test-python%:
+	# nothing yet
 
 %:
 	dh $@ --with python2
