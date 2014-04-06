@@ -63,6 +63,7 @@ Description: C++/Python toolkit for developing GIS applications (libraries)
  This package contains the shared library and input plugins.
 
 Package: libmapnik2-dev
+Priority: extra
 Section: oldlibs
 Architecture: all
 Depends:
@@ -185,6 +186,7 @@ Description: C++/Python toolkit for developing GIS applications (Python)
  This package contains the Python bindings.
 
 Package: python-mapnik2
+Priority: extra
 Section: oldlibs
 Architecture: all
 Depends:
