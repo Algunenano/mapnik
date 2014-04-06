@@ -33,7 +33,7 @@ Build-Depends:
  , libcurl4-gnutls-dev
  , librasterlite-dev
  , python-epydoc
-Standards-Version: 3.9.4
+Standards-Version: 3.9.5
 Section: libs
 X-Python-Version: >= 2.5
 Homepage: http://www.mapnik.org/
