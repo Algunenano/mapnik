@@ -24,7 +24,7 @@ Build-Depends:
  , libxml2-dev
  , libproj-dev
  , libboost-python-dev
- , libcairo2-dev
+ , libcairo-dev
  , pkg-config
  , python-cairo-dev
  , libpq-dev
