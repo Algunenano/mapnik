@@ -6,9 +6,9 @@ Source: https://github.com/mapnik/mapnik/
   tests/data/fonts/LICENCE.txt (refers to a dead url)
  other files being excluded to ease copyright maintenance.
 Files-Excluded:
- tests/data/fonts/XB\ Zar.ttf
+ tests/data/fonts/XB Zar.ttf
  tests/data/fonts/LICENCE.txt
- scons
+ scons/*
  fonts/dejavu*
  fonts/unifont*
  tests/data/fonts/DejaVuSansMono-BoldOblique.ttf
