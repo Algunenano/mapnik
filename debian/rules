@@ -10,6 +10,7 @@ SCONS = $(shell which scons)
 SCONS_FLAGS := -j1
 # -O2
 SCONS_FLAGS += OPTIMIZATION=2
+SCONS_FLAGS += FULL_LIB_PATH=False
 SCONS_FLAGS += INPUT_PLUGINS=csv,gdal,geojson,ogr,osm,postgis,python,raster,rasterlite,shape,sqlite
 SCONS_FLAGS += PROJ_INCLUDES=/usr/include PROJ_LIBS=/usr/lib
 SCONS_FLAGS += SYSTEM_FONTS=/usr/share/fonts
