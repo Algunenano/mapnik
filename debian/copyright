@@ -8,10 +8,12 @@ Source: https://github.com/mapnik/mapnik/
 Files-Excluded:
  tests/data/fonts/XB Zar.ttf
  tests/data/fonts/LICENCE.txt
+ tests/data/fonts/DejaVuSansMono-BoldOblique.ttf
+ tests/data/fonts/NotoSans-Regular.tcc
+ tests/visual_tests/fonts/*
  scons/*
  fonts/dejavu*
  fonts/unifont*
- tests/data/fonts/DejaVuSansMono-BoldOblique.ttf
  tests/data/csv/10m-land.csv
  tests/data/raster/*
  tests/data/shp/ne_110m*
