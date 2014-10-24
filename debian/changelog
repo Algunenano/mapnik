@@ -1,19 +1,26 @@
 mapnik (3.0.0~rc1+dfsg-1) UNRELEASED; urgency=medium
 
-  [ Bas Couwenberg ]
-  * Change dependency from libgdal1-dev to libgdal-dev.
-
-  [ Jérémy Lal ]
   * Imported Upstream version 3.0.0~rc1+dfsg
-  * Files-Excluded syntax fixes
-  * Exclude more fonts to simplify copyright
+  * Copyright:
+    + syntax fixes
+    + exclude more test files to ease maintenance
+    + boost files moved to deps
   * Watch: fix mangling, watch rc releases
-  * Depends generic libcairo-dev instead of transitional libcairo2
-  * Depends libwebp-dev
-  * Unapply all patches, applied upstream
-  * Disable building with rpath
+  * Build-Depends:
+    + libcairo-dev instead of transitional libcairo2-dev
+    + libgdal-dev instead of libgdal1-dev
+    + libwebp-dev
+    + libharfbuzz-dev
+  * Patches:
+    + unapply previous patches, applied upstream
+    + add patches fixing mapnik::raster call, and removing
+      exit calls, forwarded upstream
+  * Rules:
+    + disable building with rpath
+    + build new plugins: pgraster, topojson
+  * Standards-Version 3.9.6
 
- -- Bas Couwenberg <sebastic@xs4all.nl>  Fri, 24 Oct 2014 11:15:02 +0200
+ -- Jérémy Lal <kapouer@melix.org>  Fri, 24 Oct 2014 15:16:57 +0200
 
 mapnik (2.2.0+ds1-7) unstable; urgency=medium
 
