@@ -43,11 +43,11 @@ License: BSD-3-clause
 Comment: the method for building multiple python versions using scons
  was taken from debian/rules file of debian package "fife".
 
-Files: boost/geometry/*
+Files: deps/boost/geometry/*
 Copyright: 2008 Federico J. Fernandez
 License: BSL-1.0
 
-Files: boost/gil/*
+Files: deps/boost/gil/*
 Copyright: 2004-2007 Christian Henning
 License: BSL-1.0
 
