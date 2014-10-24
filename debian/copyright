@@ -51,10 +51,6 @@ Files: deps/boost/gil/*
 Copyright: 2004-2007 Christian Henning
 License: BSL-1.0
 
-Files: include/mapnik/hash_variant.cpp
-Copyright: 2011 Antony Polukhin
-License: BSL-1.0
-
 Files: deps/agg/*
 Copyright: 2002-2005 Maxim Shemanarev (McSeem)
  2005 Tony Juricic
