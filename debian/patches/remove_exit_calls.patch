@@ -1,0 +1,34 @@
+Description: remove exit calls in shared lib
+Forwarded: https://github.com/mapnik/mapnik/issues/2547
+Last-Update: 2014-10-24
+Author: Jérémy Lal <kapouer@melix.org>
+--- a/plugins/input/osm/render.cpp
++++ b/plugins/input/osm/render.cpp
+@@ -40,7 +40,7 @@
+     if (argc < 6)
+     {
+         std::cerr << "Usage: render XMLfile w s e n [OSMfile]" << std::endl;
+-        exit(0);
++        return 0;
+     }
+ 
+     mapnik::datasource_cache::instance().register_datasources("/usr/local/lib/mapnik/input");
+--- a/deps/mapnik/sparsehash/internal/densehashtable.h
++++ b/deps/mapnik/sparsehash/internal/densehashtable.h
+@@ -1175,7 +1175,6 @@
+     pointer realloc_or_die(pointer /*ptr*/, size_type /*n*/) {
+       fprintf(stderr, "realloc_or_die is only supported for "
+                       "libc_allocator_with_realloc\n");
+-      exit(1);
+       return NULL;
+     }
+   };
+@@ -1197,7 +1196,7 @@
+       if (retval == NULL) {
+         fprintf(stderr, "sparsehash: FATAL ERROR: failed to reallocate "
+                 "%lu elements for ptr %p", static_cast<unsigned long>(n), ptr);
+-        exit(1);
++        return NULL; 
+       }
+       return retval;
+     }
