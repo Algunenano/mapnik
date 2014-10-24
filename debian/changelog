@@ -10,7 +10,7 @@ mapnik (3.0.0~rc1+dfsg-1) UNRELEASED; urgency=medium
   * Watch: fix mangling, watch rc releases
   * Depends generic libcairo-dev instead of transitional libcairo2
   * Depends libwebp-dev
-  * Unapply patches applied upstream
+  * Unapply all patches, applied upstream
   * Disable building with rpath
 
  -- Bas Couwenberg <sebastic@xs4all.nl>  Fri, 24 Oct 2014 11:15:02 +0200
