@@ -15,6 +15,7 @@ Build-Depends:
  , libboost-thread-dev
  , libboost-regex-dev
  , libboost-program-options-dev
+ , libharfbuzz-dev
  , libicu-dev
  , libpng-dev
  , libjpeg-dev
