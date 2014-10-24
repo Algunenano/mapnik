@@ -30,6 +30,7 @@
 #include <mapnik/feature_layer_desc.hpp>
 #include <mapnik/wkb.hpp>
 #include <mapnik/unicode.hpp>
+#include <mapnik/value_types.hpp>
 #include <mapnik/feature_factory.hpp>
 
 // ogr
@@ -67,7 +68,7 @@ ogr_featureset::ogr_featureset(mapnik::context_ptr const& ctx,
       layer_(layer),
       layerdef_(layer.GetLayerDefn()),
       tr_(new transcoder(encoding)),
-      fidcolumn_(layer_.GetFIDColumn()),
+      fidcolumn_(layer_.GetFIDColumn()), // TODO - unused
       count_(0)
 {
     layer_.SetSpatialFilterRect (extent.minx(),
@@ -82,8 +83,15 @@ ogr_featureset::~ogr_featureset()
 
 feature_ptr ogr_featureset::next()
 {
+    if (count_ == 0)
+    {
+        // Reset the layer reading on the first feature read
+        // this is a hack, but needed due to https://github.com/mapnik/mapnik/issues/2048
+        // Proper solution is to avoid storing layer state in featureset
+        layer_.ResetReading();
+    }
     OGRFeature *poFeature;
-    while ((poFeature = layer_.GetNextFeature()) != NULL)
+    while ((poFeature = layer_.GetNextFeature()) != nullptr)
     {
         // ogr feature ids start at 0, so add one to stay
         // consistent with other mapnik datasources that start at 1
@@ -129,8 +137,7 @@ feature_ptr ogr_featureset::next()
             case OFTString:
             case OFTWideString:     // deprecated !
             {
-                UnicodeString ustr = tr_->transcode(poFeature->GetFieldAsString(i));
-                feature->put( fld_name, ustr);
+                feature->put( fld_name, tr_->transcode(poFeature->GetFieldAsString(i)));
                 break;
             }
 

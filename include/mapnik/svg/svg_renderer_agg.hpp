@@ -27,11 +27,11 @@
 #include <mapnik/svg/svg_path_attributes.hpp>
 #include <mapnik/gradient.hpp>
 #include <mapnik/box2d.hpp>
-#include <mapnik/grid/grid_pixel.hpp>
 #include <mapnik/noncopyable.hpp>
 
-// boost
-#include <boost/foreach.hpp>
+#if defined(GRID_RENDERER)
+#include <mapnik/grid/grid_pixel.hpp>
+#endif
 
 // agg
 #include "agg_path_storage.h"
@@ -52,7 +52,6 @@
 #include "agg_gradient_lut.h"
 #include "agg_gamma_lut.h"
 #include "agg_span_interpolator_linear.h"
-#include "agg_pixfmt_rgba.h"
 
 namespace mapnik  {
 namespace svg {
@@ -102,12 +101,14 @@ template <typename VertexSource, typename AttributeSource, typename ScanlineRend
 class svg_renderer_agg : mapnik::noncopyable
 {
 public:
-    typedef agg::conv_curve<VertexSource>            curved_type;
-    typedef agg::conv_stroke<curved_type>            curved_stroked_type;
-    typedef agg::conv_transform<curved_stroked_type> curved_stroked_trans_type;
-    typedef agg::conv_transform<curved_type>         curved_trans_type;
-    typedef agg::conv_contour<curved_trans_type>     curved_trans_contour_type;
-    typedef agg::renderer_base<PixelFormat>          renderer_base;
+    using curved_type = agg::conv_curve<VertexSource>           ;
+    using curved_stroked_type = agg::conv_stroke<curved_type>           ;
+    using curved_stroked_trans_type = agg::conv_transform<curved_stroked_type>;
+    using curved_trans_type = agg::conv_transform<curved_type>        ;
+    using curved_trans_contour_type = agg::conv_contour<curved_trans_type>    ;
+    using renderer_base = agg::renderer_base<PixelFormat>         ;
+    using vertex_source_type = VertexSource                            ;
+    using attribute_source_type = AttributeSource                         ;
 
     svg_renderer_agg(VertexSource & source, AttributeSource const& attributes)
         : source_(source),
@@ -119,16 +120,17 @@ public:
     void render_gradient(Rasterizer& ras,
                          Scanline& sl,
                          Renderer& ren,
-                         const gradient &grad,
+                         gradient const& grad,
                          agg::trans_affine const& mtx,
                          double opacity,
-                         const box2d<double> &symbol_bbox,
-                         const box2d<double> &path_bbox)
+                         box2d<double> const& symbol_bbox,
+                         curved_trans_type & curved_trans,
+                         unsigned path_id)
     {
-        typedef agg::gamma_lut<agg::int8u, agg::int8u> gamma_lut_type;
-        typedef agg::gradient_lut<agg::color_interpolator<agg::rgba8>, 1024> color_func_type;
-        typedef agg::span_interpolator_linear<> interpolator_type;
-        typedef agg::span_allocator<agg::rgba8> span_allocator_type;
+        using gamma_lut_type = agg::gamma_lut<agg::int8u, agg::int8u>;
+        using color_func_type = agg::gradient_lut<agg::color_interpolator<agg::rgba8>, 1024>;
+        using interpolator_type = agg::span_interpolator_linear<>;
+        using span_allocator_type = agg::span_allocator<agg::rgba8>;
 
         span_allocator_type             m_alloc;
         color_func_type                 m_gradient_lut;
@@ -138,7 +140,7 @@ public:
         grad.get_control_points(x1,y1,x2,y2,radius);
 
         m_gradient_lut.remove_all();
-        BOOST_FOREACH ( mapnik::stop_pair const& st, grad.get_stop_array() )
+        for ( mapnik::stop_pair const& st : grad.get_stop_array() )
         {
             mapnik::color const& stop_color = st.second;
             unsigned r = stop_color.red();
@@ -147,91 +149,87 @@ public:
             unsigned a = stop_color.alpha();
             m_gradient_lut.add_color(st.first, agg::rgba8_pre(r, g, b, int(a * opacity)));
         }
-        m_gradient_lut.build_lut();
-
-        agg::trans_affine transform = mtx;
-        transform.invert();
-        agg::trans_affine tr;
-        tr = grad.get_transform();
-        tr.invert();
-        transform *= tr;
-
-        if (grad.get_units() != USER_SPACE_ON_USE)
+        if (m_gradient_lut.build_lut())
         {
-            double bx1=symbol_bbox.minx();
-            double by1=symbol_bbox.miny();
-            double bx2=symbol_bbox.maxx();
-            double by2=symbol_bbox.maxy();
+            agg::trans_affine transform = mtx;
+            transform.invert();
+            agg::trans_affine tr;
+            tr = grad.get_transform();
+            tr.invert();
+            transform *= tr;
 
-            if (grad.get_units() == OBJECT_BOUNDING_BOX)
+            if (grad.get_units() != USER_SPACE_ON_USE)
             {
-                bx1=path_bbox.minx();
-                by1=path_bbox.miny();
-                bx2=path_bbox.maxx();
-                by2=path_bbox.maxy();
+                double bx1=symbol_bbox.minx();
+                double by1=symbol_bbox.miny();
+                double bx2=symbol_bbox.maxx();
+                double by2=symbol_bbox.maxy();
+
+                if (grad.get_units() == OBJECT_BOUNDING_BOX)
+                {
+                    bounding_rect_single(curved_trans, path_id, &bx1, &by1, &bx2, &by2);
+                }
+
+                transform.translate(-bx1,-by1);
+                transform.scale(1.0/(bx2-bx1),1.0/(by2-by1));
             }
 
-            transform.translate(-bx1,-by1);
-            transform.scale(1.0/(bx2-bx1),1.0/(by2-by1));
-        }
+            if (grad.get_gradient_type() == RADIAL)
+            {
+                using gradient_adaptor_type = agg::gradient_radial_focus;
+                using span_gradient_type = agg::span_gradient<agg::rgba8,
+                                                              interpolator_type,
+                                                              gradient_adaptor_type,
+                                                              color_func_type>;
 
+                // the agg radial gradient assumes it is centred on 0
+                transform.translate(-x2,-y2);
 
-        if (grad.get_gradient_type() == RADIAL)
-        {
-            typedef agg::gradient_radial_focus gradient_adaptor_type;
-            typedef agg::span_gradient<agg::rgba8,
-                interpolator_type,
-                gradient_adaptor_type,
-                color_func_type> span_gradient_type;
+                // scale everything up since agg turns things into integers a bit too soon
+                int scaleup=255;
+                radius*=scaleup;
+                x1*=scaleup;
+                y1*=scaleup;
+                x2*=scaleup;
+                y2*=scaleup;
 
-            // the agg radial gradient assumes it is centred on 0
-            transform.translate(-x2,-y2);
+                transform.scale(scaleup,scaleup);
+                interpolator_type     span_interpolator(transform);
+                gradient_adaptor_type gradient_adaptor(radius,(x1-x2),(y1-y2));
 
-            // scale everything up since agg turns things into integers a bit too soon
-            int scaleup=255;
-            radius*=scaleup;
-            x1*=scaleup;
-            y1*=scaleup;
-            x2*=scaleup;
-            y2*=scaleup;
+                span_gradient_type    span_gradient(span_interpolator,
+                                                    gradient_adaptor,
+                                                    m_gradient_lut,
+                                                    0, radius);
 
-            transform.scale(scaleup,scaleup);
-            interpolator_type     span_interpolator(transform);
-            gradient_adaptor_type gradient_adaptor(radius,(x1-x2),(y1-y2));
+                render_scanlines_aa(ras, sl, ren, m_alloc, span_gradient);
+            }
+            else
+            {
+                using gradient_adaptor_type = linear_gradient_from_segment;
+                using span_gradient_type = agg::span_gradient<agg::rgba8,
+                                                              interpolator_type,
+                                                              gradient_adaptor_type,
+                                                              color_func_type>;
+                // scale everything up since agg turns things into integers a bit too soon
+                int scaleup=255;
+                x1*=scaleup;
+                y1*=scaleup;
+                x2*=scaleup;
+                y2*=scaleup;
 
-            span_gradient_type    span_gradient(span_interpolator,
-                                                gradient_adaptor,
-                                                m_gradient_lut,
-                                                0, radius);
+                transform.scale(scaleup,scaleup);
 
-            render_scanlines_aa(ras, sl, ren, m_alloc, span_gradient);
-        }
-        else
-        {
-            typedef linear_gradient_from_segment gradient_adaptor_type;
-            typedef agg::span_gradient<agg::rgba8,
-                interpolator_type,
-                gradient_adaptor_type,
-                color_func_type> span_gradient_type;
+                interpolator_type     span_interpolator(transform);
+                gradient_adaptor_type gradient_adaptor(x1,y1,x2,y2);
 
-            // scale everything up since agg turns things into integers a bit too soon
-            int scaleup=255;
-            x1*=scaleup;
-            y1*=scaleup;
-            x2*=scaleup;
-            y2*=scaleup;
+                span_gradient_type    span_gradient(span_interpolator,
+                                                    gradient_adaptor,
+                                                    m_gradient_lut,
+                                                    0, scaleup);
 
-            transform.scale(scaleup,scaleup);
-
-            interpolator_type     span_interpolator(transform);
-            gradient_adaptor_type gradient_adaptor(x1,y1,x2,y2);
-
-            span_gradient_type    span_gradient(span_interpolator,
-                                                gradient_adaptor,
-                                                m_gradient_lut,
-                                                0, scaleup);
-
-            render_scanlines_aa(ras, sl, ren, m_alloc, span_gradient);
+                render_scanlines_aa(ras, sl, ren, m_alloc, span_gradient);
+            }
         }
     }
 
@@ -261,10 +259,6 @@ public:
 
             transform = attr.transform;
 
-            double bx1,by1,bx2,by2;
-            bounding_rect_single(curved_trans, attr.index, &bx1, &by1, &bx2, &by2);
-            box2d<double> path_bbox(bx1,by1,bx2,by2);
-
             transform *= mtx;
             double scl = transform.scale();
             //curved_.approximation_method(curve_inc);
@@ -290,7 +284,7 @@ public:
 
                 if(attr.fill_gradient.get_gradient_type() != NO_GRADIENT)
                 {
-                    render_gradient(ras, sl, ren, attr.fill_gradient, transform, attr.fill_opacity * attr.opacity * opacity, symbol_bbox, path_bbox);
+                    render_gradient(ras, sl, ren, attr.fill_gradient, transform, attr.fill_opacity * attr.opacity * opacity, symbol_bbox, curved_trans, attr.index);
                 }
                 else
                 {
@@ -326,7 +320,7 @@ public:
 
                 if(attr.stroke_gradient.get_gradient_type() != NO_GRADIENT)
                 {
-                    render_gradient(ras, sl, ren, attr.stroke_gradient, transform, attr.stroke_opacity * attr.opacity * opacity, symbol_bbox, path_bbox);
+                    render_gradient(ras, sl, ren, attr.stroke_gradient, transform, attr.stroke_opacity * attr.opacity * opacity, symbol_bbox, curved_trans, attr.index);
                 }
                 else
                 {
@@ -342,14 +336,15 @@ public:
         }
     }
 
+#if defined(GRID_RENDERER)
     template <typename Rasterizer, typename Scanline, typename Renderer>
     void render_id(Rasterizer& ras,
                    Scanline& sl,
                    Renderer& ren,
                    int feature_id,
                    agg::trans_affine const& mtx,
-                   double opacity,
-                   const box2d<double> &symbol_bbox)
+                   double /*opacity*/,
+                   box2d<double> const& /*symbol_bbox*/)
 
     {
         using namespace agg;
@@ -368,10 +363,6 @@ public:
                 continue;
 
             transform = attr.transform;
-
-            double bx1,by1,bx2,by2;
-            bounding_rect_single(curved_trans, attr.index, &bx1, &by1, &bx2, &by2);
-            box2d<double> path_bbox(bx1,by1,bx2,by2);
 
             transform *= mtx;
             double scl = transform.scale();
@@ -428,12 +419,15 @@ public:
             }
         }
     }
+#endif
 
+    inline VertexSource & source() const { return source_;}
+    inline AttributeSource const& attributes() const { return attributes_;}
 private:
 
-    VertexSource &  source_;
-    curved_type          curved_;
-    curved_stroked_type  curved_stroked_;
+    VertexSource &         source_;
+    curved_type            curved_;
+    curved_stroked_type    curved_stroked_;
     AttributeSource const& attributes_;
 };
 

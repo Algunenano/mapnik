@@ -19,16 +19,12 @@
 
 
 // qt
-#include <QtWidgets/QApplication>
+#include <QApplication>
 #include <QStringList>
 #include <QSettings>
 #include <mapnik/datasource_cache.hpp>
 #include <mapnik/font_engine_freetype.hpp>
 #include "mainwindow.hpp"
-
-// boost
-#include <boost/algorithm/string.hpp>
-
 
 int main( int argc, char **argv )
 {
@@ -75,7 +71,8 @@ int main( int argc, char **argv )
         }
         else
         {
-            window.zoom_all();
+            std::shared_ptr<mapnik::Map> map = window.get_map();
+            if (map) map->zoom_all();
         }
         if (argc == 4)
         {

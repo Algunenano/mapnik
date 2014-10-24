@@ -28,31 +28,31 @@
 #include <mapnik/box2d.hpp>
 #include <mapnik/noncopyable.hpp>
 
-// boost
-#include <boost/shared_ptr.hpp>
-#include <boost/ptr_container/ptr_vector.hpp>
-
 namespace mapnik {
-
-enum eGeomType {
-    Unknown = 0,
-    Point = 1,
-    LineString = 2,
-    Polygon = 3
-};
 
 template <typename T, template <typename> class Container=vertex_vector>
 class geometry : private mapnik::noncopyable
 {
+
 public:
-    typedef T coord_type;
-    typedef Container<coord_type> container_type;
-    typedef typename container_type::value_type value_type;
-    typedef typename container_type::size_type size_type;
+    static const std::uint8_t geometry_bits = 7;
+    enum types : std::uint8_t
+    {
+        Unknown = 0x00,
+        Point =   0x01,
+        LineString = 0x02,
+        Polygon = 0x03,
+        PolygonExterior = Polygon,
+        PolygonInterior = Polygon | ( 1 << geometry_bits)
+    };
+    using coord_type = T;
+    using container_type = Container<coord_type>;
+    using value_type = typename container_type::value_type;
+    using size_type = typename container_type::size_type;
 private:
     container_type cont_;
-    eGeomType type_;
-    mutable unsigned itr_;
+    types type_;
+    mutable size_type itr_;
 public:
 
     geometry()
@@ -60,17 +60,22 @@ public:
           itr_(0)
     {}
 
-    explicit geometry(eGeomType type)
+    explicit geometry(types type)
         : type_(type),
           itr_(0)
     {}
 
-    eGeomType type() const
+    types type() const
     {
-        return type_;
+        return static_cast<types>(type_ & types::Polygon);
     }
 
-    void set_type(eGeomType type)
+    bool interior() const
+    {
+        return static_cast<bool>(type_ >> geometry_bits);
+    }
+
+    void set_type(types type)
     {
         type_ = type;
     }
@@ -91,7 +96,8 @@ public:
         double x = 0;
         double y = 0;
         rewind(0);
-        for (unsigned i=0; i < size(); ++i)
+        size_type geom_size = size();
+        for (size_type i = 0; i < geom_size; ++i)
         {
             unsigned cmd = vertex(&x,&y);
             if (cmd == SEG_CLOSE) continue;
@@ -143,9 +149,7 @@ public:
     }
 };
 
-typedef geometry<double,vertex_vector> geometry_type;
-typedef boost::shared_ptr<geometry_type> geometry_ptr;
-typedef boost::ptr_vector<geometry_type> geometry_container;
+using geometry_type = geometry<double,vertex_vector>;
 
 }
 

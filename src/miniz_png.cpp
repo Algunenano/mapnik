@@ -28,10 +28,11 @@
 
 // miniz
 #define MINIZ_NO_ARCHIVE_APIS
-#define MINIZ_NO_STDIO
 #define MINIZ_NO_ZLIB_COMPATIBLE_NAMES
-#include "miniz.c"
 
+extern "C" {
+#include "miniz.c"
+}
 // zlib
 #include <zlib.h>
 
@@ -44,8 +45,8 @@ namespace mapnik { namespace MiniZ {
 
 PNGWriter::PNGWriter(int level, int strategy)
 {
-    buffer = NULL;
-    compressor = NULL;
+    buffer = nullptr;
+    compressor = nullptr;
 
     if (level == -1)
     {
@@ -55,29 +56,33 @@ PNGWriter::PNGWriter(int level, int strategy)
     {
         throw std::runtime_error("compression level must be between 0 and 10");
     }
-    mz_uint flags = s_tdefl_num_probes[level] | (level <= 3) ? TDEFL_GREEDY_PARSING_FLAG : 0 | TDEFL_WRITE_ZLIB_HEADER;
+    mz_uint flags = s_tdefl_num_probes[level] | TDEFL_WRITE_ZLIB_HEADER;
+    if (level <= 3)
+    {
+        flags |= TDEFL_GREEDY_PARSING_FLAG;
+    }
     if (strategy == Z_FILTERED) flags |= TDEFL_FILTER_MATCHES;
     else if (strategy == Z_HUFFMAN_ONLY) flags &= ~TDEFL_MAX_PROBES_MASK;
     else if (strategy == Z_RLE) flags |= TDEFL_RLE_MATCHES;
     else if (strategy == Z_FIXED) flags |= TDEFL_FORCE_ALL_STATIC_BLOCKS;
 
     buffer = (tdefl_output_buffer *)MZ_MALLOC(sizeof(tdefl_output_buffer));
-    if (buffer == NULL)
+    if (buffer == nullptr)
     {
         throw std::bad_alloc();
     }
 
-    buffer->m_pBuf = NULL;
+    buffer->m_pBuf = nullptr;
     buffer->m_capacity = 8192;
     buffer->m_expandable = MZ_TRUE;
     buffer->m_pBuf = (mz_uint8 *)MZ_MALLOC(buffer->m_capacity);
-    if (buffer->m_pBuf == NULL)
+    if (buffer->m_pBuf == nullptr)
     {
         throw std::bad_alloc();
     }
 
     compressor = (tdefl_compressor *)MZ_MALLOC(sizeof(tdefl_compressor));
-    if (compressor == NULL)
+    if (compressor == nullptr)
     {
         throw std::bad_alloc();
     }
@@ -137,12 +142,14 @@ void PNGWriter::finishChunk(size_t start)
 {
     // Write chunk length at the beginning of the chunk.
     size_t payloadLength = buffer->m_size - start - 4 - 4;
-    writeUInt32BE(buffer->m_pBuf + start, payloadLength);
-
+    writeUInt32BE(buffer->m_pBuf + start, static_cast<mz_uint32>(payloadLength));
     // Write CRC32 checksum. Don't include the 4-byte length, but /do/ include
     // the 4-byte chunk name.
     mz_uint32 crc = mz_crc32(MZ_CRC32_INIT, buffer->m_pBuf + start + 4, payloadLength + 4);
-    mz_uint8 checksum[] = { crc >> 24, crc >> 16, crc >> 8, crc };
+    mz_uint8 checksum[] = { static_cast<mz_uint8>(crc >> 24),
+                            static_cast<mz_uint8>(crc >> 16),
+                            static_cast<mz_uint8>(crc >> 8),
+                            static_cast<mz_uint8>(crc) };
     mz_bool status = tdefl_output_buffer_putter(checksum, 4, buffer);
     if (status != MZ_TRUE)
     {
@@ -253,7 +260,7 @@ void PNGWriter::writeIDAT(T const& image)
         }
     }
 
-    status = tdefl_compress_buffer(compressor, NULL, 0, TDEFL_FINISH);
+    status = tdefl_compress_buffer(compressor, nullptr, 0, TDEFL_FINISH);
     if (status != TDEFL_STATUS_DONE)
     {
         throw std::runtime_error("failed to compress image");
@@ -300,7 +307,7 @@ void PNGWriter::writeIDATStripAlpha(T const& image) {
 
     MZ_FREE(scanline);
 
-    status = tdefl_compress_buffer(compressor, NULL, 0, TDEFL_FINISH);
+    status = tdefl_compress_buffer(compressor, nullptr, 0, TDEFL_FINISH);
     if (status != TDEFL_STATUS_DONE) throw std::runtime_error("failed to compress image");
 
     finishChunk(IDAT);
@@ -362,4 +369,3 @@ template void PNGWriter::writeIDATStripAlpha<image_data_32>(image_data_32 const&
 template void PNGWriter::writeIDATStripAlpha<image_view<image_data_32> >(image_view<image_data_32> const& image);
 
 }}
-

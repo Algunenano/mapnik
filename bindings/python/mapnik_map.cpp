@@ -20,21 +20,29 @@
  *
  *****************************************************************************/
 
+#include <mapnik/config.hpp>
+
 // boost
+#include "boost_std_shared_shim.hpp"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 #include <boost/python.hpp>
-#include <boost/python/detail/api_placeholder.hpp>
+#include <boost/noncopyable.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include <boost/python/iterator.hpp>
 #include <boost/iterator/transform_iterator.hpp>
+#pragma GCC diagnostic pop
 
 // mapnik
 #include <mapnik/rule.hpp>
 #include <mapnik/layer.hpp>
 #include <mapnik/map.hpp>
 #include <mapnik/projection.hpp>
-#include <mapnik/ctrans.hpp>
+#include <mapnik/view_transform.hpp>
 #include <mapnik/feature_type_style.hpp>
-//#include <mapnik/util/deepcopy.hpp>
 #include "mapnik_enumeration.hpp"
 
 using mapnik::color;
@@ -46,6 +54,16 @@ using mapnik::Map;
 std::vector<layer>& (Map::*layers_nonconst)() =  &Map::layers;
 std::vector<layer> const& (Map::*layers_const)() const =  &Map::layers;
 mapnik::parameters& (Map::*params_nonconst)() =  &Map::get_extra_parameters;
+
+void insert_style(mapnik::Map & m, std::string const& name, mapnik::feature_type_style const& style)
+{
+    m.insert_style(name,style);
+}
+
+void insert_fontset(mapnik::Map & m, std::string const& name, mapnik::font_set const& fontset)
+{
+    m.insert_fontset(name,fontset);
+}
 
 mapnik::feature_type_style find_style(mapnik::Map const& m, std::string const& name)
 {
@@ -91,17 +109,6 @@ mapnik::featureset_ptr query_map_point(mapnik::Map const& m, int index, double x
     return m.query_map_point(idx, x, y);
 }
 
-// deepcopy
-/*
-mapnik::Map map_deepcopy(mapnik::Map & m, boost::python::dict memo)
-{
-    // FIXME: ignore memo for now
-    mapnik::Map result;
-    mapnik::util::deepcopy(m, result);
-    return result;
-}
-*/
-
 void set_maximum_extent(mapnik::Map & m, boost::optional<mapnik::box2d<double> > const& box)
 {
     if (box)
@@ -116,15 +123,15 @@ void set_maximum_extent(mapnik::Map & m, boost::optional<mapnik::box2d<double> >
 
 struct extract_style
 {
-    typedef boost::python::tuple result_type;
+    using result_type = boost::python::tuple;
     result_type operator() (std::map<std::string, mapnik::feature_type_style>::value_type const& val) const
     {
         return boost::python::make_tuple(val.first,val.second);
     }
 };
 
-typedef boost::transform_iterator<extract_style, Map::const_style_iterator> style_extract_iterator;
-typedef std::pair<style_extract_iterator,style_extract_iterator> style_range;
+using style_extract_iterator = boost::transform_iterator<extract_style, Map::const_style_iterator>;
+using style_range = std::pair<style_extract_iterator,style_extract_iterator>;
 
 style_range _styles_ (mapnik::Map const& m)
 {
@@ -147,6 +154,7 @@ void export_map()
         .value("ADJUST_BBOX_HEIGHT",mapnik::Map::ADJUST_BBOX_HEIGHT)
         .value("ADJUST_CANVAS_WIDTH",mapnik::Map::ADJUST_CANVAS_WIDTH)
         .value("ADJUST_CANVAS_HEIGHT", mapnik::Map::ADJUST_CANVAS_HEIGHT)
+        .value("RESPECT", mapnik::Map::RESPECT)
         ;
 
     class_<std::vector<layer> >("Layers")
@@ -174,7 +182,7 @@ void export_map()
                     "'+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs'\n"
                     ))
 
-        .def("append_style",&Map::insert_style,
+        .def("append_style",insert_style,
              (arg("style_name"),arg("style_object")),
              "Insert a Mapnik Style onto the map by appending it.\n"
              "\n"
@@ -187,7 +195,7 @@ void export_map()
              "False # you can only append styles with unique names\n"
             )
 
-        .def("append_fontset",&Map::insert_fontset,
+        .def("append_fontset",insert_fontset,
              (arg("fontset")),
              "Add a FontSet to the map."
             )
@@ -344,7 +352,7 @@ void export_map()
              ">>> m.scale_denominator()\n"
             )
 
-        .def("view_transform",&Map::view_transform,
+        .def("view_transform",&Map::transform,
              "Return the map ViewTransform object\n"
              "which is used internally to convert between\n"
              "geographic coordinates and screen coordinates.\n"
@@ -356,8 +364,8 @@ void export_map()
         .def("zoom",&Map::zoom,
              (arg("factor")),
              "Zoom in or out by a given factor.\n"
-             "Positive number zooms in, negative number\n"
-             "zooms out.\n"
+             "positive number larger than 1, zooms out\n"
+             "positive number smaller than 1, zooms in\n"
              "\n"
              "Usage:\n"
              "\n"
@@ -382,7 +390,6 @@ void export_map()
              ">>> m.zoom_to_box(extent)\n"
             )
 
-        //.def("__deepcopy__",&map_deepcopy)
         .add_property("parameters",make_function(params_nonconst,return_value_policy<reference_existing_object>()),"TODO")
 
         .add_property("aspect_fix_mode",
@@ -421,6 +428,22 @@ void export_map()
                       "\n"
                       "Usage:\n"
                       ">>> m.background_image = '/path/to/image.png'\n"
+            )
+
+        .add_property("background_image_comp_op",&Map::background_image_comp_op,
+                      &Map::set_background_image_comp_op,
+                      "The background image compositing operation.\n"
+                      "\n"
+                      "Usage:\n"
+                      ">>> m.background_image_comp_op = mapnik.CompositeOp.src_over\n"
+            )
+
+        .add_property("background_image_opacity",&Map::background_image_opacity,
+                      &Map::set_background_image_opacity,
+                      "The background image opacity.\n"
+                      "\n"
+                      "Usage:\n"
+                      ">>> m.background_image_opacity = 1.0\n"
             )
 
         .add_property("base",
@@ -514,5 +537,7 @@ void export_map()
                       ">>> m.width\n"
                       "800\n"
             )
+        // comparison
+        .def(self == self)
         ;
 }

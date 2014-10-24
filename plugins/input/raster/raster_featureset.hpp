@@ -35,7 +35,6 @@
 
 // boost
 #include <boost/utility.hpp>
-#include <boost/format.hpp>
 
 class single_file_policy
 {
@@ -122,7 +121,7 @@ class tiled_file_policy
 {
 public:
 
-    typedef std::vector<raster_info>::const_iterator const_iterator;
+    using const_iterator = std::vector<raster_info>::const_iterator;
 
     tiled_file_policy(std::string const& file,
                       std::string const& format,
@@ -200,7 +199,7 @@ class tiled_multi_file_policy
 {
 public:
 
-    typedef std::vector<raster_info>::const_iterator const_iterator;
+    using const_iterator = std::vector<raster_info>::const_iterator;
 
     tiled_multi_file_policy(std::string const& file_pattern,
                             std::string const& format,
@@ -305,7 +304,7 @@ private:
 template <typename LookupPolicy>
 class raster_featureset : public mapnik::Featureset
 {
-    typedef typename LookupPolicy::const_iterator iterator_type;
+    using iterator_type = typename LookupPolicy::const_iterator;
 
 public:
     raster_featureset(LookupPolicy const& policy,

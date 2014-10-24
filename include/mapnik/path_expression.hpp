@@ -23,11 +23,10 @@
 #ifndef MAPNIK_PATH_EXPRESSION_HPP
 #define MAPNIK_PATH_EXPRESSION_HPP
 
-// boost
-#include <boost/variant/variant_fwd.hpp>
-#include <boost/shared_ptr.hpp>
-
+#include <mapnik/config.hpp>
+#include <mapnik/util/variant.hpp>
 // stl
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -36,9 +35,9 @@ namespace mapnik
 
 struct attribute;
 
-typedef boost::variant<std::string, attribute> path_component;
-typedef std::vector<path_component> path_expression;
-typedef boost::shared_ptr<path_expression> path_expression_ptr;
+using path_component = util::variant<std::string, attribute>;
+using path_expression = std::vector<path_component>;
+using path_expression_ptr = std::shared_ptr<path_expression>;
 
 }
 

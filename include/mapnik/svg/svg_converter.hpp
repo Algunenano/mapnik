@@ -50,14 +50,17 @@ public:
 
     svg_converter(VertexSource & source, AttributeSource & attributes)
         : source_(source),
-          attributes_(attributes) {}
+          attributes_(attributes),
+          attr_stack_(),
+          svg_width_(0.0),
+          svg_height_(0.0) {}
 
     void begin_path()
     {
         unsigned idx = source_.start_new_path();
         attributes_.add(path_attributes(cur_attr(), idx));
     }
-    
+
     void end_path()
     {
         if(attributes_.size() == 0)
@@ -245,7 +248,7 @@ public:
     {
         return cur_attr().display_flag;
     }
-    
+
     void stroke_width(double w)
     {
         cur_attr().stroke_width = w;
@@ -354,7 +357,7 @@ private:
 };
 
 
-typedef svg_converter<svg_path_adapter,agg::pod_bvector<mapnik::svg::path_attributes> > svg_converter_type;
+using svg_converter_type = svg_converter<svg_path_adapter,agg::pod_bvector<mapnik::svg::path_attributes> >;
 
 }}
 

@@ -26,6 +26,7 @@
 // mapnik
 #include <mapnik/box2d.hpp>
 #include <mapnik/geometry.hpp>
+#include <mapnik/featureset.hpp>
 #include <mapnik/datasource.hpp>
 #include <mapnik/memory_datasource.hpp>
 #include <mapnik/feature.hpp>
@@ -76,7 +77,7 @@ public:
                 }
                 else
                 {
-                    for (unsigned i=0; i<(*pos_)->num_geometries();++i)
+                    for (std::size_t i=0; i<(*pos_)->num_geometries();++i)
                     {
                         geometry_type & geom = (*pos_)->get_geometry(i);
                         if (bbox_.intersects(geom.envelope()))

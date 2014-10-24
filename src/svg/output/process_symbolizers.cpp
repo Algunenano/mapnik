@@ -20,10 +20,58 @@
  *
  *****************************************************************************/
 
+#if defined(SVG_RENDERER)
+
 // mapnik
+#include <mapnik/symbolizer.hpp>
+#include <mapnik/feature.hpp>
+#include <mapnik/transform_path_adapter.hpp>
 #include <mapnik/svg/output/svg_renderer.hpp>
+#include <mapnik/svg/geometry_svg_generator_impl.hpp>
+#include <mapnik/svg/output/svg_output_grammars.hpp>
+#include <mapnik/svg/output/svg_output_attributes.hpp>
+#include <mapnik/symbolizer_dispatch.hpp>
+
+// boost
+#include <boost/spirit/include/karma.hpp>
 
 namespace mapnik {
+
+struct symbol_type_dispatch : public util::static_visitor<bool>
+{
+    template <typename Symbolizer>
+    bool operator()(Symbolizer const&) const
+    {
+        return false;
+    }
+    bool operator()(line_symbolizer const&) const
+    {
+        return true;
+    }
+    bool operator()(polygon_symbolizer const&) const
+    {
+        return true;
+    }
+};
+
+bool is_path_based(symbolizer const& sym)
+{
+    return util::apply_visitor(symbol_type_dispatch(), sym);
+}
+
+template <typename OutputIterator, typename PathType>
+void generate_path(OutputIterator & output_iterator, PathType const& path, svg::path_output_attributes const& path_attributes)
+{
+    using path_dash_array_grammar = svg::svg_path_dash_array_grammar<OutputIterator>;
+    using path_attributes_grammar = svg::svg_path_attributes_grammar<OutputIterator>;
+    static const path_attributes_grammar attributes_grammar;
+    static const path_dash_array_grammar dash_array_grammar;
+    static const svg::svg_path_generator<OutputIterator,PathType> svg_path_grammer;
+    boost::spirit::karma::lit_type lit;
+    boost::spirit::karma::generate(output_iterator, lit("<path ") << svg_path_grammer, path);
+    boost::spirit::karma::generate(output_iterator, lit(" ") << dash_array_grammar, path_attributes.stroke_dasharray());
+    boost::spirit::karma::generate(output_iterator, lit(" ") << attributes_grammar << lit("/>\n"), path_attributes);
+}
 
 template <typename OutputIterator>
 bool svg_renderer<OutputIterator>::process(rule::symbolizers const& syms,
@@ -31,31 +79,36 @@ bool svg_renderer<OutputIterator>::process(rule::symbolizers const& syms,
                                            proj_transform const& prj_trans)
 {
     // svg renderer supports processing of multiple symbolizers.
-    typedef coord_transform<CoordTransform, geometry_type> path_type;
+    using path_type = transform_path_adapter<view_transform, geometry_type>;
 
+    bool process_path = false;
     // process each symbolizer to collect its (path) information.
     // path information (attributes from line_ and polygon_ symbolizers)
     // is collected with the path_attributes_ data member.
-    BOOST_FOREACH(symbolizer const& sym, syms)
+    for (auto const& sym : syms)
     {
-        boost::apply_visitor(symbol_dispatch(*this, feature, prj_trans), sym);
-    }
-
-    // generate path output for each geometry of the current feature.
-    for(unsigned i=0; i<feature.num_geometries(); ++i)
-    {
-        geometry_type & geom = feature.get_geometry(i);
-        if(geom.size() > 0)
+        if (is_path_based(sym))
         {
-            path_type path(t_, geom, prj_trans);
-            generator_.generate_path(path, path_attributes_);
+            process_path = true;
         }
+        util::apply_visitor(symbolizer_dispatch<svg_renderer<OutputIterator>>(*this, feature, prj_trans), sym);
     }
 
-    // set the previously collected values back to their defaults
-    // for the feature that will be processed next.
-    path_attributes_.reset();
-
+    if (process_path)
+    {
+        // generate path output for each geometry of the current feature.
+        for (auto & geom : feature.paths())
+        {
+            if(geom.size() > 0)
+            {
+                path_type path(common_.t_, geom, prj_trans);
+                generate_path(generator_.output_iterator_, path, path_attributes_);
+            }
+        }
+        // set the previously collected values back to their defaults
+        // for the feature that will be processed next.
+        path_attributes_.reset();
+    }
     return true;
 }
 
@@ -64,3 +117,5 @@ template bool svg_renderer<std::ostream_iterator<char> >::process(rule::symboliz
                                                                   proj_transform const& prj_trans);
 
 }
+
+#endif

@@ -1,4 +1,3 @@
-#include <boost/version.hpp>
 #include <boost/detail/lightweight_test.hpp>
 #include <iostream>
 #include <mapnik/params.hpp>
@@ -117,10 +116,8 @@ int main(int argc, char** argv)
 
     if (!::boost::detail::test_errors()) {
         if (quiet) std::clog << "\x1b[1;32m.\x1b[0m";
-        else std::clog << "C++ CSV parse: \x1b[1;32m✓ \x1b[0m\n";
-#if BOOST_VERSION >= 104600
+        else std::clog << "C++ WKB formats test: \x1b[1;32m✓ \x1b[0m\n";
         ::boost::detail::report_errors_remind().called_report_errors_function = true;
-#endif
     } else {
         return ::boost::report_errors();
     }

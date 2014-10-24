@@ -26,9 +26,12 @@
 // mapnik
 #include <mapnik/path_expression.hpp>
 
-// spirit2
+// boost
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
 #include <boost/spirit/include/qi.hpp>
-#include <boost/spirit/include/qi_action.hpp>
+#pragma GCC diagnostic pop
 
 // stl
 #include <string>

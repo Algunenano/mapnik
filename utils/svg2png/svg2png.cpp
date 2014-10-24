@@ -35,8 +35,12 @@
 #include <mapnik/svg/svg_renderer_agg.hpp>
 #include <mapnik/svg/svg_path_attributes.hpp>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
+#pragma GCC diagnostic pop
 
 #include "agg_rasterizer_scanline_aa.h"
 #include "agg_basics.h"
@@ -56,8 +60,7 @@ int main (int argc,char** argv)
     bool auto_open = false;
     int return_value = 0;
     std::vector<std::string> svg_files;
-    mapnik::logger logger;
-    logger.set_severity(mapnik::logger::error);
+    mapnik::logger::instance().set_severity(mapnik::logger::error);
 
     try
     {
@@ -141,9 +144,9 @@ int main (int argc,char** argv)
                 continue;
             }
 
-            typedef agg::pixfmt_rgba32_pre pixfmt;
-            typedef agg::renderer_base<pixfmt> renderer_base;
-            typedef agg::renderer_scanline_aa_solid<renderer_base> renderer_solid;
+            using pixfmt = agg::pixfmt_rgba32_pre;
+            using renderer_base = agg::renderer_base<pixfmt>;
+            using renderer_solid = agg::renderer_scanline_aa_solid<renderer_base>;
             agg::rasterizer_scanline_aa<> ras_ptr;
             agg::scanline_u8 sl;
 
@@ -155,7 +158,7 @@ int main (int argc,char** argv)
                 std::clog << "found width of '" << w << "' and height of '" << h << "'\n";
             }
             // 10 pixel buffer to avoid edge clipping of 100% svg's
-            mapnik::image_32 im(w+10,h+10);
+            mapnik::image_32 im(w+0,h+0);
             agg::rendering_buffer buf(im.raw_data(), im.width(), im.height(), im.width() * 4);
             pixfmt pixf(buf);
             renderer_base renb(pixf);

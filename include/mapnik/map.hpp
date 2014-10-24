@@ -24,24 +24,35 @@
 #define MAPNIK_MAP_HPP
 
 // mapnik
+#include <mapnik/config.hpp>
 #include <mapnik/color.hpp>
 #include <mapnik/font_set.hpp>
 #include <mapnik/enumeration.hpp>
-#include <mapnik/datasource.hpp>  // for featureset_ptr
-#include <mapnik/layer.hpp>
+#include <mapnik/box2d.hpp>
 #include <mapnik/params.hpp>
 #include <mapnik/well_known_srs.hpp>
+#include <mapnik/image_compositing.hpp>
+#include <mapnik/font_engine_freetype.hpp>
 
 // boost
-#include <boost/optional/optional.hpp>
+#include <boost/optional.hpp>
+
+// stl
+#include <map>
+#include <memory>
+#include <vector>
+#include <string>
 
 namespace mapnik
 {
 
+struct Featureset;
+using featureset_ptr = std::shared_ptr<Featureset>;
 class feature_type_style;
-class CoordTransform;
+class view_transform;
+class layer;
 
-class MAPNIK_DECL Map
+class MAPNIK_DECL Map : boost::equality_comparable<Map>
 {
 public:
 
@@ -61,9 +72,10 @@ public:
         ADJUST_BBOX_HEIGHT,
         // adjust the width of the map, leave height and geo bbox unchanged
         ADJUST_CANVAS_WIDTH,
-        //adjust the height of the map, leave width and geo bbox unchanged
+        // adjust the height of the map, leave width and geo bbox unchanged
         ADJUST_CANVAS_HEIGHT,
-        //
+        // do nothing
+        RESPECT,
         aspect_fix_mode_MAX
     };
 
@@ -76,6 +88,8 @@ private:
     int buffer_size_;
     boost::optional<color> background_;
     boost::optional<std::string> background_image_;
+    composite_mode_e background_image_comp_op_;
+    float background_image_opacity_;
     std::map<std::string,feature_type_style> styles_;
     std::map<std::string,font_set> fontsets_;
     std::vector<layer> layers_;
@@ -84,13 +98,16 @@ private:
     boost::optional<box2d<double> > maximum_extent_;
     std::string base_path_;
     parameters extra_params_;
+    boost::optional<std::string> font_directory_;
+    freetype_engine::font_file_mapping_type font_file_mapping_;
+    freetype_engine::font_memory_cache_type font_memory_cache_;
 
 public:
 
-    typedef std::map<std::string,feature_type_style>::const_iterator const_style_iterator;
-    typedef std::map<std::string,feature_type_style>::iterator style_iterator;
-    typedef std::map<std::string,font_set>::const_iterator const_fontset_iterator;
-    typedef std::map<std::string,font_set>::iterator fontset_iterator;
+    using const_style_iterator = std::map<std::string,feature_type_style>::const_iterator;
+    using style_iterator = std::map<std::string,feature_type_style>::iterator;
+    using const_fontset_iterator = std::map<std::string,font_set>::const_iterator;
+    using fontset_iterator = std::map<std::string,font_set>::iterator;
 
     /*! \brief Default constructor.
      *
@@ -106,20 +123,22 @@ public:
      *  @param height Initial map height.
      *  @param srs Initial map projection.
      */
-    Map(int width, int height, std::string const& srs=MAPNIK_LONGLAT_PROJ);
+    Map(int width, int height, std::string const& srs = MAPNIK_LONGLAT_PROJ);
 
-    /*! \brief Copy Constructur.
+    /*! \brief Copy Constructor.
      *
      *  @param rhs Map to copy from.
      */
     Map(Map const& rhs);
 
-    /*! \brief Assignment operator
-     *
-     *  TODO: to be documented
-     *
-     */
-    Map& operator=(Map const& rhs);
+    // move ctor
+    Map(Map && other);
+
+    // assignment operator
+    Map& operator=(Map rhs);
+
+    // comparison op
+    bool operator==(Map const& other) const;
 
     /*! \brief Get all styles
      * @return Const reference to styles
@@ -151,13 +170,21 @@ public:
      */
     style_iterator end_styles();
 
-    /*! \brief Insert a style in the map.
+    /*! \brief Insert a style in the map by copying.
      *  @param name The name of the style.
      *  @param style The style to insert.
      *  @return true If success.
      *          false If no success.
      */
     bool insert_style(std::string const& name,feature_type_style const& style);
+
+    /*! \brief Insert a style in the map by moving..
+     *  @param name The name of the style.
+     *  @param style The style to insert.
+     *  @return true If success.
+     *          false If no success.
+     */
+    bool insert_style(std::string const& name,feature_type_style && style);
 
     /*! \brief Remove a style from the map.
      *  @param name The name of the style.
@@ -170,13 +197,21 @@ public:
      */
     boost::optional<feature_type_style const&> find_style(std::string const& name) const;
 
-    /*! \brief Insert a fontset into the map.
+    /*! \brief Insert a fontset into the map by copying.
      *  @param name The name of the fontset.
      *  @param fontset The fontset to insert.
      *  @return true If success.
      *          false If failure.
      */
     bool insert_fontset(std::string const& name, font_set const& fontset);
+
+    /*! \brief Insert a fontset into the map by moving.
+     *  @param name The name of the fontset.
+     *  @param fontset The fontset to insert.
+     *  @return true If success.
+     *          false If failure.
+     */
+    bool insert_fontset(std::string const& name, font_set && fontset);
 
     /*! \brief Find a fontset.
      *  @param name The name of the fontset.
@@ -194,31 +229,44 @@ public:
      */
     std::map<std::string,font_set> & fontsets();
 
+    /*! \brief register fonts.
+     */
+    bool register_fonts(std::string const& dir, bool recurse);
+
+    /*! \brief cache registered fonts.
+     */
+    bool load_fonts();
+
     /*! \brief Get number of all layers.
      */
     size_t layer_count() const;
 
-    /*! \brief Add a layer to the map.
+    /*! \brief Add a layer to the map by copying it.
      *  @param l The layer to add.
      */
-    void addLayer(layer const& l);
+    void add_layer(layer const& l);
+
+    /*! \brief Add a layer to the map by moving it.
+     *  @param l The layer to add.
+     */
+    void add_layer(layer && l);
 
     /*! \brief Get a layer.
      *  @param index layer number.
      *  @return Constant layer.
      */
-    layer const& getLayer(size_t index) const;
+    layer const& get_layer(size_t index) const;
 
     /*! \brief Get a layer.
      *  @param index layer number.
      *  @return Non-constant layer.
      */
-    layer& getLayer(size_t index);
+    layer& get_layer(size_t index);
 
     /*! \brief Remove a layer.
      *  @param index layer number.
      */
-    void removeLayer(size_t index);
+    void remove_layer(size_t index);
 
     /*! \brief Get all layers.
      *  @return Constant layers.
@@ -286,10 +334,30 @@ public:
      */
     boost::optional<std::string> const& background_image() const;
 
+    /*! \brief Set the compositing operation uses to blend the background image into the background color.
+     *  @param comp_op compositing operation.
+     */
+    void set_background_image_comp_op(composite_mode_e comp_op);
+
+    /*! \brief Get the map background image compositing operation
+     *  @return Background image compositing operation as composite_mode_e
+     *  object
+     */
+    composite_mode_e background_image_comp_op() const;
+
+    /*! \brief Set the map background image opacity.
+     *  @param opacity Background image opacity.
+     */
+    void set_background_image_opacity(float opacity);
+
+    /*! \brief Get the map background image opacity
+     *  @return opacity value as float
+     */
+    float background_image_opacity() const;
+
     /*! \brief Set buffer size
      *  @param buffer_size Buffer size in pixels.
      */
-
     void set_buffer_size(int buffer_size);
 
     /*! \brief Get the map buffer size
@@ -354,7 +422,7 @@ public:
 
     double scale_denominator() const;
 
-    CoordTransform view_transform() const;
+    view_transform transform() const;
 
     /*!
      * @brief Query a Map layer (by layer index) for features
@@ -365,7 +433,7 @@ public:
      * @param index The index of the layer to query from.
      * @param x The x coordinate where to query.
      * @param y The y coordinate where to query.
-     * @return A Mapnik Featureset if successful otherwise will return NULL.
+     * @return A Mapnik Featureset if successful otherwise will return nullptr.
      */
     featureset_ptr query_point(unsigned index, double x, double y) const;
 
@@ -378,7 +446,7 @@ public:
      * @param index The index of the layer to query from.
      * @param x The x coordinate where to query.
      * @param y The y coordinate where to query.
-     * @return A Mapnik Featureset if successful otherwise will return NULL.
+     * @return A Mapnik Featureset if successful otherwise will return nullptr.
      */
     featureset_ptr query_map_point(unsigned index, double x, double y) const;
 
@@ -402,7 +470,38 @@ public:
      */
     void set_extra_parameters(parameters& params);
 
+    boost::optional<std::string> const& font_directory() const
+    {
+        return font_directory_;
+    }
+
+    void set_font_directory(std::string const& dir)
+    {
+        font_directory_ = dir;
+    }
+
+    freetype_engine::font_file_mapping_type const& get_font_file_mapping() const
+    {
+        return font_file_mapping_;
+    }
+
+    freetype_engine::font_file_mapping_type & get_font_file_mapping()
+    {
+        return font_file_mapping_;
+    }
+
+    freetype_engine::font_memory_cache_type const& get_font_memory_cache() const
+    {
+        return font_memory_cache_;
+    }
+
+    freetype_engine::font_memory_cache_type & get_font_memory_cache()
+    {
+        return font_memory_cache_;
+    }
+
 private:
+    friend void swap(Map & rhs, Map & lhs);
     void fixAspectRatio();
 };
 

@@ -22,16 +22,22 @@
 
 // mapnik
 #include <mapnik/debug.hpp>
+#include <mapnik/datasource.hpp>
 #include <mapnik/datasource_cache.hpp>
 #include <mapnik/config_error.hpp>
 #include <mapnik/params.hpp>
 #include <mapnik/plugin.hpp>
 #include <mapnik/util/fs.hpp>
+#include <mapnik/utils.hpp>
 
 // boost
-#include <boost/make_shared.hpp>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
 #include <boost/filesystem/operations.hpp>
-#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#pragma GCC diagnostic pop
 
 // stl
 #include <algorithm>
@@ -39,6 +45,8 @@
 #include <stdexcept>
 
 namespace mapnik {
+
+template class singleton<datasource_cache, CreateStatic>;
 
 extern datasource_ptr create_static_datasource(parameters const& params);
 extern std::vector<std::string> get_static_datasource_names();
@@ -78,24 +86,27 @@ datasource_ptr datasource_cache::create(parameters const& params)
     }
 #endif
 
-#ifdef MAPNIK_THREADSAFE
-    mutex::scoped_lock lock(mutex_);
-#endif
-
-    std::map<std::string,boost::shared_ptr<PluginInfo> >::iterator itr=plugins_.find(*type);
-    if (itr == plugins_.end())
+    std::map<std::string,std::shared_ptr<PluginInfo> >::iterator itr;
+    // add scope to ensure lock is released asap
     {
-        std::string s("Could not create datasource for type: '");
-        s += *type + "'";
-        if (plugin_directories_.empty())
+#ifdef MAPNIK_THREADSAFE
+        mapnik::scoped_lock lock(mutex_);
+#endif
+        itr=plugins_.find(*type);
+        if (itr == plugins_.end())
         {
-            s + " (no datasource plugin directories have been successfully registered)";
+            std::string s("Could not create datasource for type: '");
+            s += *type + "'";
+            if (plugin_directories_.empty())
+            {
+                s += " (no datasource plugin directories have been successfully registered)";
+            }
+            else
+            {
+                s += " (searched for datasource plugins in '" + plugin_directories() + "')";
+            }
+            throw config_error(s);
         }
-        else
-        {
-            s + " (searched for datasource plugins in '" + plugin_directories() + "')";
-        }
-        throw config_error(s);
     }
 
     if (! itr->second->valid())
@@ -108,7 +119,7 @@ datasource_ptr datasource_cache::create(parameters const& params)
 #ifdef __GNUC__
     __extension__
 #endif
-        create_ds* create_datasource = reinterpret_cast<create_ds*>(itr->second->get_symbol("create"));
+        create_ds create_datasource = reinterpret_cast<create_ds>(itr->second->get_symbol("create"));
 
     if (! create_datasource)
     {
@@ -117,24 +128,6 @@ datasource_ptr datasource_cache::create(parameters const& params)
     }
 
     ds = datasource_ptr(create_datasource(params), datasource_deleter());
-
-#ifdef MAPNIK_LOG
-    MAPNIK_LOG_DEBUG(datasource_cache)
-        << "datasource_cache: Datasource="
-        << ds << " type=" << type;
-
-    MAPNIK_LOG_DEBUG(datasource_cache)
-        << "datasource_cache: Size="
-        << params.size();
-
-    parameters::const_iterator i = params.begin();
-    for (; i != params.end(); ++i)
-    {
-        MAPNIK_LOG_DEBUG(datasource_cache)
-            << "datasource_cache: -- "
-            << i->first << "=" << i->second;
-    }
-#endif
 
     return ds;
 }
@@ -152,7 +145,7 @@ std::vector<std::string> datasource_cache::plugin_names()
     names = get_static_datasource_names();
 #endif
 
-    std::map<std::string,boost::shared_ptr<PluginInfo> >::const_iterator itr;
+    std::map<std::string,std::shared_ptr<PluginInfo> >::const_iterator itr;
     for (itr = plugins_.begin(); itr != plugins_.end(); ++itr)
     {
         names.push_back(itr->first);
@@ -161,44 +154,75 @@ std::vector<std::string> datasource_cache::plugin_names()
     return names;
 }
 
-void datasource_cache::register_datasources(std::string const& str)
+bool datasource_cache::register_datasources(std::string const& dir, bool recurse)
 {
 #ifdef MAPNIK_THREADSAFE
-    mutex::scoped_lock lock(mutex_);
+    mapnik::scoped_lock lock(mutex_);
 #endif
-    // TODO - only push unique paths
-    plugin_directories_.push_back(str);
-    if (mapnik::util::exists(str) && mapnik::util::is_directory(str))
+    if (!mapnik::util::exists(dir))
+    {
+        return false;
+    }
+    plugin_directories_.insert(dir);
+    if (!mapnik::util::is_directory(dir))
+    {
+        return register_datasource(dir);
+    }
+    bool success = false;
+    try
     {
         boost::filesystem::directory_iterator end_itr;
-        for (boost::filesystem::directory_iterator itr(str); itr != end_itr; ++itr )
+#ifdef _WINDOWS
+        std::wstring wide_dir(mapnik::utf8_to_utf16(dir));
+        for (boost::filesystem::directory_iterator itr(wide_dir); itr != end_itr; ++itr)
         {
-
-#if (BOOST_FILESYSTEM_VERSION == 3)
-            if (!boost::filesystem::is_directory(*itr) && is_input_plugin(itr->path().filename().string()))
-#else // v2
-            if (!boost::filesystem::is_directory(*itr) && is_input_plugin(itr->path().leaf()))
+            std::string file_name = mapnik::utf16_to_utf8(itr->path().wstring());
+#else
+        for (boost::filesystem::directory_iterator itr(dir); itr != end_itr; ++itr)
+        {
+            std::string file_name = itr->path().string();
 #endif
+            if (boost::filesystem::is_directory(*itr) && recurse)
             {
-#if (BOOST_FILESYSTEM_VERSION == 3)
-                if (register_datasource(itr->path().string()))
-#else // v2
-                if (register_datasource(itr->string()))
-#endif
+                if (register_datasources(file_name, true))
                 {
-                    registered_ = true;
+                    success = true;
+                }
+            }
+            else
+            {
+                std::string base_name = itr->path().filename().string();
+                if (!boost::algorithm::starts_with(base_name,".") &&
+                    mapnik::util::is_regular_file(file_name) &&
+                    is_input_plugin(file_name))
+                {
+                    if (register_datasource(file_name))
+                    {
+                        success = true;
+                    }
                 }
             }
         }
     }
+    catch (std::exception const& ex)
+    {
+        MAPNIK_LOG_ERROR(datasource_cache) << "register_datasources: " << ex.what();
+    }
+    return success;
 }
 
 bool datasource_cache::register_datasource(std::string const& filename)
 {
-    bool success = false;
     try
     {
-        boost::shared_ptr<PluginInfo> plugin = boost::make_shared<PluginInfo>(filename,"datasource_name");
+        if (!mapnik::util::exists(filename))
+        {
+            MAPNIK_LOG_ERROR(datasource_cache)
+                    << "Cannot load '"
+                    << filename << "' (plugin does not exist)";
+            return false;
+        }
+        std::shared_ptr<PluginInfo> plugin = std::make_shared<PluginInfo>(filename,"datasource_name");
         if (plugin->valid())
         {
             if (plugin->name().empty())
@@ -209,11 +233,13 @@ bool datasource_cache::register_datasource(std::string const& filename)
             }
             else
             {
-                plugins_.insert(std::make_pair(plugin->name(),plugin));
-                MAPNIK_LOG_DEBUG(datasource_cache)
-                        << "datasource_cache: Registered="
-                        << plugin->name();
-                success = true;
+                if (plugins_.emplace(plugin->name(),plugin).second)
+                {
+                    MAPNIK_LOG_DEBUG(datasource_cache)
+                            << "datasource_cache: Registered="
+                            << plugin->name();
+                    return true;
+                }
             }
         }
         else
@@ -229,7 +255,7 @@ bool datasource_cache::register_datasource(std::string const& filename)
                 << "Exception caught while loading plugin library: "
                 << filename << " (" << ex.what() << ")";
     }
-    return success;
+    return false;
 }
 
 }

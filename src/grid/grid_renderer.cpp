@@ -20,6 +20,8 @@
  *
  *****************************************************************************/
 
+#if defined(GRID_RENDERER)
+
 // mapnik
 #include <mapnik/grid/grid_rasterizer.hpp>
 #include <mapnik/grid/grid_renderer.hpp>
@@ -58,34 +60,18 @@ template <typename T>
 grid_renderer<T>::grid_renderer(Map const& m, T & pixmap, double scale_factor, unsigned offset_x, unsigned offset_y)
     : feature_style_processor<grid_renderer>(m, scale_factor),
       pixmap_(pixmap),
-      width_(pixmap_.width()),
-      height_(pixmap_.height()),
-      scale_factor_(scale_factor),
-      // NOTE: can change this to m dims instead of pixmap_ if render-time
-      // resolution support is dropped from grid_renderer python interface
-      t_(pixmap_.width(),pixmap_.height(),m.get_current_extent(),offset_x,offset_y),
-      font_engine_(),
-      font_manager_(font_engine_),
-      detector_(boost::make_shared<label_collision_detector4>(box2d<double>(-m.buffer_size(), -m.buffer_size(), m.width() + m.buffer_size() ,m.height() + m.buffer_size()))),
-      ras_ptr(new grid_rasterizer)
+      ras_ptr(new grid_rasterizer),
+      common_(m, attributes(), offset_x, offset_y, m.width(), m.height(), scale_factor)
 {
     setup(m);
 }
 
 template <typename T>
-grid_renderer<T>::grid_renderer(Map const& m, request const& req, T & pixmap, double scale_factor, unsigned offset_x, unsigned offset_y)
+grid_renderer<T>::grid_renderer(Map const& m, request const& req, attributes const& vars, T & pixmap, double scale_factor, unsigned offset_x, unsigned offset_y)
     : feature_style_processor<grid_renderer>(m, scale_factor),
       pixmap_(pixmap),
-      width_(pixmap_.width()),
-      height_(pixmap_.height()),
-      scale_factor_(scale_factor),
-      // NOTE: can change this to m dims instead of pixmap_ if render-time
-      // resolution support is dropped from grid_renderer python interface
-      t_(pixmap_.width(),pixmap_.height(),req.extent(),offset_x,offset_y),
-      font_engine_(),
-      font_manager_(font_engine_),
-      detector_(boost::make_shared<label_collision_detector4>(box2d<double>(-req.buffer_size(), -req.buffer_size(), req.width() + req.buffer_size() ,req.height() + req.buffer_size()))),
-      ras_ptr(new grid_rasterizer)
+      ras_ptr(new grid_rasterizer),
+      common_(m, req, vars, offset_x, offset_y, req.width(), req.height(), scale_factor)
 {
     setup(m);
 }
@@ -105,11 +91,11 @@ void grid_renderer<T>::start_map_processing(Map const& m)
 {
     MAPNIK_LOG_DEBUG(grid_renderer) << "grid_renderer: Start map processing bbox=" << m.get_current_extent();
 
-    ras_ptr->clip_box(0,0,width_,height_);
+    ras_ptr->clip_box(0,0,common_.width_,common_.height_);
 }
 
 template <typename T>
-void grid_renderer<T>::end_map_processing(Map const& m)
+void grid_renderer<T>::end_map_processing(Map const& /*m*/)
 {
     MAPNIK_LOG_DEBUG(grid_renderer) << "grid_renderer: End map processing";
 }
@@ -123,13 +109,13 @@ void grid_renderer<T>::start_layer_processing(layer const& lay, box2d<double> co
 
     if (lay.clear_label_cache())
     {
-        detector_->clear();
+        common_.detector_->clear();
     }
-    query_extent_ = query_extent;
+    common_.query_extent_ = query_extent;
     boost::optional<box2d<double> > const& maximum_extent = lay.maximum_extent();
     if (maximum_extent)
     {
-        query_extent_.clip(*maximum_extent);
+        common_.query_extent_.clip(*maximum_extent);
     }
 }
 
@@ -140,17 +126,15 @@ void grid_renderer<T>::end_layer_processing(layer const&)
 }
 
 template <typename T>
-void grid_renderer<T>::render_marker(mapnik::feature_impl & feature, unsigned int step, pixel_position const& pos, marker const& marker, agg::trans_affine const& tr, double opacity, composite_mode_e comp_op)
+void grid_renderer<T>::render_marker(mapnik::feature_impl const& feature, pixel_position const& pos, marker const& marker, agg::trans_affine const& tr, double opacity, composite_mode_e /*comp_op*/)
 {
     if (marker.is_vector())
     {
-        typedef coord_transform<CoordTransform,geometry_type> path_type;
-        typedef typename grid_renderer_base_type::pixfmt_type pixfmt_type;
-        typedef typename grid_renderer_base_type::pixfmt_type::color_type color_type;
-        typedef agg::renderer_scanline_bin_solid<grid_renderer_base_type> renderer_type;
+        using pixfmt_type = typename grid_renderer_base_type::pixfmt_type;
+        using renderer_type = agg::renderer_scanline_bin_solid<grid_renderer_base_type>;
         agg::scanline_bin sl;
 
-        grid_rendering_buffer buf(pixmap_.raw_data(), width_, height_, width_);
+        grid_rendering_buffer buf(pixmap_.raw_data(), common_.width_, common_.height_, common_.width_);
         pixfmt_type pixf(buf);
 
         grid_renderer_base_type renb(pixf);
@@ -164,7 +148,7 @@ void grid_renderer<T>::render_marker(mapnik::feature_impl & feature, unsigned in
         agg::trans_affine mtx = agg::trans_affine_translation(-c.x,-c.y);
         // apply symbol transformation to get to map space
         mtx *= tr;
-        mtx *= agg::trans_affine_scaling(scale_factor_*(1.0/step));
+        mtx *= agg::trans_affine_scaling(common_.scale_factor_);
         // render the marker at the center of the marker box
         mtx.translate(pos.x, pos.y);
         using namespace mapnik::svg;
@@ -186,7 +170,7 @@ void grid_renderer<T>::render_marker(mapnik::feature_impl & feature, unsigned in
         double height = data.height();
         double cx = 0.5 * width;
         double cy = 0.5 * height;
-        if (step == 1 && (std::fabs(1.0 - scale_factor_) < 0.001 && tr.is_identity()))
+        if ((std::fabs(1.0 - common_.scale_factor_) < 0.001 && tr.is_identity()))
         {
             // TODO - support opacity
             pixmap_.set_rectangle(feature.id(), data,
@@ -195,14 +179,13 @@ void grid_renderer<T>::render_marker(mapnik::feature_impl & feature, unsigned in
         }
         else
         {
-            // TODO - remove support for step != or add support for agg scaling with opacity
-            double ratio = (1.0/step);
-            image_data_32 target(ratio * data.width(), ratio * data.height());
+            image_data_32 target(data.width(), data.height());
             mapnik::scale_image_agg<image_data_32>(target,
                                                    data,
                                                    SCALING_NEAR,
-                                                   ratio,
-                                                   ratio);
+                                                   1,
+                                                   1,
+                                                   0.0, 0.0, 1.0); // TODO: is 1.0 a valid default here, and do we even care in grid_renderer what the image looks like?
             pixmap_.set_rectangle(feature.id(), target,
                                   boost::math::iround(pos.x - cx),
                                   boost::math::iround(pos.y - cy));
@@ -214,3 +197,5 @@ void grid_renderer<T>::render_marker(mapnik::feature_impl & feature, unsigned in
 template class grid_renderer<grid>;
 
 }
+
+#endif

@@ -27,22 +27,13 @@
 #include <mapnik/expression_node_types.hpp>
 #include <mapnik/expression_node.hpp>
 #include <mapnik/attribute.hpp>
+#include <mapnik/value_types.hpp>
 #include <mapnik/value.hpp>
-
-// boost
-#include <boost/variant.hpp>
-#if defined(BOOST_REGEX_HAS_ICU)
-#include <boost/regex/icu.hpp>          // for u32regex
-#endif
-
-// icu
-#include <unicode/unistr.h>             // for UnicodeString
-
 
 namespace mapnik
 {
 
-struct expression_string : boost::static_visitor<void>
+struct expression_string : util::static_visitor<void>
 {
     explicit expression_string(std::string & str)
         : str_(str) {}
@@ -59,7 +50,13 @@ struct expression_string : boost::static_visitor<void>
         str_ += "]";
     }
 
-    void operator() (geometry_type_attribute const& attr) const
+    void operator() (global_attribute const& attr) const
+    {
+        str_ += "@";
+        str_ += attr.name;
+    }
+
+    void operator() (geometry_type_attribute const& /*attr*/) const
     {
         str_ += "[mapnik::geometry_type]";
     }
@@ -72,9 +69,9 @@ struct expression_string : boost::static_visitor<void>
             str_ += "(";
         }
 
-        boost::apply_visitor(expression_string(str_),x.left);
+        util::apply_visitor(*this,x.left);
         str_ += x.type();
-        boost::apply_visitor(expression_string(str_),x.right);
+        util::apply_visitor(*this,x.right);
         if (x.type() != tags::mult::str() && x.type() != tags::div::str())
         {
             str_ += ")";
@@ -86,46 +83,40 @@ struct expression_string : boost::static_visitor<void>
     {
         str_ += Tag::str();
         str_ += "(";
-        boost::apply_visitor(expression_string(str_),x.expr);
+        util::apply_visitor(*this,x.expr);
         str_ += ")";
     }
 
     void operator() (regex_match_node const & x) const
     {
-        boost::apply_visitor(expression_string(str_),x.expr);
-        str_ +=".match('";
-#if defined(BOOST_REGEX_HAS_ICU)
-        std::string utf8;
-        UnicodeString ustr = UnicodeString::fromUTF32( &x.pattern.str()[0] ,x.pattern.str().length());
-        to_utf8(ustr,utf8);
-        str_ += utf8;
-#else
-        str_ += x.pattern.str();
-#endif
-        str_ +="')";
+        util::apply_visitor(*this,x.expr);
+        str_ += x.to_string();
     }
 
     void operator() (regex_replace_node const & x) const
     {
-        boost::apply_visitor(expression_string(str_),x.expr);
-        str_ +=".replace(";
-        str_ += "'";
-#if defined(BOOST_REGEX_HAS_ICU)
-        std::string utf8;
-        UnicodeString ustr = UnicodeString::fromUTF32( &x.pattern.str()[0] ,x.pattern.str().length());
-        to_utf8(ustr,utf8);
-        str_ += utf8;
-        str_ +="','";
-        to_utf8(x.format ,utf8);
-        str_ += utf8;
-#else
-        str_ += x.pattern.str();
-        str_ +="','";
-        str_ += x.format;
-#endif
-        str_ +="')";
+        util::apply_visitor(*this,x.expr);
+        str_ += x.to_string();
     }
 
+    void operator() (unary_function_call const& call) const
+    {
+        str_ += unary_function_name(call.fun);
+        str_ += "(";
+        util::apply_visitor(*this,call.arg);
+        str_ += ")";
+
+    }
+    void operator() (binary_function_call const& call) const
+    {
+        str_ += binary_function_name(call.fun);
+        str_ += "(";
+        util::apply_visitor(*this,call.arg1);
+        str_ += ",";
+        util::apply_visitor(*this,call.arg2);
+        str_ += ")";
+
+    }
 private:
     std::string & str_;
 };
@@ -134,7 +125,7 @@ std::string to_expression_string(expr_node const& node)
 {
     std::string str;
     expression_string functor(str);
-    boost::apply_visitor(functor,node);
+    util::apply_visitor(std::ref(functor),node);
     return str;
 }
 

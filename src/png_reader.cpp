@@ -29,9 +29,16 @@ extern "C"
 #include <png.h>
 }
 // boost
-#include <boost/scoped_array.hpp>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
 #include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
+#pragma GCC diagnostic pop
+
+// stl
+#include <cstring>
+#include <memory>
 
 namespace mapnik
 {
@@ -39,8 +46,8 @@ namespace mapnik
 template <typename T>
 class png_reader : public image_reader
 {
-    typedef T source_type;
-    typedef boost::iostreams::stream<source_type> ifstream;
+    using source_type = T;
+    using input_stream = boost::iostreams::stream<source_type>;
 
     struct png_struct_guard
     {
@@ -59,17 +66,19 @@ class png_reader : public image_reader
 private:
 
     source_type source_;
-    ifstream stream_;
+    input_stream stream_;
     unsigned width_;
     unsigned height_;
     int bit_depth_;
     int color_type_;
+    bool has_alpha_;
 public:
     explicit png_reader(std::string const& file_name);
-    explicit png_reader(char const* data, std::size_t size);
+    png_reader(char const* data, std::size_t size);
     ~png_reader();
     unsigned width() const;
     unsigned height() const;
+    inline bool has_alpha() const { return has_alpha_; }
     bool premultiplied_alpha() const { return false; } //http://www.libpng.org/pub/png/spec/1.1/PNG-Rationale.html
     void read(unsigned x,unsigned y,image_data_32& image);
 private:
@@ -95,12 +104,12 @@ const bool registered2 = register_image_reader("png", create_png_reader2);
 }
 
 
-void user_error_fn(png_structp png_ptr, png_const_charp error_msg)
+void user_error_fn(png_structp /*png_ptr*/, png_const_charp error_msg)
 {
-    throw image_reader_exception("failed to read invalid png");
+    throw image_reader_exception(std::string("failed to read invalid png: '") + error_msg + "'");
 }
 
-void user_warning_fn(png_structp png_ptr, png_const_charp warning_msg)
+void user_warning_fn(png_structp /*png_ptr*/, png_const_charp warning_msg)
 {
     MAPNIK_LOG_DEBUG(png_reader) << "libpng warning: '" << warning_msg << "'";
 }
@@ -108,9 +117,10 @@ void user_warning_fn(png_structp png_ptr, png_const_charp warning_msg)
 template <typename T>
 void png_reader<T>::png_read_data(png_structp png_ptr, png_bytep data, png_size_t length)
 {
-    ifstream * fin = reinterpret_cast<ifstream*>(png_get_io_ptr(png_ptr));
+    input_stream * fin = reinterpret_cast<input_stream*>(png_get_io_ptr(png_ptr));
     fin->read(reinterpret_cast<char*>(data), length);
-    if (fin->gcount() != static_cast<std::streamsize>(length))
+    std::streamsize read_count = fin->gcount();
+    if (read_count < 0 || static_cast<png_size_t>(read_count) != length)
     {
         png_error(png_ptr, "Read Error");
     }
@@ -123,10 +133,11 @@ png_reader<T>::png_reader(std::string const& file_name)
       width_(0),
       height_(0),
       bit_depth_(0),
-      color_type_(0)
+      color_type_(0),
+      has_alpha_(false)
 {
-
-    if (!stream_) throw image_reader_exception("cannot open image file "+ file_name);
+    if (!source_.is_open()) throw image_reader_exception("PNG reader: cannot open file '"+ file_name + "'");
+    if (!stream_) throw image_reader_exception("PNG reader: cannot open file '"+ file_name + "'");
     init();
 }
 
@@ -137,10 +148,11 @@ png_reader<T>::png_reader(char const* data, std::size_t size)
       width_(0),
       height_(0),
       bit_depth_(0),
-      color_type_(0)
+      color_type_(0),
+      has_alpha_(false)
 {
 
-    if (!stream_) throw image_reader_exception("cannot open image stream");
+    if (!stream_) throw image_reader_exception("PNG reader: cannot open image stream");
     init();
 }
 
@@ -153,11 +165,11 @@ template <typename T>
 void png_reader<T>::init()
 {
     png_byte header[8];
-    memset(header,0,8);
+    std::memset(header,0,8);
     stream_.read(reinterpret_cast<char*>(header),8);
     if ( stream_.gcount() != 8)
     {
-        throw image_reader_exception("Could not read image");
+        throw image_reader_exception("PNG reader: Could not read image");
     }
     int is_png=!png_sig_cmp(header,0,8);
     if (!is_png)
@@ -187,7 +199,7 @@ void png_reader<T>::init()
 
     png_uint_32  width, height;
     png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth_, &color_type_,0,0,0);
-
+    has_alpha_ = (color_type_ & PNG_COLOR_MASK_ALPHA) || png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS);
     width_=width;
     height_=height;
 
@@ -263,7 +275,7 @@ void png_reader<T>::read(unsigned x0, unsigned y0,image_data_32& image)
         png_read_update_info(png_ptr, info_ptr);
         // we can read whole image at once
         // alloc row pointers
-        boost::scoped_array<png_byte*> rows(new png_bytep[height_]);
+        const std::unique_ptr<png_bytep[]> rows(new png_bytep[height_]);
         for (unsigned i=0; i<height_; ++i)
             rows[i] = (png_bytep)image.getRow(i);
         png_read_image(png_ptr, rows.get());
@@ -274,7 +286,7 @@ void png_reader<T>::read(unsigned x0, unsigned y0,image_data_32& image)
         unsigned w=std::min(unsigned(image.width()),width_ - x0);
         unsigned h=std::min(unsigned(image.height()),height_ - y0);
         unsigned rowbytes=png_get_rowbytes(png_ptr, info_ptr);
-        boost::scoped_array<png_byte> row(new png_byte[rowbytes]);
+        const std::unique_ptr<png_byte[]> row(new png_byte[rowbytes]);
         //START read image rows
         for (unsigned i = 0;i < height_; ++i)
         {

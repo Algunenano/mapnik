@@ -20,16 +20,28 @@
  *
  *****************************************************************************/
 
+#include <mapnik/config.hpp>
+
+// boost
+#include "boost_std_shared_shim.hpp"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
 #include <boost/python.hpp>
 #include <boost/noncopyable.hpp>
+#pragma GCC diagnostic pop
 
+#include <mapnik/value_types.hpp>
+#include <mapnik/params.hpp>
+#include <mapnik/datasource.hpp>
 #include <mapnik/datasource_cache.hpp>
 
 namespace  {
 
 using namespace boost::python;
 
-boost::shared_ptr<mapnik::datasource> create_datasource(const dict& d)
+std::shared_ptr<mapnik::datasource> create_datasource(const dict& d)
 {
     mapnik::parameters params;
     boost::python::list keys=d.keys();

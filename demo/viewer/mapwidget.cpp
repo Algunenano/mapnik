@@ -20,24 +20,22 @@
 
 #include <QtGui>
 
-#define BOOST_CHRONO_HEADER_ONLY
-#include <boost/timer/timer.hpp>
 #include <boost/bind.hpp>
-
 #include <mapnik/agg_renderer.hpp>
 #include <mapnik/graphics.hpp>
 #include <mapnik/layer.hpp>
 #include <mapnik/projection.hpp>
 #include <mapnik/scale_denominator.hpp>
-#include <mapnik/ctrans.hpp>
+#include <mapnik/view_transform.hpp>
+#include <mapnik/transform_path_adapter.hpp>
 #include <mapnik/memory_datasource.hpp>
 #include <mapnik/feature_kv_iterator.hpp>
-#include <mapnik/config_error.hpp>
 #include <mapnik/image_util.hpp>
+#include <mapnik/util/timer.hpp>
 
 #ifdef HAVE_CAIRO
 // cairo
-#include <mapnik/cairo_renderer.hpp>
+#include <mapnik/cairo/cairo_renderer.hpp>
 #endif
 
 #include "mapwidget.hpp"
@@ -49,8 +47,7 @@ using mapnik::layer;
 using mapnik::box2d;
 using mapnik::coord2d;
 using mapnik::feature_ptr;
-using mapnik::geometry_ptr;
-using mapnik::CoordTransform;
+using mapnik::view_transform;
 using mapnik::projection;
 using mapnik::scale_denominator;
 using mapnik::feature_kv_iterator;
@@ -161,7 +158,7 @@ void MapWidget::mousePressEvent(QMouseEvent* e)
 
             projection map_proj(map_->srs()); // map projection
             double scale_denom = scale_denominator(map_->scale(),map_proj.is_geographic());
-            CoordTransform t(map_->width(),map_->height(),map_->get_current_extent());
+            view_transform t(map_->width(),map_->height(),map_->get_current_extent());
 
             for (unsigned index = 0; index <  map_->layer_count();++index)
             {
@@ -189,11 +186,11 @@ void MapWidget::mousePressEvent(QMouseEvent* e)
 
                       for ( ;itr!=end; ++itr)
                       {
-                          info.push_back(QPair<QString,QString>(QString(boost::get<0>(*itr).c_str()),
-                                                                boost::get<1>(*itr).to_string().c_str()));
+                          info.push_back(QPair<QString,QString>(QString(std::get<0>(*itr).c_str()),
+                                                                std::get<1>(*itr).to_string().c_str()));
                       }
 
-                      typedef mapnik::coord_transform<mapnik::CoordTransform,mapnik::geometry_type> path_type;
+                      using path_type = mapnik::transform_path_adapter<mapnik::view_transform,mapnik::geometry_type>;
 
                      for  (unsigned i=0; i<feat->num_geometries();++i)
                      {
@@ -266,7 +263,7 @@ void MapWidget::mouseReleaseEvent(QMouseEvent* e)
          drag_=false;
          if (map_)
          {
-            CoordTransform t(map_->width(),map_->height(),map_->get_current_extent());
+            view_transform t(map_->width(),map_->height(),map_->get_current_extent());
             box2d<double> box = t.backward(box2d<double>(start_x_,start_y_,end_x_,end_y_));
             map_->zoom_to_box(box);
             updateMap();
@@ -503,17 +500,15 @@ void render_agg(mapnik::Map const& map, double scaling_factor, QPixmap & pix)
 
     try
     {
-        {
-            boost::timer::auto_cpu_timer t;
-            ren.apply();
-        }
+        mapnik::auto_cpu_timer t(std::clog, "rendering took: ");
+        ren.apply();
         QImage image((uchar*)buf.raw_data(),width,height,QImage::Format_ARGB32);
         pix = QPixmap::fromImage(image.rgbSwapped());
     }
-    catch (mapnik::config_error & ex)
-    {
-        std::cerr << ex.what() << std::endl;
-    }
+    //catch (mapnik::config_error & ex)
+    //{
+    //    std::cerr << ex.what() << std::endl;
+    //}
     catch (const std::exception & ex)
     {
         std::cerr << "exception: " << ex.what() << std::endl;
@@ -537,8 +532,13 @@ void render_cairo(mapnik::Map const& map, double scaling_factor, QPixmap & pix)
 #ifdef HAVE_CAIRO
     mapnik::cairo_surface_ptr image_surface(cairo_image_surface_create(CAIRO_FORMAT_ARGB32,map.width(),map.height()),
                                             mapnik::cairo_surface_closer());
-    mapnik::cairo_renderer<mapnik::cairo_surface_ptr> renderer(map, image_surface, scaling_factor);
-    renderer.apply();
+    mapnik::cairo_ptr cairo = mapnik::create_context(image_surface);
+    if (cairo)
+    {
+        mapnik::auto_cpu_timer t(std::clog, "rendering took: ");
+        mapnik::cairo_renderer<mapnik::cairo_ptr> renderer(map, cairo, scaling_factor);
+        renderer.apply();
+    }
     image_32 buf(image_surface);
     QImage image((uchar*)buf.raw_data(),buf.width(),buf.height(),QImage::Format_ARGB32);
     pix = QPixmap::fromImage(image.rgbSwapped());
@@ -603,12 +603,12 @@ void MapWidget::updateMap()
    }
 }
 
-boost::shared_ptr<Map> MapWidget::getMap()
+std::shared_ptr<Map> MapWidget::getMap()
 {
    return map_;
 }
 
-void MapWidget::setMap(boost::shared_ptr<Map> map)
+void MapWidget::setMap(std::shared_ptr<Map> map)
 {
    map_ = map;
 }

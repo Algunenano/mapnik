@@ -1,16 +1,20 @@
-
 // mapnik
 #include <mapnik/geometry.hpp>
 #include <mapnik/util/conversions.hpp>
+#include <mapnik/util/trim.hpp>
 
 // boost
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
 #include <boost/detail/lightweight_test.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/foreach.hpp>
+#pragma GCC diagnostic pop
 
 // stl
 #include <stdexcept>
 #include <iostream>
+#include <sstream>
 #include <fstream>
 #include <vector>
 #include <algorithm>
@@ -44,7 +48,7 @@ std::string dump_path(T & path)
 std::string clip_line(mapnik::box2d<double> const& bbox,
                       mapnik::geometry_type & geom)
 {
-    typedef agg::conv_clip_polyline<mapnik::geometry_type> line_clipper;
+    using line_clipper = agg::conv_clip_polyline<mapnik::geometry_type>;
     line_clipper clipped(geom);
     clipped.clip_box(bbox.minx(),bbox.miny(),bbox.maxx(),bbox.maxy());
     return dump_path(clipped);
@@ -54,7 +58,7 @@ void parse_geom(mapnik::geometry_type & geom,
                 std::string const& geom_string) {
     std::vector<std::string> vertices;
     boost::split(vertices, geom_string, boost::is_any_of(","));
-    BOOST_FOREACH(std::string const& vert, vertices)
+    for (std::string const& vert : vertices)
     {
         std::vector<std::string> commands;
         boost::split(commands, vert, boost::is_any_of(" "));
@@ -112,7 +116,7 @@ int main(int argc, char** argv)
             parse_geom(geom,parts[1]);
             //std::clog << dump_path(geom) << "\n";
             // third part is expected, clipped geometry
-            BOOST_TEST_EQ(clip_line(bbox,geom),parts[2]);
+            BOOST_TEST_EQ(clip_line(bbox,geom),mapnik::util::trim_copy(parts[2]));
         }
         stream.close();
     }
@@ -125,9 +129,7 @@ int main(int argc, char** argv)
     {
         if (quiet) std::clog << "\x1b[1;32m.\x1b[0m";
         else std::clog << "C++ clipping: \x1b[1;32m✓ \x1b[0m\n";
-#if BOOST_VERSION >= 104600
         ::boost::detail::report_errors_remind().called_report_errors_function = true;
-#endif
     }
     else
     {

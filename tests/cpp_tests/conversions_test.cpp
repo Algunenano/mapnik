@@ -1,18 +1,19 @@
-#include <boost/version.hpp>
 #include <mapnik/value_types.hpp>
+#include <mapnik/value.hpp>
 #include <mapnik/util/conversions.hpp>
 #include <boost/detail/lightweight_test.hpp>
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <boost/unordered_map.hpp>
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && _MSC_VER < 1900
 #include <cstdio>
 #endif
 
 int main(int argc, char** argv)
 {
-    #if defined(_MSC_VER)
+    #if defined(_MSC_VER) && _MSC_VER < 1900
     unsigned int old = _set_output_format(_TWO_DIGIT_EXPONENT);
     #endif
     std::vector<std::string> args;
@@ -23,6 +24,7 @@ int main(int argc, char** argv)
     bool quiet = std::find(args.begin(), args.end(), "-q")!=args.end();
 
     using mapnik::util::to_string;
+    using mapnik::util::string2bool;
 
     try
     {
@@ -276,19 +278,31 @@ int main(int argc, char** argv)
         to_string(out, false);
         BOOST_TEST_EQ( out, "false" );
         out.clear();
+
+        bool val = false;
+        BOOST_TEST( !string2bool("this is invalid",val) );
+        BOOST_TEST_EQ( val, false );
+        BOOST_TEST( string2bool("true",val) );
+        BOOST_TEST_EQ( val, true );
+
+        // mapnik::value hashability
+        using values_container = boost::unordered_map<mapnik::value, unsigned>;
+        values_container vc;
+        mapnik::value val2(1);
+        vc[val2] = 1;
+        BOOST_TEST_EQ( (int)vc[1], (int)1 );
+
     }
     catch (std::exception const & ex)
     {
-        std::clog << "C++ type conversions problem: " << ex.what() << "\n";
+        std::clog << ex.what() << "\n";
         BOOST_TEST(false);
     }
 
     if (!::boost::detail::test_errors()) {
         if (quiet) std::clog << "\x1b[1;32m.\x1b[0m";
         else std::clog << "C++ type conversions: \x1b[1;32m✓ \x1b[0m\n";
-#if BOOST_VERSION >= 104600
         ::boost::detail::report_errors_remind().called_report_errors_function = true;
-#endif
     } else {
         return ::boost::report_errors();
     }

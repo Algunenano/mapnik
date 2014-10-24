@@ -23,12 +23,22 @@
 #ifndef MAPNIK_CSV_UTILS_DATASOURCE_HPP
 #define MAPNIK_CSV_UTILS_DATASOURCE_HPP
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
+#include <boost/algorithm/string.hpp>
+#pragma GCC diagnostic pop
 
 #include <string>
-#include <boost/algorithm/string.hpp>
+#include <cstdio>
 
 namespace csv_utils
 {
+    static inline bool is_likely_number(std::string const& value)
+    {
+        return( strspn( value.c_str(), "e-.+0123456789" ) == value.size() );
+    }
+
     static inline void fix_json_quoting(std::string & csv_line)
     {
         std::string wrapping_char;

@@ -20,10 +20,18 @@
  *
  *****************************************************************************/
 
+#include <mapnik/config.hpp>
+
 // boost
+#include "boost_std_shared_shim.hpp"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 #include <boost/python.hpp>
-#include <boost/python/detail/api_placeholder.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
+#pragma GCC diagnostic pop
 
 // mapnik
 #include <mapnik/layer.hpp>
@@ -374,6 +382,7 @@ void export_layer()
                       ">>> lyr.styles[0]\n"
                       "'My Style'\n"
             )
-
+        // comparison
+        .def(self == self)
         ;
 }

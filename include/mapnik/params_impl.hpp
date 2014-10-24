@@ -28,57 +28,44 @@
 #include <mapnik/value_types.hpp>
 #include <mapnik/boolean.hpp>
 #include <mapnik/util/conversions.hpp>
+
 // boost
-#include <boost/variant/static_visitor.hpp>
-#include <boost/variant/apply_visitor.hpp> // keep gcc happy
-#include <boost/variant/variant.hpp>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
 #include <boost/optional.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/format.hpp>
+#pragma GCC diagnostic pop
 
 // stl
 #include <string>
+#include <sstream>
 #include <stdexcept>
 
-
 namespace mapnik { namespace detail {
-
 
 template <typename T>
 struct extract_value
 {
-    static inline boost::optional<T> do_extract_from_string(std::string const& source)
+    static inline boost::optional<T> do_extract_from_string(std::string const& /*source*/)
     {
-        std::string err_msg = (boost::format("No conversion from std::string to %s") % typeid(T).name()).str();
-        throw std::runtime_error(err_msg);
+        std::ostringstream s;
+        s << "No conversion from std::string to " << typeid(T).name();
+        throw std::runtime_error(s.str());
     }
 };
 
 template <>
-struct extract_value<mapnik::boolean>
+struct extract_value<mapnik::boolean_type>
 {
-    static inline boost::optional<mapnik::boolean> do_extract_from_string(std::string const& source)
+    static inline boost::optional<mapnik::boolean_type> do_extract_from_string(std::string const& source)
     {
         bool result;
         if (mapnik::util::string2bool(source, result))
-            return boost::optional<mapnik::boolean>(result);
-        return boost::optional<mapnik::boolean>();
+            return boost::optional<mapnik::boolean_type>(result);
+        return boost::optional<mapnik::boolean_type>();
     }
 };
-
-template <>
-struct extract_value<int>
-{
-    static inline boost::optional<int> do_extract_from_string(std::string const& source)
-    {
-        mapnik::value_integer result;
-        if (mapnik::util::string2int(source, result))
-            return boost::optional<int>(result);
-        return boost::optional<int>();
-    }
-};
-
-#ifdef BIGINT
 
 template <>
 struct extract_value<mapnik::value_integer>
@@ -91,8 +78,6 @@ struct extract_value<mapnik::value_integer>
         return boost::optional<mapnik::value_integer>();
     }
 };
-
-#endif
 
 template <>
 struct extract_value<mapnik::value_double>
@@ -109,7 +94,7 @@ struct extract_value<mapnik::value_double>
 template <>
 struct extract_value<mapnik::value_null>
 {
-    static inline boost::optional<mapnik::value_null> do_extract_from_string(std::string const& source)
+    static inline boost::optional<mapnik::value_null> do_extract_from_string(std::string const&)
     {
         return boost::optional<mapnik::value_null>(); // FIXME
     }
@@ -136,7 +121,7 @@ boost::optional<T> param_cast(std::string const& source)
 } // end namespace detail
 
 template <typename T>
-struct value_extractor_visitor : public boost::static_visitor<>
+struct value_extractor_visitor : public util::static_visitor<>
 {
 
     value_extractor_visitor(boost::optional<T> & var)
@@ -149,7 +134,7 @@ struct value_extractor_visitor : public boost::static_visitor<>
     }
 
     template <typename T1>
-    void operator () (T1 val) const
+    void operator () (T1 const& val) const
     {
         try
         {
@@ -157,13 +142,12 @@ struct value_extractor_visitor : public boost::static_visitor<>
         }
         catch (boost::bad_lexical_cast const& )
         {
-            std::string err_msg = (boost::format("Failed converting from %s to %s")
-                                   % typeid(T1).name()
-                                   % typeid(T).name()).str();
-            throw std::runtime_error(err_msg);
+            std::ostringstream s;
+            s << "Failed converting from " << typeid(T1).name()
+              << " to " << typeid(T).name();
+            throw std::runtime_error(s.str());
         }
     }
-
 
     boost::optional<T> & var_;
 };
@@ -173,8 +157,8 @@ namespace params_detail {
 template <typename T>
 struct converter
 {
-    typedef T value_type;
-    typedef boost::optional<value_type> return_type;
+    using value_type = T;
+    using return_type = boost::optional<value_type>;
     static return_type extract(parameters const& params,
                                std::string const& name,
                                boost::optional<T> const& default_opt_value)
@@ -183,7 +167,7 @@ struct converter
         parameters::const_iterator itr = params.find(name);
         if (itr != params.end())
         {
-            boost::apply_visitor(value_extractor_visitor<T>(result),itr->second);
+            util::apply_visitor(value_extractor_visitor<T>(result),itr->second);
         }
         return result;
     }

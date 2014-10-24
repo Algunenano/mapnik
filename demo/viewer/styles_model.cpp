@@ -19,14 +19,16 @@
 
 
 #include "styles_model.hpp"
+#include <mapnik/config.hpp>
+#include <mapnik/util/variant.hpp>
 #include <mapnik/expression_string.hpp>
 #include <mapnik/noncopyable.hpp>
 #include <mapnik/rule.hpp>
 #include <mapnik/feature_type_style.hpp>
-
+#include <mapnik/symbolizer.hpp>
 // boost
 #include <boost/concept_check.hpp>
-#include <boost/scoped_ptr.hpp>
+
 // qt
 #include <QList>
 #include <QIcon>
@@ -114,13 +116,13 @@ public:
     }
 
 private:
-    boost::scoped_ptr<node_base> impl_;
+    const std::unique_ptr<node_base> impl_;
     QList<node*> children_;
     node * parent_;
 };
 
 
-struct symbolizer_info : public boost::static_visitor<QString>
+struct symbolizer_info : public mapnik::util::static_visitor<QString>
 {
     QString operator() (mapnik::point_symbolizer const& sym) const
     {
@@ -183,13 +185,13 @@ struct symbolizer_info : public boost::static_visitor<QString>
     }
 };
 
-struct symbolizer_icon : public boost::static_visitor<QIcon>
+struct symbolizer_icon : public mapnik::util::static_visitor<QIcon>
 {
     QIcon operator() (mapnik::polygon_symbolizer const& sym) const
     {
         QPixmap pix(16,16);
         QPainter painter(&pix);
-        mapnik::color const& fill = sym.get_fill();
+        mapnik::color const& fill = mapnik::get<mapnik::color>(sym, mapnik::keys::fill);
         QBrush brush(QColor(fill.red(),fill.green(),fill.blue(),fill.alpha()));
         painter.fillRect(0, 0, 16, 16, brush);
         return QIcon(pix);
@@ -199,7 +201,7 @@ struct symbolizer_icon : public boost::static_visitor<QIcon>
     {
         // FIXME!
         /*
-          boost::shared_ptr<mapnik::image_data_32> symbol = sym.get_image();
+          std::shared_ptr<mapnik::image_data_32> symbol = sym.get_image();
           if (symbol)
           {
           QImage image(symbol->getBytes(),
@@ -215,10 +217,10 @@ struct symbolizer_icon : public boost::static_visitor<QIcon>
         QPixmap pix(48,16);
         pix.fill();
         QPainter painter(&pix);
-        mapnik::stroke const&  strk = sym.get_stroke();
-        mapnik::color const& col = strk.get_color();
+        //mapnik::stroke const&  strk = sym.get_stroke();
+        mapnik::color const& col = mapnik::get<mapnik::color>(sym, mapnik::keys::stroke);
         QPen pen(QColor(col.red(),col.green(),col.blue(),col.alpha()));
-        pen.setWidth(strk.get_width());
+        pen.setWidth(mapnik::get<double>(sym, mapnik::keys::width));
         painter.setPen(pen);
         painter.drawLine(0,7,47,7);
         //painter.drawLine(7,15,12,0);
@@ -243,12 +245,12 @@ public:
     QString name() const
     {
         //return QString("Symbolizer:fixme");
-        return boost::apply_visitor(symbolizer_info(),sym_);
+        return mapnik::util::apply_visitor(symbolizer_info(),sym_);
     }
 
     QIcon icon() const
     {
-        return boost::apply_visitor(symbolizer_icon(),sym_);//QIcon(":/images/filter.png");
+        return mapnik::util::apply_visitor(symbolizer_icon(),sym_);//QIcon(":/images/filter.png");
     }
     mapnik::symbolizer const& sym_;
 };
@@ -263,7 +265,6 @@ public:
     QString name() const
     {
         mapnik::expression_ptr filter = rule_.get_filter();
-
         return QString(mapnik::to_expression_string(*filter).c_str());
     }
 
@@ -304,7 +305,7 @@ private:
 class map_node
 {
 public:
-    explicit map_node(boost::shared_ptr<mapnik::Map> map)
+    explicit map_node(std::shared_ptr<mapnik::Map> map)
     : map_(map)  {}
     ~map_node() {}
 
@@ -319,14 +320,14 @@ public:
     }
 
 private:
-    boost::shared_ptr<mapnik::Map> map_;
+    std::shared_ptr<mapnik::Map> map_;
 };
 
-StyleModel::StyleModel(boost::shared_ptr<mapnik::Map> map, QObject * parent)
+StyleModel::StyleModel(std::shared_ptr<mapnik::Map> map, QObject * parent)
     : QAbstractItemModel(parent),
       root_(new node(map_node(map)))
 {
-    typedef std::map<std::string,mapnik::feature_type_style> style_type;
+    using style_type = std::map<std::string,mapnik::feature_type_style>;
     style_type const & styles = map->styles();
     style_type::const_iterator itr = styles.begin();
     style_type::const_iterator end = styles.end();

@@ -31,14 +31,16 @@ extern "C"
 }
 
 // boost
-#include <boost/shared_ptr.hpp>
-#include <boost/scoped_array.hpp>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
+#pragma GCC diagnostic pop
 
 // std
 #include <cstdio>
+#include <memory>
 
 namespace mapnik
 {
@@ -47,8 +49,8 @@ template <typename T>
 class jpeg_reader : public image_reader
 {
 public:
-    typedef T source_type;
-    typedef boost::iostreams::stream<source_type> input_stream;
+    using source_type = T;
+    using input_stream = boost::iostreams::stream<source_type>;
     const static unsigned BUF_SIZE = 4096;
 private:
     struct jpeg_stream_wrapper
@@ -81,6 +83,7 @@ public:
     ~jpeg_reader();
     unsigned width() const;
     unsigned height() const;
+    inline bool has_alpha() const { return false; }
     inline bool premultiplied_alpha() const { return true; }
     void read(unsigned x,unsigned y,image_data_32& image);
 private:
@@ -162,15 +165,14 @@ void jpeg_reader<T>::skip(j_decompress_ptr cinfo, long count)
     if (count <= 0) return; //A zero or negative skip count should be treated as a no-op.
     jpeg_stream_wrapper* wrap = reinterpret_cast<jpeg_stream_wrapper*>(cinfo->src);
 
-    if (wrap->manager.bytes_in_buffer > 0u
-        && static_cast<unsigned long>(count) < wrap->manager.bytes_in_buffer)
+    if (wrap->manager.bytes_in_buffer > 0 && count < static_cast<long>(wrap->manager.bytes_in_buffer))
     {
         wrap->manager.bytes_in_buffer -= count;
         wrap->manager.next_input_byte = &wrap->buffer[BUF_SIZE - wrap->manager.bytes_in_buffer];
     }
     else
     {
-        wrap->stream->seekg(count, std::ios_base::cur);
+        wrap->stream->seekg(count - wrap->manager.bytes_in_buffer, std::ios_base::cur);
         // trigger buffer fill
         wrap->manager.next_input_byte = 0;
         wrap->manager.bytes_in_buffer = 0; //bytes_in_buffer may be zero on return.
@@ -178,7 +180,7 @@ void jpeg_reader<T>::skip(j_decompress_ptr cinfo, long count)
 }
 
 template <typename T>
-void jpeg_reader<T>::term (j_decompress_ptr cinfo)
+void jpeg_reader<T>::term (j_decompress_ptr /*cinfo*/)
 {
 // no-op
 }
@@ -191,7 +193,7 @@ void jpeg_reader<T>::attach_stream (j_decompress_ptr cinfo, input_stream* in)
         cinfo->src = (struct jpeg_source_mgr *)
             (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT, sizeof(jpeg_stream_wrapper));
     }
-    typename jpeg_reader::jpeg_stream_wrapper * src = reinterpret_cast<typename jpeg_reader::jpeg_stream_wrapper*> (cinfo->src);
+    jpeg_reader::jpeg_stream_wrapper * src = reinterpret_cast<jpeg_reader::jpeg_stream_wrapper*> (cinfo->src);
     src->manager.init_source = init_source;
     src->manager.fill_input_buffer = fill_input_buffer;
     src->manager.skip_input_data = skip;
@@ -203,15 +205,16 @@ void jpeg_reader<T>::attach_stream (j_decompress_ptr cinfo, input_stream* in)
 }
 
 template <typename T>
-void jpeg_reader<T>::on_error(j_common_ptr cinfo)
+void jpeg_reader<T>::on_error(j_common_ptr /*cinfo*/)
 {
-    throw image_reader_exception("JPEG Reader: libjpeg could not read image");
 }
 
 template <typename T>
 void jpeg_reader<T>::on_error_message(j_common_ptr cinfo)
 {
-    // used to supress jpeg from printing to stderr
+    char buffer[JMSG_LENGTH_MAX];
+    (*cinfo->err->format_message)(cinfo, buffer);
+    throw image_reader_exception(std::string("JPEG Reader: libjpeg could not read image: ") + buffer);
 }
 
 template <typename T>
@@ -280,7 +283,7 @@ void jpeg_reader<T>::read(unsigned x0, unsigned y0, image_data_32& image)
     unsigned w = std::min(unsigned(image.width()),width_ - x0);
     unsigned h = std::min(unsigned(image.height()),height_ - y0);
 
-    boost::scoped_array<unsigned int> out_row(new unsigned int[w]);
+    const std::unique_ptr<unsigned int[]> out_row(new unsigned int[w]);
     unsigned row = 0;
     while (cinfo.output_scanline < cinfo.output_height)
     {

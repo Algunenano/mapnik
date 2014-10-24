@@ -113,9 +113,9 @@ if 'csv' in mapnik.DatasourceCache.plugin_names():
         eq_(len(ds.fields()),10)
         eq_(len(ds.field_types()),10)
         eq_(ds.fields(),['x', 'y', 'text', 'date', 'integer', 'boolean', 'float', 'time', 'datetime', 'empty_column'])
-        eq_(ds.field_types(),['int', 'int', 'str', 'str', 'int', 'str', 'float', 'str', 'str', 'str'])
+        eq_(ds.field_types(),['int', 'int', 'str', 'str', 'int', 'bool', 'float', 'str', 'str', 'str'])
         fs = ds.featureset()
-        attr = {'x': 0, 'empty_column': u'', 'text': u'a b', 'float': 1.0, 'datetime': u'1971-01-01T04:14:00', 'y': 0, 'boolean': u'True', 'time': u'04:14:00', 'date': u'1971-01-01', 'integer': 40}
+        attr = {'x': 0, 'empty_column': u'', 'text': u'a b', 'float': 1.0, 'datetime': u'1971-01-01T04:14:00', 'y': 0, 'boolean': True, 'time': u'04:14:00', 'date': u'1971-01-01', 'integer': 40}
         first = True
         for feat in fs:
             if first:
@@ -331,18 +331,18 @@ if 'csv' in mapnik.DatasourceCache.plugin_names():
         ds = get_csv_ds('nulls_and_booleans_as_strings.csv')
         eq_(len(ds.fields()),4)
         eq_(ds.fields(),['x','y','null','boolean'])
-        eq_(ds.field_types(),['int','int','str','str'])
+        eq_(ds.field_types(),['int', 'int', 'str', 'bool'])
         fs = ds.featureset()
         feat = fs.next()
         eq_(feat['x'],0)
         eq_(feat['y'],0)
         eq_(feat['null'],'null')
-        eq_(feat['boolean'],'true')
+        eq_(feat['boolean'],True)
         feat = fs.next()
         eq_(feat['x'],0)
         eq_(feat['y'],0)
         eq_(feat['null'],'')
-        eq_(feat['boolean'],'false')
+        eq_(feat['boolean'],False)
         desc = ds.describe()
         eq_(desc['geometry_type'],mapnik.DataGeometryType.Point)
 
@@ -402,6 +402,17 @@ if 'csv' in mapnik.DatasourceCache.plugin_names():
         fs = ds.featureset()
         feat = fs.next()
         eq_(feat['Name'],u"Winthrop, WA")
+
+    def test_creation_of_csv_from_in_memory_string_with_uft8(**kwargs):
+        csv_string = '''
+           wkt,Name
+          "POINT (120.15 48.47)","Québec"
+          ''' # csv plugin will test lines <= 10 chars for being fully blank
+        ds = mapnik.Datasource(**{"type":"csv","inline":csv_string})
+        eq_(ds.describe()['geometry_type'],mapnik.DataGeometryType.Point)
+        fs = ds.featureset()
+        feat = fs.next()
+        eq_(feat['Name'],u"Québec")
 
     def validate_geojson_datasource(ds):
         eq_(len(ds.fields()),1)
@@ -540,7 +551,6 @@ if 'csv' in mapnik.DatasourceCache.plugin_names():
         feat = fs.next()
         eq_(feat['bigint'],2147483648)
         feat = fs.next()
-        eq_(feat['bigint'],sys.maxint)
         eq_(feat['bigint'],9223372036854775807)
         eq_(feat['bigint'],0x7FFFFFFFFFFFFFFF)
         desc = ds.describe()
@@ -570,6 +580,27 @@ if 'csv' in mapnik.DatasourceCache.plugin_names():
         desc = ds.describe()
         eq_(desc['geometry_type'],mapnik.DataGeometryType.Point)
         eq_(len(ds.all_features()),8)
+
+    def test_manually_supplied_extent(**kwargs):
+        csv_string = '''
+           wkt,Name
+          '''
+        ds = mapnik.Datasource(**{"type":"csv","extent":"-180,-90,180,90","inline":csv_string})
+        b = ds.envelope()
+        eq_(b.minx,-180)
+        eq_(b.miny,-90)
+        eq_(b.maxx,180)
+        eq_(b.maxy,90)
+
+    def test_inline_geojson(**kwargs):
+        csv_string = "geojson\n'{\"coordinates\":[-92.22568,38.59553],\"type\":\"Point\"}'"
+        ds = mapnik.Datasource(**{"type":"csv","inline":csv_string})
+        eq_(len(ds.fields()),0)
+        eq_(ds.fields(),[])
+        # FIXME - re-enable after https://github.com/mapnik/mapnik/issues/2319 is fixed
+        #fs = ds.featureset()
+        #feat = fs.next()
+        #eq_(feat.num_geometries(),1)
 
 if __name__ == "__main__":
     setup()

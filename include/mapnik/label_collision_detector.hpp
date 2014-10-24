@@ -26,10 +26,13 @@
 // mapnik
 #include <mapnik/quad_tree.hpp>
 #include <mapnik/noncopyable.hpp>
+#include <mapnik/value_types.hpp>
+
+// icu
+#include <unicode/unistr.h>
 
 // stl
 #include <vector>
-#include <unicode/unistr.h>
 
 namespace mapnik
 {
@@ -38,17 +41,13 @@ namespace mapnik
 
 struct label_collision_detector
 {
-    typedef std::vector<box2d<double> > label_placements;
+    using label_placements = std::vector<box2d<double> >;
 
     bool has_placement(box2d<double> const& box)
     {
-        label_placements::const_iterator itr=labels_.begin();
-        for( ; itr !=labels_.end();++itr)
+        for (auto const& label : labels_)
         {
-            if (itr->intersects(box))
-            {
-                return false;
-            }
+            if (label.intersects(box)) return false;
         }
         labels_.push_back(box);
         return true;
@@ -66,7 +65,7 @@ private:
 // quad_tree based label collision detector
 class label_collision_detector2 : mapnik::noncopyable
 {
-    typedef quad_tree<box2d<double> > tree_t;
+    using tree_t = quad_tree<box2d<double> >;
     tree_t tree_;
 public:
 
@@ -77,15 +76,10 @@ public:
     {
         tree_t::query_iterator itr = tree_.query_in_box(box);
         tree_t::query_iterator end = tree_.query_end();
-
         for ( ;itr != end; ++itr)
         {
-            if (itr->intersects(box))
-            {
-                return false;
-            }
+            if (itr->intersects(box)) return false;
         }
-
         tree_.insert(box,box);
         return true;
     }
@@ -100,7 +94,7 @@ public:
 // quad_tree based label collision detector with seperate check/insert
 class label_collision_detector3 : mapnik::noncopyable
 {
-    typedef quad_tree< box2d<double> > tree_t;
+    using tree_t = quad_tree< box2d<double> >;
     tree_t tree_;
 public:
 
@@ -114,12 +108,8 @@ public:
 
         for ( ;itr != end; ++itr)
         {
-            if (itr->intersects(box))
-            {
-                return false;
-            }
+            if (itr->intersects(box)) return false;
         }
-
         return true;
     }
 
@@ -142,18 +132,18 @@ public:
     struct label
     {
         label(box2d<double> const& b) : box(b), text() {}
-        label(box2d<double> const& b, UnicodeString const& t) : box(b), text(t) {}
+        label(box2d<double> const& b, mapnik::value_unicode_string const& t) : box(b), text(t) {}
 
         box2d<double> box;
-        UnicodeString text;
+        mapnik::value_unicode_string text;
     };
 
 private:
-    typedef quad_tree< label > tree_t;
+    using tree_t = quad_tree< label >;
     tree_t tree_;
 
 public:
-    typedef tree_t::query_iterator query_iterator;
+    using query_iterator = tree_t::query_iterator;
 
     explicit label_collision_detector4(box2d<double> const& extent)
         : tree_(extent) {}
@@ -165,41 +155,53 @@ public:
 
         for ( ;itr != end; ++itr)
         {
-            if (itr->box.intersects(box))
-            {
-                return false;
-            }
+            if (itr->box.intersects(box)) return false;
         }
 
         return true;
     }
 
-    bool has_placement(box2d<double> const& box, UnicodeString const& text, double distance)
+    bool has_placement(box2d<double> const& box, double margin)
     {
-        box2d<double> bigger_box(box.minx() - distance, box.miny() - distance, box.maxx() + distance, box.maxy() + distance);
-        tree_t::query_iterator itr = tree_.query_in_box(bigger_box);
+        box2d<double> const& margin_box = (margin > 0
+                                               ? box2d<double>(box.minx() - margin, box.miny() - margin,
+                                                               box.maxx() + margin, box.maxy() + margin)
+                                               : box);
+
+        tree_t::query_iterator itr = tree_.query_in_box(margin_box);
         tree_t::query_iterator end = tree_.query_end();
 
-        for ( ;itr != end; ++itr)
+        for (;itr != end; ++itr)
         {
-            if (itr->box.intersects(box) || (text == itr->text && itr->box.intersects(bigger_box)))
+            if (itr->box.intersects(margin_box))
             {
                 return false;
             }
         }
-
         return true;
     }
 
-    bool has_point_placement(box2d<double> const& box, double distance)
+    bool has_placement(box2d<double> const& box, double margin, mapnik::value_unicode_string const& text, double repeat_distance)
     {
-        box2d<double> bigger_box(box.minx() - distance, box.miny() - distance, box.maxx() + distance, box.maxy() + distance);
-        tree_t::query_iterator itr = tree_.query_in_box(bigger_box);
+        // Don't bother with any of the repeat checking unless the repeat distance is greater than the margin
+        if (repeat_distance <= margin) {
+            return has_placement(box, margin);
+        }
+
+        box2d<double> repeat_box(box.minx() - repeat_distance, box.miny() - repeat_distance,
+                                 box.maxx() + repeat_distance, box.maxy() + repeat_distance);
+
+        box2d<double> const& margin_box = (margin > 0
+                                               ? box2d<double>(box.minx() - margin, box.miny() - margin,
+                                                               box.maxx() + margin, box.maxy() + margin)
+                                               : box);
+
+        tree_t::query_iterator itr = tree_.query_in_box(repeat_box);
         tree_t::query_iterator end = tree_.query_end();
 
         for ( ;itr != end; ++itr)
         {
-            if (itr->box.intersects(bigger_box))
+            if (itr->box.intersects(margin_box) || (text == itr->text && itr->box.intersects(repeat_box)))
             {
                 return false;
             }
@@ -213,7 +215,7 @@ public:
         tree_.insert(label(box), box);
     }
 
-    void insert(box2d<double> const& box, UnicodeString const& text)
+    void insert(box2d<double> const& box, mapnik::value_unicode_string const& text)
     {
         tree_.insert(label(box, text), box);
     }

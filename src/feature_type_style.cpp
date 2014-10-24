@@ -25,7 +25,7 @@
 #include <mapnik/enumeration.hpp>
 
 // boost
-#include <boost/foreach.hpp>
+
 
 namespace mapnik
 {
@@ -40,44 +40,60 @@ IMPLEMENT_ENUM( filter_mode_e, filter_mode_strings )
 
 
 feature_type_style::feature_type_style()
-: filter_mode_(FILTER_ALL),
-    filters_(),
-    direct_filters_(),
-    opacity_(1.0f)
+    : rules_(),
+      filter_mode_(FILTER_ALL),
+      filters_(),
+      direct_filters_(),
+      comp_op_(),
+      opacity_(1.0f),
+      image_filters_inflate_(false)
 {}
 
-feature_type_style::feature_type_style(feature_type_style const& rhs, bool deep_copy)
-    : filter_mode_(rhs.filter_mode_),
+feature_type_style::feature_type_style(feature_type_style const& rhs)
+    : rules_(rhs.rules_),
+      filter_mode_(rhs.filter_mode_),
       filters_(rhs.filters_),
       direct_filters_(rhs.direct_filters_),
       comp_op_(rhs.comp_op_),
-      opacity_(rhs.opacity_)
-{
-    if (!deep_copy) {
-        rules_ = rhs.rules_;
-    } else {
-        rules::const_iterator it  = rhs.rules_.begin(),
-            end = rhs.rules_.end();
-        for(; it != end; ++it) {
-            rules_.push_back(rule(*it, deep_copy));
-        }
-    }
-}
+      opacity_(rhs.opacity_),
+      image_filters_inflate_(rhs.image_filters_inflate_) {}
 
-feature_type_style& feature_type_style::operator=(feature_type_style const& rhs)
+feature_type_style::feature_type_style(feature_type_style && rhs)
+    : rules_(std::move(rhs.rules_)),
+      filter_mode_(std::move(rhs.filter_mode_)),
+      filters_(std::move(rhs.filters_)),
+      direct_filters_(std::move(rhs.direct_filters_)),
+      comp_op_(std::move(rhs.comp_op_)),
+      opacity_(std::move(rhs.opacity_)),
+      image_filters_inflate_(std::move(rhs.image_filters_inflate_)) {}
+
+feature_type_style& feature_type_style::operator=(feature_type_style rhs)
 {
-    if (this == &rhs) return *this;
-    rules_=rhs.rules_;
-    filters_ = rhs.filters_;
-    direct_filters_ = rhs.direct_filters_;
-    comp_op_ = rhs.comp_op_;
-    opacity_= rhs.opacity_;
+    using std::swap;
+    std::swap(this->rules_, rhs.rules_);
+    std::swap(this->filter_mode_, rhs.filter_mode_);
+    std::swap(this->filters_, rhs.filters_);
+    std::swap(this->direct_filters_, rhs.direct_filters_);
+    std::swap(this->comp_op_, rhs.comp_op_);
+    std::swap(this->opacity_, rhs.opacity_);
+    std::swap(this->image_filters_inflate_, rhs.image_filters_inflate_);
     return *this;
 }
 
-void feature_type_style::add_rule(rule const& rule)
+bool feature_type_style::operator==(feature_type_style const& rhs) const
 {
-    rules_.push_back(rule);
+    return (rules_ == rhs.rules_) &&
+        (filter_mode_ == rhs.filter_mode_) &&
+        (filters_ == rhs.filters_) &&
+        (direct_filters_ == rhs.direct_filters_) &&
+        (comp_op_ == rhs.comp_op_) &&
+        (opacity_ == rhs.opacity_) &&
+        (image_filters_inflate_ == rhs.image_filters_inflate_);
+}
+
+void feature_type_style::add_rule(rule && rule)
+{
+    rules_.push_back(std::move(rule));
 }
 
 rules const& feature_type_style::get_rules() const
@@ -92,7 +108,7 @@ rules& feature_type_style::get_rules_nonconst()
 
 bool feature_type_style::active(double scale_denom) const
 {
-    BOOST_FOREACH(rule const& r, rules_)
+    for (rule const& r : rules_)
     {
         if (r.active(scale_denom))
         {
@@ -152,5 +168,14 @@ float feature_type_style::get_opacity() const
     return opacity_;
 }
 
+void feature_type_style::set_image_filters_inflate(bool inflate)
+{
+    image_filters_inflate_ = inflate;
+}
+
+bool feature_type_style::image_filters_inflate() const
+{
+    return image_filters_inflate_;
+}
 
 }

@@ -27,11 +27,14 @@
 #include <mapnik/global.hpp>
 
 // boost
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/phoenix_function.hpp>
 #include <boost/spirit/include/phoenix_core.hpp>
 #include <boost/spirit/include/phoenix_operator.hpp>
-
+#pragma GCC diagnostic pop
 
 namespace mapnik { namespace svg {
 
@@ -45,10 +48,11 @@ inline double deg2rad(double deg)
 template <typename PathType>
 struct move_to
 {
-    template <typename T0, typename T1>
+
+    template <typename T0>
     struct result
     {
-        typedef void type;
+        using type = void;
     };
 
     explicit move_to(PathType & path)
@@ -66,10 +70,10 @@ struct move_to
 template <typename PathType>
 struct hline_to
 {
-    template <typename T0, typename T1>
+    template <typename T0>
     struct result
     {
-        typedef void type;
+        using type = void;
     };
 
     explicit hline_to(PathType & path)
@@ -88,10 +92,10 @@ struct hline_to
 template <typename PathType>
 struct vline_to
 {
-    template <typename T0, typename T1>
+    template <typename T0>
     struct result
     {
-        typedef void type;
+        using type = void;
     };
 
     explicit vline_to(PathType & path)
@@ -109,10 +113,10 @@ struct vline_to
 template <typename PathType>
 struct line_to
 {
-    template <typename T0, typename T1>
+    template <typename T0>
     struct result
     {
-        typedef void type;
+        using type = void;
     };
 
     explicit line_to(PathType & path)
@@ -131,10 +135,10 @@ struct line_to
 template <typename PathType>
 struct curve4
 {
-    template <typename T0, typename T1, typename T2, typename T3>
+    template <typename T0>
     struct result
     {
-        typedef void type;
+        using type = void;
     };
 
     explicit curve4(PathType & path)
@@ -156,10 +160,10 @@ struct curve4
 template <typename PathType>
 struct curve4_smooth
 {
-    template <typename T0, typename T1, typename T2>
+    template <typename T0>
     struct result
     {
-        typedef void type;
+        using type = void;
     };
 
     explicit curve4_smooth(PathType & path)
@@ -178,10 +182,10 @@ struct curve4_smooth
 template <typename PathType>
 struct curve3
 {
-    template <typename T0, typename T1, typename T2>
+    template <typename T0>
     struct result
     {
-        typedef void type;
+        using type = void;
     };
 
     explicit curve3(PathType & path)
@@ -201,10 +205,10 @@ struct curve3
 template <typename PathType>
 struct curve3_smooth
 {
-    template <typename T0, typename T1>
+    template <typename T0>
     struct result
     {
-        typedef void type;
+        using type = void;
     };
 
     explicit curve3_smooth(PathType & path)
@@ -223,10 +227,10 @@ struct curve3_smooth
 template <typename PathType>
 struct arc_to
 {
-    template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5>
+    template <typename T0>
     struct result
     {
-        typedef void type;
+        using type = void;
     };
 
     explicit arc_to(PathType & path)
@@ -247,7 +251,7 @@ struct arc_to
 template <typename PathType>
 struct close
 {
-    typedef void result_type;
+    using result_type = void;
 
     explicit close(PathType & path)
         : path_(path) {}

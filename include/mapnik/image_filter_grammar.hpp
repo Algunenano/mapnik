@@ -24,13 +24,28 @@
 #define MAPNIK_IMAGE_FILITER_GRAMMAR_HPP
 
 // boost
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
 #include <boost/spirit/include/qi.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
+#pragma GCC diagnostic pop
+
 // mapnik
 #include <mapnik/css_color_grammar.hpp>
-#include <mapnik/image_filter.hpp>
+#include <mapnik/color.hpp>
+
 // stl
-#include <vector>
+#include <cmath>
+
+namespace mapnik {
+
+namespace filter {
+struct color_stop;
+struct colorize_alpha;
+}
+
+}
 
 BOOST_FUSION_ADAPT_STRUCT(
     mapnik::filter::color_stop,
@@ -47,7 +62,7 @@ struct percent_offset_impl
     template <typename T>
     struct result
     {
-        typedef double type;
+        using type = double;
     };
 
     double operator() (double val) const
@@ -67,14 +82,15 @@ struct image_filter_grammar :
     qi::rule<Iterator, ContType(), qi::ascii::space_type> start;
     qi::rule<Iterator, ContType(), qi::ascii::space_type> filter;
     qi::rule<Iterator, qi::locals<int,int>, void(ContType&), qi::ascii::space_type> agg_blur_filter;
-    //qi::rule<Iterator, qi::locals<double,double,double,double,double,double,double,double>,
-    //         void(ContType&), qi::ascii::space_type> hsla_filter;
+    qi::rule<Iterator, qi::locals<double,double,double,double,double,double,double,double>,
+             void(ContType&), qi::ascii::space_type> scale_hsla_filter;
     qi::rule<Iterator, qi::locals<mapnik::filter::colorize_alpha, mapnik::filter::color_stop>, void(ContType&), qi::ascii::space_type> colorize_alpha_filter;
     qi::rule<Iterator, qi::ascii::space_type> no_args;
     qi::uint_parser< unsigned, 10, 1, 3 > radius_;
     css_color_grammar<Iterator> css_color_;
     qi::rule<Iterator,void(mapnik::filter::color_stop &),qi::ascii::space_type> color_stop_offset;
     phoenix::function<percent_offset_impl> percent_offset;
+    qi::rule<Iterator, qi::locals<color>, void(ContType&), qi::ascii::space_type> color_to_alpha_filter;
 };
 
 }

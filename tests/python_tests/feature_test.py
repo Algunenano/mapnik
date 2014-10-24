@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import itertools
+import itertools,sys
 import unittest
 from nose.tools import *
 from utilities import execution_path, run_all
@@ -11,6 +11,12 @@ from binascii import unhexlify
 def test_default_constructor():
     f = mapnik.Feature(mapnik.Context(),1)
     eq_(f is not None,True)
+
+def test_feature_geo_interface():
+    ctx = mapnik.Context()
+    feat = mapnik.Feature(ctx,1)
+    feat.add_geometries_from_wkt('Point (0 0)')
+    eq_(feat.__geo_interface__['geometry'],{u'type': u'Point', u'coordinates': [0, 0]})
 
 def test_python_extended_constructor():
     context = mapnik.Context()
@@ -89,5 +95,24 @@ def test_feature_expression_evaluation_attr_with_spaces():
     eq_(str(expr),"([name with space]='a')")
     eq_(expr.evaluate(f),True)
 
+# https://github.com/mapnik/mapnik/issues/2390
+@raises(RuntimeError)
+def test_feature_from_geojson():
+    ctx = mapnik.Context()
+    inline_string = """
+    {
+         "geometry" : {
+            "coordinates" : [ 0,0 ]
+            "type" : "Point"
+         },
+         "type" : "Feature",
+         "properties" : {
+            "this":"that"
+            "known":"nope because missing comma"
+         }
+    }
+    """
+    feat = mapnik.Feature.from_geojson(inline_string,ctx)
+
 if __name__ == "__main__":
-    run_all(eval(x) for x in dir() if x.startswith("test_"))
+    exit(run_all(eval(x) for x in dir() if x.startswith("test_")))

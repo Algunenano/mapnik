@@ -20,19 +20,25 @@
  *
  *****************************************************************************/
 
+#include <mapnik/config.hpp>
+
 // boost
+#include "boost_std_shared_shim.hpp"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 #include <boost/python.hpp>
-#include <boost/python/detail/api_placeholder.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/version.hpp>
+#pragma GCC diagnostic pop
 
 // stl
-#include <sstream>
 #include <vector>
 
 // mapnik
 #include <mapnik/box2d.hpp>
-#include <mapnik/coord.hpp>
-#include <mapnik/query.hpp>
 #include <mapnik/datasource.hpp>
 #include <mapnik/datasource_cache.hpp>
 #include <mapnik/feature_layer_desc.hpp>
@@ -43,12 +49,13 @@ using mapnik::datasource;
 using mapnik::memory_datasource;
 using mapnik::layer_descriptor;
 using mapnik::attribute_descriptor;
+using mapnik::parameters;
 
 namespace
 {
 //user-friendly wrapper that uses Python dictionary
 using namespace boost::python;
-boost::shared_ptr<mapnik::datasource> create_datasource(dict const& d)
+std::shared_ptr<mapnik::datasource> create_datasource(dict const& d)
 {
     mapnik::parameters params;
     boost::python::list keys=d.keys();
@@ -61,7 +68,11 @@ boost::shared_ptr<mapnik::datasource> create_datasource(dict const& d)
             PyObject* temp = PyUnicode_AsUTF8String(obj.ptr());
             if (temp)
             {
+#if PY_VERSION_HEX >= 0x03000000
+                char* c_str = PyBytes_AsString(temp);
+#else
                 char* c_str = PyString_AsString(temp);
+#endif
                 params[key] = std::string(c_str);
                 Py_DecRef(temp);
             }
@@ -88,7 +99,7 @@ boost::shared_ptr<mapnik::datasource> create_datasource(dict const& d)
     return mapnik::datasource_cache::instance().create(params);
 }
 
-boost::python::dict describe(boost::shared_ptr<mapnik::datasource> const& ds)
+boost::python::dict describe(std::shared_ptr<mapnik::datasource> const& ds)
 {
     boost::python::dict description;
     mapnik::layer_descriptor ld = ds->get_descriptor();
@@ -99,7 +110,7 @@ boost::python::dict describe(boost::shared_ptr<mapnik::datasource> const& ds)
     return description;
 }
 
-boost::python::list fields(boost::shared_ptr<mapnik::datasource> const& ds)
+boost::python::list fields(std::shared_ptr<mapnik::datasource> const& ds)
 {
     boost::python::list flds;
     if (ds)
@@ -115,7 +126,7 @@ boost::python::list fields(boost::shared_ptr<mapnik::datasource> const& ds)
     }
     return flds;
 }
-boost::python::list field_types(boost::shared_ptr<mapnik::datasource> const& ds)
+boost::python::list field_types(std::shared_ptr<mapnik::datasource> const& ds)
 {
     boost::python::list fld_types;
     if (ds)
@@ -169,7 +180,7 @@ void export_datasource()
         .value("Collection",mapnik::datasource::Collection)
         ;
 
-    class_<datasource,boost::shared_ptr<datasource>,
+    class_<datasource,std::shared_ptr<datasource>,
         boost::noncopyable>("Datasource",no_init)
         .def("type",&datasource::type)
         .def("geometry_type",&datasource::get_geometry_type)
@@ -182,11 +193,14 @@ void export_datasource()
         .def("params",make_function(params_const,return_value_policy<copy_const_reference>()),
              "The configuration parameters of the data source. "
              "These vary depending on the type of data source.")
+        .def(self == self)
         ;
 
     def("CreateDatasource",&create_datasource);
 
-    class_<memory_datasource, bases<datasource>, boost::noncopyable>("MemoryDatasource", init<>())
+    class_<memory_datasource,
+           bases<datasource>, std::shared_ptr<memory_datasource>,
+           boost::noncopyable>("MemoryDatasourceBase", init<parameters>())
         .def("add_feature",&memory_datasource::push,
              "Adds a Feature:\n"
              ">>> ms = MemoryDatasource()\n"
@@ -194,4 +208,6 @@ void export_datasource()
              ">>> ms.add_feature(Feature(1))\n")
         .def("num_features",&memory_datasource::size)
         ;
+
+    implicitly_convertible<std::shared_ptr<memory_datasource>,std::shared_ptr<datasource> >();
 }

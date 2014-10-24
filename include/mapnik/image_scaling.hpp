@@ -23,11 +23,15 @@
 #ifndef MAPNIK_IMAGE_SCALING_HPP
 #define MAPNIK_IMAGE_SCALING_HPP
 
-// stl
-#include <string>
-
-#include <boost/optional.hpp>
+// mapnik
 #include <mapnik/config.hpp>
+#include <mapnik/image_data.hpp>
+
+// stl
+#include <iosfwd>
+
+// boost
+#include <boost/optional.hpp>
 
 namespace mapnik
 {
@@ -50,34 +54,31 @@ enum scaling_method_e
     SCALING_MITCHELL,
     SCALING_SINC,
     SCALING_LANCZOS,
-    SCALING_BLACKMAN,
-    SCALING_BILINEAR8
+    SCALING_BLACKMAN
 };
 
-boost::optional<scaling_method_e> scaling_method_from_string(std::string const& name);
-boost::optional<std::string> scaling_method_to_string(scaling_method_e scaling_method);
+MAPNIK_DECL boost::optional<scaling_method_e> scaling_method_from_string(std::string const& name);
+MAPNIK_DECL boost::optional<std::string> scaling_method_to_string(scaling_method_e scaling_method);
 
 template <typename Image>
-void scale_image_agg(Image & target,
+MAPNIK_DECL void scale_image_agg(Image & target,
                       Image const& source,
                       scaling_method_e scaling_method,
                       double image_ratio_x,
                       double image_ratio_y,
-                      double x_off_f=0,
-                      double y_off_f=0,
-                      double filter_radius=2);
+                      double x_off_f,
+                      double y_off_f,
+                      double filter_factor);
 
-template <typename Image>
-void scale_image_bilinear_old(Image & target,
-                              Image const& source,
-                              double x_off_f=0,
-                              double y_off_f=0);
-
-template <typename Image>
-void scale_image_bilinear8(Image & target,
-                           Image const& source,
-                           double x_off_f=0,
-                           double y_off_f=0);
+extern template MAPNIK_DECL void scale_image_agg<mapnik::image_data_32>(
+                      mapnik::image_data_32 & target,
+                      mapnik::image_data_32 const& source,
+                      scaling_method_e scaling_method,
+                      double image_ratio_x,
+                      double image_ratio_y,
+                      double x_off_f,
+                      double y_off_f,
+                      double filter_radius);
 
 }
 #endif // MAPNIK_IMAGE_SCALING_HPP

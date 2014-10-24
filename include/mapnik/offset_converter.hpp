@@ -26,27 +26,22 @@
 #ifdef MAPNIK_LOG
 #include <mapnik/debug.hpp>
 #endif
+#include <mapnik/global.hpp>
 #include <mapnik/config.hpp>
-#include <mapnik/box2d.hpp>
 #include <mapnik/vertex.hpp>
-#include <mapnik/proj_transform.hpp>
-
-// boost
-#include <boost/math/constants/constants.hpp>
 
 // stl
 #include <cmath>
+#include <vector>
+#include <cstddef>
 
 namespace mapnik
 {
 
-const double pi = boost::math::constants::pi<double>();
-
 template <typename Geometry>
 struct MAPNIK_DECL offset_converter
 {
-    typedef std::size_t size_type;
-    //typedef typename Geometry::value_type value_type;
+    using size_type = std::size_t;
 
     offset_converter(Geometry & geom)
         : geom_(geom)
@@ -62,11 +57,13 @@ struct MAPNIK_DECL offset_converter
     enum status
     {
         initial,
-        process,
-        last_vertex,
-        angle_joint,
-        end
+        process
     };
+
+    unsigned type() const
+    {
+        return static_cast<unsigned>(geom_.type());
+    }
 
     double get_offset() const
     {
@@ -98,19 +95,27 @@ struct MAPNIK_DECL offset_converter
     unsigned vertex(double * x, double * y)
     {
         if (offset_ == 0.0)
+        {
             return geom_.vertex(x, y);
+        }
 
         if (status_ == initial)
+        {
             init_vertices();
+        }
 
         if (pos_ >= vertices_.size())
+        {
             return SEG_END;
+        }
 
         pre_ = (pos_ ? cur_ : pre_first_);
-        cur_ = vertices_[pos_++];
+        cur_ = vertices_.at(pos_++);
 
         if (pos_ == vertices_.size())
+        {
             return output_vertex(x, y);
+        }
 
         double const check_dist = offset_ * threshold_;
         double const check_dist2 = check_dist * check_dist;
@@ -127,13 +132,19 @@ struct MAPNIK_DECL offset_converter
             double const dy = u0.y - cur_.y;
 
             if (dx*dx + dy*dy > check_dist2)
+            {
                 break;
+            }
 
             if (!intersection(pre_, cur_, &vt, u0, u1, &ut))
+            {
                 continue;
+            }
 
             if (vt < 0.0 || vt > t || ut < 0.0 || ut > 1.0)
+            {
                 continue;
+            }
 
             t = vt;
             pos_ = i+1;
@@ -161,12 +172,18 @@ private:
 
     static double explement_reflex_angle(double angle)
     {
-        if (angle > pi)
-            return angle - 2 * pi;
-        else if (angle < -pi)
-            return angle + 2 * pi;
+        if (angle > M_PI)
+        {
+            return angle - 2 * M_PI;
+        }
+        else if (angle < -M_PI)
+        {
+            return angle + 2 * M_PI;
+        }
         else
+        {
             return angle;
+        }
     }
 
     static bool intersection(vertex2d const& u1, vertex2d const& u2, double* ut,
@@ -186,7 +203,9 @@ private:
             double const dn = vx * uy - ux * vy;
 
             if (dn > -1e-6 && dn < 1e-6)
+            {
                 return false; // they are parallel
+            }
 
             *vt = up / dn;
             *ut = (*vt * vx + dx) / ux;
@@ -200,7 +219,9 @@ private:
             double const dn = vy * ux - uy * vx;
 
             if (dn > -1e-6 && dn < 1e-6)
+            {
                 return false; // they are parallel
+            }
 
             *vt = up / dn;
             *ut = (*vt * vy + dy) / uy;
@@ -251,7 +272,9 @@ private:
     status init_vertices()
     {
         if (status_ != initial) // already initialized
+        {
             return status_;
+        }
 
         vertex2d v1(vertex2d::no_init);
         vertex2d v2(vertex2d::no_init);
@@ -261,7 +284,9 @@ private:
         v2.cmd = geom_.vertex(&v2.x, &v2.y);
 
         if (v2.cmd == SEG_END) // not enough vertices in source
+        {
             return status_ = process;
+        }
 
         double angle_a = 0;
         double angle_b = std::atan2((v2.y - v1.y), (v2.x - v1.x));
@@ -290,16 +315,24 @@ private:
             if (offset_ < 0.0)
             {
                 if (joint_angle > 0.0)
-                    joint_angle = joint_angle - 2 * pi;
+                {
+                    joint_angle = joint_angle - 2 * M_PI;
+                }
                 else
-                    bulge_steps = 1 + int(std::floor(half_turns / pi));
+                {
+                    bulge_steps = 1 + static_cast<int>(std::floor(half_turns / M_PI));
+                }
             }
             else
             {
                 if (joint_angle < 0.0)
-                    joint_angle = joint_angle + 2 * pi;
+                {
+                    joint_angle = joint_angle + 2 * M_PI;
+                }
                 else
-                    bulge_steps = 1 + int(floor(half_turns / pi));
+                {
+                    bulge_steps = 1 + static_cast<int>(std::floor(half_turns / M_PI));
+                }
             }
 
             #ifdef MAPNIK_LOG
@@ -307,14 +340,14 @@ private:
             {
                 // inside turn (sharp/obtuse angle)
                 MAPNIK_LOG_DEBUG(ctrans) << "offset_converter:"
-                    << " Sharp joint [<< inside turn " << int(joint_angle*180/pi)
+                    << " Sharp joint [<< inside turn " << int(joint_angle*180/M_PI)
                     << " degrees >>]";
             }
             else
             {
                 // outside turn (reflex angle)
                 MAPNIK_LOG_DEBUG(ctrans) << "offset_converter:"
-                    << " Bulge joint >)) outside turn " << int(joint_angle*180/pi)
+                    << " Bulge joint >)) outside turn " << int(joint_angle*180/M_PI)
                     << " degrees ((< with " << bulge_steps << " segments";
             }
             #endif
@@ -322,7 +355,7 @@ private:
             displace(w, v1, angle_a);
             push_vertex(w);
 
-            for (int s = 0; ++s < bulge_steps; )
+            for (int s = 0; ++s < bulge_steps;)
             {
                 displace(w, v1, angle_a + (joint_angle * s) / bulge_steps);
                 push_vertex(w);
@@ -355,10 +388,6 @@ private:
 
     void push_vertex(vertex2d const& v)
     {
-        #ifdef MAPNIK_LOG
-        MAPNIK_LOG_DEBUG(ctrans) << "offset_converter: " << v;
-        #endif
-
         vertices_.push_back(v);
     }
 

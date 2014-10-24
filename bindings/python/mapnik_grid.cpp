@@ -20,10 +20,21 @@
  *
  *****************************************************************************/
 
+#if defined(GRID_RENDERER)
+
+#include <mapnik/config.hpp>
+
 // boost
+#include "boost_std_shared_shim.hpp"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 #include <boost/python.hpp>
 #include <boost/python/module.hpp>
 #include <boost/python/def.hpp>
+#pragma GCC diagnostic pop
 
 // mapnik
 #include <mapnik/grid/grid.hpp>
@@ -53,7 +64,7 @@ mapnik::grid::value_type get_pixel(mapnik::grid const& grid, int x, int y)
 
 void export_grid()
 {
-    class_<mapnik::grid,boost::shared_ptr<mapnik::grid> >(
+    class_<mapnik::grid,std::shared_ptr<mapnik::grid> >(
         "Grid",
         "This class represents a feature hitgrid.",
         init<int,int,std::string,unsigned>(
@@ -80,3 +91,5 @@ void export_grid()
         ;
 
 }
+
+#endif

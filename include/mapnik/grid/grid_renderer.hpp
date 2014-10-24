@@ -26,19 +26,18 @@
 // mapnik
 #include <mapnik/config.hpp>
 #include <mapnik/feature_style_processor.hpp>
-#include <mapnik/font_engine_freetype.hpp>
 #include <mapnik/grid/grid.hpp>
 #include <mapnik/noncopyable.hpp>
 #include <mapnik/rule.hpp>              // for rule, symbolizers
 #include <mapnik/box2d.hpp>     // for box2d
 #include <mapnik/color.hpp>     // for color
-#include <mapnik/ctrans.hpp>    // for CoordTransform
+#include <mapnik/view_transform.hpp>    // for view_transform
 #include <mapnik/image_compositing.hpp>  // for composite_mode_e
 #include <mapnik/pixel_position.hpp>
+#include <mapnik/renderer_common.hpp>
 
-// boost
-#include <boost/scoped_ptr.hpp>
-#include <boost/shared_ptr.hpp>
+// stl
+#include <memory>
 
 // fwd declaration to avoid depedence on agg headers
 namespace agg { struct trans_affine; }
@@ -64,18 +63,20 @@ class MAPNIK_DECL grid_renderer : public feature_style_processor<grid_renderer<T
 {
 
 public:
-    typedef T buffer_type;
-    typedef grid_renderer<T> processor_impl_type;
+    using buffer_type = T;
+    using processor_impl_type = grid_renderer<T>;
     grid_renderer(Map const& m, T & pixmap, double scale_factor=1.0, unsigned offset_x=0, unsigned offset_y=0);
-    grid_renderer(Map const& m, request const& req, T & pixmap, double scale_factor=1.0, unsigned offset_x=0, unsigned offset_y=0);
+    grid_renderer(Map const& m, request const& req, attributes const& vars, T & pixmap, double scale_factor=1.0, unsigned offset_x=0, unsigned offset_y=0);
     ~grid_renderer();
     void start_map_processing(Map const& map);
     void end_map_processing(Map const& map);
     void start_layer_processing(layer const& lay, box2d<double> const& query_extent);
     void end_layer_processing(layer const& lay);
-    void start_style_processing(feature_type_style const& st) {}
-    void end_style_processing(feature_type_style const& st) {}
-    void render_marker(mapnik::feature_impl & feature, unsigned int step, pixel_position const& pos, marker const& marker, const agg::trans_affine & tr, double opacity, composite_mode_e comp_op);
+    void start_style_processing(feature_type_style const& /*st*/) {}
+    void end_style_processing(feature_type_style const& /*st*/) {}
+    void render_marker(mapnik::feature_impl const& feature,
+                       pixel_position const& pos, marker const& marker,
+                       agg::trans_affine const& tr, double opacity, composite_mode_e comp_op);
 
     void process(point_symbolizer const& sym,
                  mapnik::feature_impl & feature,
@@ -107,6 +108,9 @@ public:
     void process(markers_symbolizer const& sym,
                  mapnik::feature_impl & feature,
                  proj_transform const& prj_trans);
+    void process(group_symbolizer const& sym,
+                 mapnik::feature_impl & feature,
+                 proj_transform const& prj_trans);
     inline bool process(rule::symbolizers const& /*syms*/,
                         mapnik::feature_impl & /*feature*/,
                         proj_transform const& /*prj_trans*/)
@@ -114,26 +118,36 @@ public:
         // grid renderer doesn't support processing of multiple symbolizers.
         return false;
     }
+
+    bool painted()
+    {
+        return pixmap_.painted();
+    }
+
     void painted(bool painted)
     {
         pixmap_.painted(painted);
     }
+
     inline eAttributeCollectionPolicy attribute_collection_policy() const
     {
         return DEFAULT;
     }
 
+    inline double scale_factor() const
+    {
+        return common_.scale_factor_;
+    }
+
+    inline attributes const& variables() const
+    {
+        return common_.vars_;
+    }
+
 private:
     buffer_type & pixmap_;
-    unsigned width_;
-    unsigned height_;
-    double scale_factor_;
-    CoordTransform t_;
-    freetype_engine font_engine_;
-    face_manager<freetype_engine> font_manager_;
-    boost::shared_ptr<label_collision_detector4> detector_;
-    boost::scoped_ptr<grid_rasterizer> ras_ptr;
-    box2d<double> query_extent_;
+    const std::unique_ptr<grid_rasterizer> ras_ptr;
+    renderer_common common_;
     void setup(Map const& m);
 };
 }

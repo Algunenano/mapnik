@@ -20,6 +20,7 @@
 #
 
 import os
+import copy
 Import ('plugin_base')
 Import ('env')
 
@@ -42,7 +43,7 @@ libraries.append(env['BOOST_PYTHON_LIB'])
 libraries.append(env['ICU_LIB_NAME'])
 
 python_cpppath = env['PYTHON_INCLUDES']
-allcpp_paths = env['CPPPATH']
+allcpp_paths = copy.copy(env['CPPPATH'])
 allcpp_paths.extend(python_cpppath)
 # NOTE: explicit linking to libpython is uneeded on most linux version if the
 # python plugin is used by a app in python using mapnik's python bindings
@@ -65,20 +66,16 @@ else:
     # so instead add to libraries
     libraries.append('python%s' % env['PYTHON_VERSION'])
 
-if env['CUSTOM_LDFLAGS']:
-    linkflags = '%s %s' % (env['CUSTOM_LDFLAGS'], python_link_flag)
-else:
-    linkflags = python_link_flag
+plugin_env.Append(LINKFLAGS=python_link_flag)
 
 if env['PLUGIN_LINKING'] == 'shared':
-    libraries.append('mapnik')
+    libraries.append(env['MAPNIK_NAME'])
     TARGET = plugin_env.SharedLibrary('../%s' % PLUGIN_NAME,
                                       SHLIBPREFIX='',
                                       SHLIBSUFFIX='.input',
                                       source=plugin_sources,
                                       CPPPATH=allcpp_paths,
-                                      LIBS=libraries,
-                                      LINKFLAGS=linkflags)
+                                      LIBS=libraries)
 
     # if the plugin links to libmapnik ensure it is built first
     Depends(TARGET, env.subst('../../../src/%s' % env['MAPNIK_LIB_NAME']))
@@ -94,7 +91,7 @@ plugin_obj = {
   'LIBS': libraries,
   'SOURCES': plugin_sources,
   'CPPPATH': python_cpppath,
-  'LINKFLAGS': linkflags.replace('-Z','').split(' '),
+  'LINKFLAGS': python_link_flag.replace('-Z','').split(' '),
 }
 
 Return('plugin_obj')

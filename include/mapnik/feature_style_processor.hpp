@@ -24,13 +24,14 @@
 #define MAPNIK_FEATURE_STYLE_PROCESSOR_HPP
 
 // mapnik
-#include <mapnik/datasource.hpp> // for featureset_ptr
+#include <mapnik/box2d.hpp>
+#include <mapnik/featureset.hpp>
 #include <mapnik/config.hpp>
+#include <mapnik/feature_style_processor_context.hpp>
 
 // stl
 #include <set>
 #include <string>
-#include <vector>
 
 namespace mapnik
 {
@@ -41,6 +42,7 @@ class projection;
 class proj_transform;
 class feature_type_style;
 class rule_cache;
+struct layer_rendering_material;
 
 enum eAttributeCollectionPolicy
 {
@@ -51,7 +53,6 @@ enum eAttributeCollectionPolicy
 template <typename Processor>
 class MAPNIK_DECL feature_style_processor
 {
-    struct symbol_dispatch;
 public:
     explicit feature_style_processor(Map const& m,
                                      double scale_factor = 1.0);
@@ -67,6 +68,7 @@ public:
     void apply(mapnik::layer const& lyr,
                std::set<std::string>& names,
                double scale_denom_override=0.0);
+
     /*!
      * \brief render a layer given a projection and scale.
      */
@@ -85,16 +87,32 @@ private:
     /*!
      * \brief renders a featureset with the given styles.
      */
-    void render_style(layer const& lay,
-                      Processor & p,
+    void render_style(Processor & p,
                       feature_type_style const* style,
                       rule_cache const& rules,
-                      std::string const& style_name,
                       featureset_ptr features,
                       proj_transform const& prj_trans);
 
+    /*!
+     * \brief prepare features for rendering asynchronously.
+     */
+    void prepare_layer(layer_rendering_material & mat,
+                       feature_style_context_map & ctx_map,
+                       Processor & p,
+                       double scale,
+                       double scale_denom,
+                       unsigned width,
+                       unsigned height,
+                       box2d<double> const& extent,
+                       int buffer_size,
+                       std::set<std::string>& names);
+
+    /*!
+     * \brief render features list queued when they are available.
+     */
+    void render_material(layer_rendering_material & mat, Processor & p );
+
     Map const& m_;
-    double scale_factor_;
 };
 }
 

@@ -28,17 +28,10 @@
 #include <mapnik/palette.hpp>
 #include <mapnik/noncopyable.hpp>
 
-// boost
-#include <boost/version.hpp>
-#if BOOST_VERSION >= 104600
-#include <boost/range/algorithm.hpp>
-#endif
-#include <boost/scoped_ptr.hpp>
-
 // stl
+#include <algorithm>
 #include <vector>
 #include <set>
-#include <algorithm>
 #include <cmath>
 
 namespace mapnik {
@@ -64,15 +57,16 @@ class hextree : private mapnik::noncopyable
     struct node
     {
         node ()
-            : reds(0),
-              greens(0),
-              blues(0),
-              alphas(0),
+            : reds(0.0),
+              greens(0.0),
+              blues(0.0),
+              alphas(0.0),
               count(0),
               pixel_count(0),
+              reduce_cost(0.0),
               children_count(0)
         {
-            memset(&children_[0],0,sizeof(children_));
+            std::fill(children_, children_ + 16, nullptr);
         }
 
         ~node ()
@@ -124,7 +118,7 @@ class hextree : private mapnik::noncopyable
     unsigned colors_;
     // flag indicating existance of invisible pixels (a < InsertPolicy::MIN_ALPHA)
     bool has_holes_;
-    boost::scoped_ptr<node> root_;
+    const std::unique_ptr<node> root_;
     // working palette for quantization, sorted on mean(r,g,b,a) for easier searching NN
     std::vector<rgba> sorted_pal_;
     // index remaping of sorted_pal_ indexes to indexes of returned image palette
@@ -263,13 +257,8 @@ public:
             int dist, newdist;
 
             // find closest match based on mean of r,g,b,a
-#if BOOST_VERSION >= 104600
-            std::vector<rgba>::const_iterator pit =
-                boost::lower_bound(sorted_pal_, c, rgba::mean_sort_cmp());
-#else
             std::vector<rgba>::const_iterator pit =
                 std::lower_bound(sorted_pal_.begin(),sorted_pal_.end(), c, rgba::mean_sort_cmp());
-#endif
             ind = pit-sorted_pal_.begin();
             if (ind == sorted_pal_.size())
                 ind--;
@@ -342,28 +331,24 @@ public:
         create_palette_rek(sorted_pal_, root_.get());
 
         // sort palette for binary searching in quantization
-#if BOOST_VERSION >= 104600
-        boost::sort(sorted_pal_, rgba::mean_sort_cmp());
-#else
         std::sort(sorted_pal_.begin(), sorted_pal_.end(), rgba::mean_sort_cmp());
-#endif
         // returned palette is rearanged, so that colors with a<255 are at the begining
         pal_remap_.resize(sorted_pal_.size());
         palette.clear();
         palette.reserve(sorted_pal_.size());
-        for (unsigned i=0; i<sorted_pal_.size(); i++)
+        for (unsigned i=0; i<sorted_pal_.size(); ++i)
         {
             if (sorted_pal_[i].a<255)
             {
-                pal_remap_[i] = palette.size();
+                pal_remap_[i] = static_cast<unsigned>(palette.size());
                 palette.push_back(sorted_pal_[i]);
             }
         }
-        for (unsigned i=0; i<sorted_pal_.size(); i++)
+        for (unsigned i=0; i<sorted_pal_.size(); ++i)
         {
             if (sorted_pal_[i].a==255)
             {
-                pal_remap_[i] = palette.size();
+                pal_remap_[i] = static_cast<unsigned>(palette.size());
                 palette.push_back(sorted_pal_[i]);
             }
         }

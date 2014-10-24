@@ -23,82 +23,11 @@
 // mapnik
 #include <mapnik/rule.hpp>
 #include <mapnik/expression_node.hpp>
-#include <mapnik/debug.hpp>
-#include <mapnik/raster_colorizer.hpp>
-#include <mapnik/expression_string.hpp>
-
-// all symbolizers
-#include <mapnik/building_symbolizer.hpp>
-#include <mapnik/line_symbolizer.hpp>
-#include <mapnik/line_pattern_symbolizer.hpp>
-#include <mapnik/polygon_symbolizer.hpp>
-#include <mapnik/polygon_pattern_symbolizer.hpp>
-#include <mapnik/point_symbolizer.hpp>
-#include <mapnik/raster_symbolizer.hpp>
-#include <mapnik/shield_symbolizer.hpp>
-#include <mapnik/text_symbolizer.hpp>
-#include <mapnik/markers_symbolizer.hpp>
-#include <mapnik/debug_symbolizer.hpp>
-
-// boost
-#include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
-#include <boost/concept_check.hpp>
 
 // stl
 #include <limits>
+#include <memory>
 
-namespace {
-
-    struct deepcopy_symbolizer : public boost::static_visitor<>
-    {
-        void operator () (mapnik::raster_symbolizer & sym) const
-        {
-            mapnik::raster_colorizer_ptr old_colorizer = sym.get_colorizer();
-            mapnik::raster_colorizer_ptr new_colorizer = mapnik::raster_colorizer_ptr();
-            new_colorizer->set_stops(old_colorizer->get_stops());
-            new_colorizer->set_default_mode(old_colorizer->get_default_mode());
-            new_colorizer->set_default_color(old_colorizer->get_default_color());
-            new_colorizer->set_epsilon(old_colorizer->get_epsilon());
-            sym.set_colorizer(new_colorizer);
-        }
-
-        void operator () (mapnik::text_symbolizer & sym) const
-        {
-            copy_text_ptr(sym);
-        }
-
-        void operator () (mapnik::shield_symbolizer & sym) const
-        {
-            copy_text_ptr(sym);
-        }
-
-        void operator () (mapnik::building_symbolizer & sym) const
-        {
-            copy_height_ptr(sym);
-        }
-
-        template <typename T> void operator () (T &sym) const
-        {
-            boost::ignore_unused_variable_warning(sym);
-        }
-
-        template <class T>
-        void copy_text_ptr(T & sym) const
-        {
-            boost::ignore_unused_variable_warning(sym);
-            MAPNIK_LOG_WARN(rule) << "rule: deep copying TextSymbolizers is broken!";
-        }
-
-        template <class T>
-        void copy_height_ptr(T & sym) const
-        {
-            std::string height_expr = mapnik::to_expression_string(*sym.height());
-            sym.set_height(mapnik::parse_expression(height_expr,"utf8"));
-        }
-    };
-
-}
 namespace mapnik
 {
 
@@ -107,7 +36,7 @@ rule::rule()
       min_scale_(0),
       max_scale_(std::numeric_limits<double>::infinity()),
       syms_(),
-      filter_(boost::make_shared<mapnik::expr_node>(true)),
+      filter_(std::make_shared<expr_node>(true)),
       else_filter_(false),
       also_filter_(false) {}
 
@@ -118,55 +47,52 @@ rule::rule(std::string const& name,
       min_scale_(min_scale_denominator),
       max_scale_(max_scale_denominator),
       syms_(),
-      filter_(boost::make_shared<mapnik::expr_node>(true)),
+      filter_(std::make_shared<mapnik::expr_node>(true)),
       else_filter_(false),
       also_filter_(false)  {}
 
-rule::rule(const rule& rhs, bool deep_copy)
+rule::rule(rule const& rhs)
     : name_(rhs.name_),
       min_scale_(rhs.min_scale_),
       max_scale_(rhs.max_scale_),
       syms_(rhs.syms_),
-      filter_(rhs.filter_),
+      filter_(std::make_shared<expr_node>(*rhs.filter_)),
       else_filter_(rhs.else_filter_),
-      also_filter_(rhs.also_filter_)
+      also_filter_(rhs.also_filter_) {}
+
+rule::rule(rule && rhs)
+    : name_(std::move(rhs.name_)),
+      min_scale_(std::move(rhs.min_scale_)),
+      max_scale_(std::move(rhs.max_scale_)),
+      syms_(std::move(rhs.syms_)),
+      filter_(std::move(rhs.filter_)),
+      else_filter_(std::move(rhs.else_filter_)),
+      also_filter_(std::move(rhs.also_filter_)) {}
+
+rule& rule::operator=(rule rhs)
 {
-    if (deep_copy) {
-
-        std::string expr = to_expression_string(*filter_);
-        filter_ = parse_expression(expr,"utf8");
-        symbolizers::const_iterator it  = syms_.begin();
-        symbolizers::const_iterator end = syms_.end();
-
-        for(; it != end; ++it)
-        {
-            boost::apply_visitor(deepcopy_symbolizer(),*it);
-        }
-    }
-}
-
-rule& rule::operator=(rule const& rhs)
-{
-    rule tmp(rhs);
-    swap(tmp);
+    using std::swap;
+    swap(this->name_, rhs.name_);
+    swap(this->min_scale_, rhs.min_scale_);
+    swap(this->max_scale_, rhs.max_scale_);
+    swap(this->syms_, rhs.syms_);
+    swap(this->filter_, rhs.filter_);
+    swap(this->else_filter_, rhs.else_filter_);
+    swap(this->also_filter_, rhs.also_filter_);
     return *this;
 }
 
-bool rule::operator==(rule const& other)
+bool rule::operator==(rule const& rhs) const
 {
-    return  (this == &other);
+    return  (name_ == rhs.name_) &&
+        (min_scale_ == rhs.min_scale_) &&
+        (max_scale_ == rhs.max_scale_) &&
+        (syms_ == rhs.syms_) &&
+        (filter_ == rhs.filter_) &&
+        (else_filter_ == rhs.else_filter_) &&
+        (also_filter_ == rhs.also_filter_);
 }
 
-void rule::swap(rule& rhs) throw()
-{
-    name_=rhs.name_;
-    min_scale_=rhs.min_scale_;
-    max_scale_=rhs.max_scale_;
-    syms_=rhs.syms_;
-    filter_=rhs.filter_;
-    else_filter_=rhs.else_filter_;
-    also_filter_=rhs.also_filter_;
-}
 
 void rule::set_max_scale(double scale)
 {
@@ -198,9 +124,9 @@ std::string const& rule::get_name() const
     return name_;
 }
 
-void rule::append(symbolizer const& sym)
+void rule::append(symbolizer && sym)
 {
-    syms_.push_back(sym);
+    syms_.push_back(std::move(sym));
 }
 
 void rule::remove_at(size_t index)
@@ -264,11 +190,6 @@ void rule::set_also(bool also_filter)
 bool rule::has_also_filter() const
 {
     return also_filter_;
-}
-
-bool rule::active(double scale) const
-{
-    return ( !syms_.empty() && scale >= min_scale_ - 1e-6 && scale < max_scale_ + 1e-6);
 }
 
 }

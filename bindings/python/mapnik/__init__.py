@@ -43,6 +43,10 @@ import itertools
 import os
 import sys
 import warnings
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 def bootstrap_env():
     """
@@ -67,8 +71,6 @@ def bootstrap_env():
 bootstrap_env()
 
 from _mapnik import *
-from paths import inputpluginspath
-from paths import fontscollectionpath
 
 import printing
 printing.renderer = render
@@ -255,17 +257,25 @@ class _Projection(Projection,_injector):
         """
         return inverse_(obj,self)
 
+class _Feature(Feature,_injector):
+    __geo_interface__ = property(lambda self: json.loads(self.to_geojson()))
+
+class _Path(Path,_injector):
+    __geo_interface__ = property(lambda self: json.loads(self.to_geojson()))
+
 class _Datasource(Datasource,_injector):
 
-    def all_features(self,fields=None):
+    def all_features(self,fields=None,variables={}):
         query = Query(self.envelope())
+        query.set_variables(variables);
         attributes = fields or self.fields()
         for fld in attributes:
             query.add_property_name(fld)
         return self.features(query).features
 
-    def featureset(self,fields=None):
+    def featureset(self,fields=None,variables={}):
         query = Query(self.envelope())
+        query.set_variables(variables);
         attributes = fields or self.fields()
         for fld in attributes:
             query.add_property_name(fld)
@@ -275,16 +285,15 @@ class _Color(Color,_injector):
     def __repr__(self):
         return "Color(R=%d,G=%d,B=%d,A=%d)" % (self.r,self.g,self.b,self.a)
 
-class _ProcessedText(ProcessedText, _injector):
-    def append(self, properties, text):
-        #More pythonic name
-        self.push_back(properties, text)
+class _SymbolizerBase(SymbolizerBase,_injector):
+     # back compatibility
+     @property
+     def filename(self):
+         return self['file']
 
-class _Symbolizers(Symbolizers,_injector):
-
-    def __getitem__(self, idx):
-        sym = Symbolizers._c___getitem__(self, idx)
-        return sym.symbol()
+     @filename.setter
+     def filename(self, val):
+         self['file'] = val
 
 def _add_symbol_method_to_symbolizers(vars=globals()):
 
@@ -418,7 +427,7 @@ def PostGIS(**keywords):
       cursor_size -- integer size of binary cursor to use (default: 0, no binary cursor is used)
 
     >>> from mapnik import PostGIS, Layer
-    >>> params = dict(dbname='mapnik',table='osm',user='postgres',password='gis')
+    >>> params = dict(dbname=env['MAPNIK_NAME'],table='osm',user='postgres',password='gis')
     >>> params['estimate_extent'] = False
     >>> params['extent'] = '-20037508,-19929239,20037508,19929239'
     >>> postgis = PostGIS(**params)
@@ -429,6 +438,51 @@ def PostGIS(**keywords):
     keywords['type'] = 'postgis'
     return CreateDatasource(keywords)
 
+def PgRaster(**keywords):
+    """Create a PgRaster Datasource.
+
+    Required keyword arguments:
+      dbname -- database name to connect to
+      table -- table name or subselect query
+
+      *Note: if using subselects for the 'table' value consider also
+       passing the 'raster_field' and 'srid' and 'extent_from_subquery'
+       options and/or specifying the 'raster_table' option.
+
+    Optional db connection keyword arguments:
+      user -- database user to connect as (default: see postgres docs)
+      password -- password for database user (default: see postgres docs)
+      host -- portgres hostname (default: see postgres docs)
+      port -- postgres port (default: see postgres docs)
+      initial_size -- integer size of connection pool (default: 1)
+      max_size -- integer max of connection pool (default: 10)
+      persist_connection -- keep connection open (default: True)
+
+    Optional table-level keyword arguments:
+      extent -- manually specified data extent (comma delimited string, default: None)
+      estimate_extent -- boolean, direct PostGIS to use the faster, less accurate `estimate_extent` over `extent` (default: False)
+      extent_from_subquery -- boolean, direct Mapnik to query Postgis for the extent of the raw 'table' value (default: uses 'geometry_table')
+      raster_table -- specify geometry table to use to look up metadata (default: automatically parsed from 'table' value)
+      raster_field -- specify geometry field to use (default: first entry in raster_columns)
+      srid -- specify srid to use (default: auto-detected from geometry_field)
+      row_limit -- integer limit of rows to return (default: 0)
+      cursor_size -- integer size of binary cursor to use (default: 0, no binary cursor is used)
+      use_overviews -- boolean, use overviews when available (default: false)
+      prescale_rasters -- boolean, scale rasters on the db side (default: false)
+      clip_rasters -- boolean, clip rasters on the db side (default: false)
+      band -- integer, if non-zero interprets the given band (1-based offset) as a data raster (default: 0)
+
+    >>> from mapnik import PgRaster, Layer
+    >>> params = dict(dbname='mapnik',table='osm',user='postgres',password='gis')
+    >>> params['estimate_extent'] = False
+    >>> params['extent'] = '-20037508,-19929239,20037508,19929239'
+    >>> pgraster = PgRaster(**params)
+    >>> lyr = Layer('PgRaster Layer')
+    >>> lyr.datasource = pgraster
+
+    """
+    keywords['type'] = 'pgraster'
+    return CreateDatasource(keywords)
 
 def Raster(**keywords):
     """Create a Raster (Tiff) Datasource.
@@ -616,6 +670,16 @@ def Python(**keywords):
     keywords['type'] = 'python'
     return CreateDatasource(keywords)
 
+def MemoryDatasource(**keywords):
+    """Create a Memory Datasource.
+
+    Optional keyword arguments:
+        (TODO)
+    """
+    params = Parameters()
+    params.append(Parameter('type','memory'))
+    return MemoryDatasourceBase(params)
+
 class PythonDatasource(object):
     """A base class for a Python data source.
 
@@ -771,24 +835,6 @@ class _TextSymbolizer(TextSymbolizer,_injector):
     @text_opacity.setter
     def text_opacity(self, text_opacity):
         self.format.text_opacity = text_opacity
-
-
-    @property
-    def wrap_char(self):
-        return self.format.wrap_char
-
-    @wrap_char.setter
-    def wrap_char(self, wrap_char):
-        self.format.wrap_char = wrap_char
-
-
-    @property
-    def wrap_character(self):
-        return self.format.wrap_character
-
-    @wrap_char.setter
-    def wrap_character(self, wrap_character):
-        self.format.wrap_character = wrap_character
 
 
     @property
@@ -966,17 +1012,6 @@ class _TextSymbolizer(TextSymbolizer,_injector):
         self.properties.maximum_angle_char_delta = maximum_angle_char_delta
 
 
-
-    @property
-    def force_odd_labels(self):
-        return self.properties.force_odd_labels
-
-    @force_odd_labels.setter
-    def force_odd_labels(self, force_odd_labels):
-        self.properties.force_odd_labels = force_odd_labels
-
-
-
     @property
     def allow_overlap(self):
         return self.properties.allow_overlap
@@ -1017,15 +1052,17 @@ def register_plugins(path=None):
         if os.environ.has_key('MAPNIK_INPUT_PLUGINS_DIRECTORY'):
             path = os.environ.get('MAPNIK_INPUT_PLUGINS_DIRECTORY')
         else:
+            from paths import inputpluginspath
             path = inputpluginspath
     DatasourceCache.register_datasources(path)
 
-def register_fonts(path=None,valid_extensions=['.ttf','.otf','.ttc','.pfa','.pfb','.ttc','.dfont']):
+def register_fonts(path=None,valid_extensions=['.ttf','.otf','.ttc','.pfa','.pfb','.ttc','.dfont','.woff']):
     """Recursively register fonts using path argument as base directory"""
     if not path:
        if os.environ.has_key('MAPNIK_FONT_DIRECTORY'):
            path = os.environ.get('MAPNIK_FONT_DIRECTORY')
        else:
+           from paths import fontscollectionpath
            path = fontscollectionpath
     for dirpath, _, filenames in os.walk(path):
         for filename in filenames:

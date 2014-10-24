@@ -27,24 +27,26 @@
 #include <mapnik/coord.hpp>
 
 // stl
+#include <algorithm>
 #include <cassert>
 
 namespace mapnik {
+
 template <typename T>
 class coord_array
 {
-    typedef T coord_type;
-    coord_type* pt_;
-    const unsigned size_;
 public:
+    using coord_type = T;
+
     coord_array(unsigned size=0)
         : pt_(static_cast<coord_type*>(size==0?0: ::operator new (sizeof(coord_type)*size))),
           size_(size) {}
 
-    coord_array(const coord_array& rhs)
+    coord_array(coord_array const& rhs)
         : pt_(static_cast<coord_type*>(rhs.size_==0?0: ::operator new (sizeof(coord_type)*rhs.size_))),
-          size_(rhs.size_) {
-        memcpy(pt_,rhs.pt_,sizeof(coord_type)*rhs.size_);
+          size_(rhs.size_)
+    {
+        std::copy(rhs.pt_, rhs.pt_ + rhs.size_ , pt_);
     }
 
     ~coord_array()
@@ -82,8 +84,28 @@ public:
         return pt_[index];
     }
 
+    coord_type const* begin() const
+    {
+        return pt_;
+    }
+
+    coord_type const* end() const
+    {
+        return pt_ + size_;
+    }
+
+    coord_type * begin()
+    {
+        return pt_;
+    }
+    coord_type * end()
+    {
+        return pt_ + size_;
+    }
 private:
     coord_array& operator=(const coord_array&);
+    coord_type* pt_;
+    const unsigned size_;
 };
 }
 

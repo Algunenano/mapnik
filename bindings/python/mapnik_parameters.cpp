@@ -20,14 +20,23 @@
  *
  *****************************************************************************/
 
+#include <mapnik/config.hpp>
+
 // boost
+#include "boost_std_shared_shim.hpp"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 #include <boost/python.hpp>
-#include <boost/make_shared.hpp>
+#pragma GCC diagnostic pop
 
 // mapnik
 #include <mapnik/debug.hpp>
 #include <mapnik/params.hpp>
 #include <mapnik/unicode.hpp>
+#include <mapnik/value_types.hpp>
 #include <mapnik/value.hpp>
 // stl
 #include <iterator>
@@ -82,7 +91,7 @@ struct parameters_pickle_suite : boost::python::pickle_suite
             extract<std::string> ex0(obj);
             extract<mapnik::value_integer> ex1(obj);
             extract<double> ex2(obj);
-            extract<UnicodeString> ex3(obj);
+            extract<mapnik::value_unicode_string> ex3(obj);
 
             // TODO - this is never hit - we need proper python string -> std::string to get invoked here
             if (ex0.check())
@@ -175,22 +184,22 @@ mapnik::value_holder get_param(mapnik::parameter const& p, int index)
     }
 }
 
-boost::shared_ptr<mapnik::parameter> create_parameter(UnicodeString const& key, mapnik::value_holder const& value)
+std::shared_ptr<mapnik::parameter> create_parameter(mapnik::value_unicode_string const& key, mapnik::value_holder const& value)
 {
     std::string key_utf8;
     mapnik::to_utf8(key, key_utf8);
-    return boost::make_shared<mapnik::parameter>(key_utf8,value);
+    return std::make_shared<mapnik::parameter>(key_utf8,value);
 }
 
 // needed for Python_Unicode to std::string (utf8) conversion
 
-boost::shared_ptr<mapnik::parameter> create_parameter_from_string(UnicodeString const& key, UnicodeString const& ustr)
+std::shared_ptr<mapnik::parameter> create_parameter_from_string(mapnik::value_unicode_string const& key, mapnik::value_unicode_string const& ustr)
 {
     std::string key_utf8;
     std::string ustr_utf8;
     mapnik::to_utf8(key, key_utf8);
     mapnik::to_utf8(ustr,ustr_utf8);
-    return boost::make_shared<mapnik::parameter>(key_utf8, ustr_utf8);
+    return std::make_shared<mapnik::parameter>(key_utf8, ustr_utf8);
 }
 
 void export_parameters()
@@ -201,7 +210,7 @@ void export_parameters()
     implicitly_convertible<mapnik::value_integer,mapnik::value_holder>();
     implicitly_convertible<mapnik::value_double,mapnik::value_holder>();
 
-    class_<parameter,boost::shared_ptr<parameter> >("Parameter",no_init)
+    class_<parameter,std::shared_ptr<parameter> >("Parameter",no_init)
         .def("__init__", make_constructor(create_parameter),
              "Create a mapnik.Parameter from a pair of values, the first being a string\n"
              "and the second being either a string, and integer, or a float")

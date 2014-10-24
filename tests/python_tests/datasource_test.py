@@ -33,7 +33,7 @@ def test_total_feature_count_shp():
 
 def test_total_feature_count_json():
     if 'ogr' in mapnik.DatasourceCache.plugin_names():
-        ds = mapnik.Ogr(file='../data/json/points.json',layer_by_index=0)
+        ds = mapnik.Ogr(file='../data/json/points.geojson',layer_by_index=0)
         desc = ds.describe()
         eq_(desc['geometry_type'],mapnik.DataGeometryType.Point)
         eq_(desc['name'],'ogr')
@@ -56,7 +56,7 @@ def test_sqlite_reading():
         eq_(num_feats, 245)
 
 def test_reading_json_from_string():
-    json = open('../data/json/points.json','r').read()
+    json = open('../data/json/points.geojson','r').read()
     if 'ogr' in mapnik.DatasourceCache.plugin_names():
         ds = mapnik.Ogr(file=json,layer_by_index=0)
         features = ds.all_features()
@@ -125,4 +125,4 @@ def test_hit_grid():
 
 if __name__ == '__main__':
     setup()
-    run_all(eval(x) for x in dir() if x.startswith("test_"))
+    exit(run_all(eval(x) for x in dir() if x.startswith("test_")))
