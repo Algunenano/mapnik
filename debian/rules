@@ -17,7 +17,7 @@ SCONS_FLAGS += SYSTEM_FONTS=/usr/share/fonts
 SCONS_FLAGS += XMLPARSER=libxml2
 SCONS_FLAGS += DEMO=False
 SCONS_FLAGS += CPP_TESTS=False
-SCONS_FLAGS += PREFIX=/usr LIB_DIR_NAME=/mapnik/2.2
+SCONS_FLAGS += PREFIX=/usr LIB_DIR_NAME=/mapnik/3.0
 SCONS_FLAGS += CUSTOM_CXXFLAGS="$(shell dpkg-buildflags --get CXXFLAGS) -g0"
 SCONS_FLAGS += CUSTOM_CFLAGS="$(shell dpkg-buildflags --get CFLAGS) -g0"
 SCONS_FLAGS += CUSTOM_LDFLAGS="$(shell dpkg-buildflags --get LDFLAGS) -g0"
@@ -56,7 +56,7 @@ override_dh_install-arch:
 override_dh_install-indep:
 	# build Python API documentation
 	# and trick epydoc into loading the shlib too
-	LD_LIBRARY_PATH=$(CURDIR)/debian/libmapnik2.2/usr/lib/ epydoc --no-private \
+	LD_LIBRARY_PATH=$(CURDIR)/debian/libmapnik3.0/usr/lib/ epydoc --no-private \
 		--no-frames \
 		--no-sourcecode \
 		--name mapnik \
