@@ -1,3 +1,20 @@
+mapnik (3.0.0~rc1+dfsg-1) UNRELEASED; urgency=medium
+
+  [ Bas Couwenberg ]
+  * Change dependency from libgdal1-dev to libgdal-dev.
+
+  [ Jérémy Lal ]
+  * Imported Upstream version 3.0.0~rc1+dfsg
+  * Files-Excluded syntax fixes
+  * Exclude more fonts to simplify copyright
+  * Watch: fix mangling, watch rc releases
+  * Depends generic libcairo-dev instead of transitional libcairo2
+  * Depends libwebp-dev
+  * Unapply patches applied upstream
+  * Disable building with rpath
+
+ -- Bas Couwenberg <sebastic@xs4all.nl>  Fri, 24 Oct 2014 11:15:02 +0200
+
 mapnik (2.2.0+ds1-7) unstable; urgency=medium
 
   * Standards-Version 3.9.5
