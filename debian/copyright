@@ -9,7 +9,7 @@ Files-Excluded:
  tests/data/fonts/XB Zar.ttf
  tests/data/fonts/LICENCE.txt
  tests/data/fonts/DejaVuSansMono-BoldOblique.ttf
- tests/data/fonts/NotoSans-Regular.tcc
+ tests/data/fonts/NotoSans-Regular.ttc
  tests/visual_tests/fonts/*
  scons/*
  fonts/dejavu*
