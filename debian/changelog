@@ -1,4 +1,4 @@
-mapnik (3.0.0~rc1+dfsg-1) UNRELEASED; urgency=medium
+mapnik (3.0.0~rc1+dfsg-1) unstable; urgency=medium
 
   * Imported Upstream version 3.0.0~rc1+dfsg
   * Copyright:
@@ -19,8 +19,12 @@ mapnik (3.0.0~rc1+dfsg-1) UNRELEASED; urgency=medium
     + disable building with rpath
     + build new plugins: pgraster, topojson
   * Standards-Version 3.9.6
+  * Clean pyc
+  * Typo in Files-Excluded filename
+  * Files-Excluded: use question mark
+  * Imported Upstream version 3.0.0~rc1+dfsg
 
- -- Jérémy Lal <kapouer@melix.org>  Fri, 24 Oct 2014 15:16:57 +0200
+ -- Jérémy Lal <kapouer@melix.org>  Sat, 25 Oct 2014 00:06:02 +0200
 
 mapnik (2.2.0+ds1-7) unstable; urgency=medium
 
