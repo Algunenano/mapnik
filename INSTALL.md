@@ -4,8 +4,26 @@ Mapnik is cross platform and runs on Linux, Mac OSX, Solaris, *BSD, and Windows.
 
 To configure and build Mapnik do:
 
-    ./configure
-    make
+```bash
+    $ ./configure
+    $ make
+```
+
+To trigger parallel compilation you can pass a JOBS value to make:
+
+```bash
+    $ JOBS=4 make
+```
+
+(Note that compiling Mapnik needs several GBytes of RAM. If you use parallel compiliation it needs more.)
+
+To use a Python interpreter that is not named `python` for your build, do
+something like the following instead:
+
+```bash
+    $ PYTHON=python2 ./configure
+    $ make PYTHON=python2
+```
 
 NOTE: the above will not work on windows, rather see https://github.com/mapnik/mapnik/wiki/WindowsInstallation
 
@@ -32,47 +50,56 @@ For troubleshooting help see https://github.com/mapnik/mapnik/wiki/InstallationT
 
 Build system dependencies are:
 
- * C++ compiler (like g++ or clang++)
- * >= 2 GB RAM
+ * C++ compiler supporting `-std=c++11` (like >= g++ 4.8 or >= clang++ 3.4)
+ * >= 2 GB RAM (> 5 GB for g++)
  * Python 2.4-2.7 
  * Scons (a copy is bundled)
 
 Mapnik Core depends on:
 
  * Boost
-    - >= 1.47 is required.
+    - >= 1.47 is required and >= 1.56 recommended
     - These libraries are used:
       - filesystem
       - system
-      - thread (if mapnik threadsafe support is required, default on)
+      - thread (for python bindings only)
       - regex (optionally built with icu regex support)
       - program_options (optionally for mapnik command line programs)
  * libicuuc >= 4.0 (ideally >= 4.2) - International Components for Unicode
- * libpng >= 1.2.x - PNG graphics
- * libjpeg - JPEG graphics
- * libtiff - TIFF graphics 
  * libz - Zlib compression
  * libfreetype - Freetype2 for font support (Install requires freetype-config)
  * libxml2 - XML parsing (Install requires xml2-config)
- * libproj - PROJ.4 projection library
+ * libharfbuzz - an OpenType text shaping engine (>=0.9.34 needed for CSS font-feature-settings support)
+
+Mapnik Core optionally depends on:
+
+ * libpng >= 1.2.x - PNG graphics (Default enabled, if found)
+ * libjpeg - JPEG graphics (Default enabled, if found)
+ * libtiff - TIFF graphics (Default enabled, if found)
+ * libwebp - WEBP graphics  (Default enabled, if found)
+ * libproj - PROJ.4 projection library (Default enabled, if found)
 
 Mapnik Python bindings depend on:
 
  * Python 2.5-2.7 or >= 3.2 
  * Boost python
+ * simplejson module if using <= 2.5
 
-Note: Python3k is supported, see: https://github.com/mapnik/mapnik/wiki/Python3k
+Note: Python 3.x is supported, see: https://github.com/mapnik/mapnik/wiki/Python3k
 
-Optional dependencies:
+Additional optional dependencies:
 
  * Cairo >= 1.6.0 - Graphics library for output formats like PDF, PS, and SVG
     - pkg-config - Required for building with cairo support
     - pycairo - Python bindings for cairo
- * libpq - PostgreSQL libraries (For PostGIS plugin support)
+ * PostgreSQL (for PostGIS plugin support)
+    - libpq - PostreSQL libraries
+    - pg_config - PostgreSQL installation capabilities
  * libgdal - GDAL/OGR input (For gdal and ogr plugin support)
  * libsqlite3 - SQLite input (needs RTree support builtin) (sqlite plugin support)
  * libocci - Oracle input plugin support
  * libcurl - OSM input plugin support
+ * librasterlite - Rasterlite input plugin support
 
 Instructions for installing many of these dependencies on
 various platforms can be found at the Mapnik Wiki:

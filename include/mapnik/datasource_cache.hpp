@@ -24,19 +24,20 @@
 #define MAPNIK_DATASOURCE_CACHE_HPP
 
 // mapnik
+#include <mapnik/config.hpp>
 #include <mapnik/utils.hpp>
-#include <mapnik/params.hpp>
-#include <mapnik/datasource.hpp>
 #include <mapnik/noncopyable.hpp>
-
-// boost
-#include <boost/shared_ptr.hpp>
 
 // stl
 #include <map>
+#include <set>
+#include <vector>
+#include <memory>
 
 namespace mapnik {
 
+class datasource;
+class parameters;
 class PluginInfo;
 
 class MAPNIK_DECL datasource_cache
@@ -47,16 +48,19 @@ class MAPNIK_DECL datasource_cache
 public:
     std::vector<std::string> plugin_names();
     std::string plugin_directories();
-    void register_datasources(std::string const& path);
+    bool register_datasources(std::string const& path, bool recurse = false);
     bool register_datasource(std::string const& path);
-    boost::shared_ptr<datasource> create(parameters const& params);
+    std::shared_ptr<datasource> create(parameters const& params);
 private:
     datasource_cache();
     ~datasource_cache();
-    std::map<std::string,boost::shared_ptr<PluginInfo> > plugins_;
+    std::map<std::string,std::shared_ptr<PluginInfo> > plugins_;
     bool registered_;
-    std::vector<std::string> plugin_directories_;
+    std::set<std::string> plugin_directories_;
 };
+
+extern template class MAPNIK_DECL singleton<datasource_cache, CreateStatic>;
+
 }
 
 #endif // MAPNIK_DATASOURCE_CACHE_HPP

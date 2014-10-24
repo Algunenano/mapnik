@@ -1,4 +1,3 @@
-
 /*****************************************************************************
  *
  * This file is part of Mapnik (c++ mapping toolkit)
@@ -43,7 +42,7 @@
 #include <mapnik/enumeration.hpp>
 
 // boost
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 // stl
 #include <vector>
@@ -68,7 +67,8 @@ enum colorizer_mode_enum
 DEFINE_ENUM( colorizer_mode, colorizer_mode_enum );
 
 //! \brief Structure to represent a stop position.
-class MAPNIK_DECL colorizer_stop {
+class MAPNIK_DECL colorizer_stop
+{
 public:
 
     //! \brief Constructor
@@ -141,7 +141,7 @@ private:
 };
 
 
-typedef std::vector<colorizer_stop> colorizer_stops;
+using colorizer_stops = std::vector<colorizer_stop>;
 
 
 //! \brief Class representing the raster colorizer
@@ -199,15 +199,14 @@ public:
     //! \brief Colorize a raster
     //!
     //! \param[in, out] raster A raster stored in float32 single channel format, which gets colorized in place.
-    //! \param[in] f The feature used to find 'NODATA' information if available
-    void colorize(boost::shared_ptr<raster> const& raster, feature_impl const& f) const;
+    void colorize(std::shared_ptr<raster> const& raster, feature_impl const& f) const;
 
 
     //! \brief Perform the translation of input to output
     //!
     //! \param[in] value Input value
     //! \return color associated with the value
-    color get_color(float value) const;
+    unsigned get_color(float value) const;
 
 
     //! \brief Set the epsilon value for exact mode
@@ -227,7 +226,7 @@ private:
 };
 
 
-typedef boost::shared_ptr<raster_colorizer> raster_colorizer_ptr;
+using raster_colorizer_ptr = std::shared_ptr<raster_colorizer>;
 
 
 } // mapnik namespace

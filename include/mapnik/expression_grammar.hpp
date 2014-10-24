@@ -28,18 +28,29 @@
 #include <mapnik/value_types.hpp>
 #include <mapnik/unicode.hpp>
 #include <mapnik/expression_node.hpp>
+#include <mapnik/function_call.hpp>
 
-// spirit2
+// boost
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/support_locals.hpp>
-
-// phoenix
 #include <boost/spirit/include/phoenix_function.hpp>
+#include <boost/fusion/adapted/struct.hpp>
+#pragma GCC diagnostic pop
+
+BOOST_FUSION_ADAPT_STRUCT(mapnik::unary_function_call,
+                          (mapnik::unary_function_impl, fun)
+                          (mapnik::unary_function_call::argument_type, arg))
+
+BOOST_FUSION_ADAPT_STRUCT(mapnik::binary_function_call,
+                          (mapnik::binary_function_impl, fun)
+                          (mapnik::binary_function_call::argument_type, arg1)
+                          (mapnik::binary_function_call::argument_type, arg2))
 
 namespace mapnik
 {
-
-using namespace boost;
 namespace qi = boost::spirit::qi;
 namespace standard_wide =  boost::spirit::standard_wide;
 using standard_wide::space_type;
@@ -49,13 +60,13 @@ struct unicode_impl
     template <typename T>
     struct result
     {
-        typedef UnicodeString type;
+        using type = mapnik::value_unicode_string;
     };
 
     explicit unicode_impl(mapnik::transcoder const& tr)
         : tr_(tr) {}
 
-    UnicodeString operator()(std::string const& str) const
+    mapnik::value_unicode_string operator()(std::string const& str) const
     {
         return tr_.transcode(str.c_str());
     }
@@ -65,10 +76,10 @@ struct unicode_impl
 
 struct regex_match_impl
 {
-    template <typename T0, typename T1>
+    template <typename T>
     struct result
     {
-        typedef expr_node type;
+        using type = expr_node;
     };
 
     explicit regex_match_impl(mapnik::transcoder const& tr)
@@ -82,10 +93,11 @@ struct regex_match_impl
 
 struct regex_replace_impl
 {
-    template <typename T0, typename T1, typename T2>
+
+    template <typename T>
     struct result
     {
-        typedef expr_node type;
+        using type = expr_node;
     };
 
     explicit regex_replace_impl(mapnik::transcoder const& tr)
@@ -110,21 +122,62 @@ struct geometry_types : qi::symbols<char,mapnik::value_integer>
     }
 };
 
+struct boolean_constants :  qi::symbols<char,mapnik::value_bool>
+{
+    boolean_constants()
+    {
+        add
+            ("true", true)
+            ("false", false)
+            ;
+    }
+};
+
+struct floating_point_constants :  qi::symbols<char,mapnik::value_double>
+{
+    floating_point_constants()
+    {
+        add
+            ("pi", 3.1415926535897932384626433832795)
+            ("deg_to_rad",0.017453292519943295769236907684886)
+            ("rad_to_deg",57.295779513082320876798154814105)
+            ;
+    }
+};
+
+
 template <typename T>
 struct integer_parser
 {
-    typedef qi::int_parser<T,10,1,-1> type;
+    using type = qi::int_parser<T,10,1,-1>;
 };
 
+struct unary_function_types : qi::symbols<char, unary_function_impl>
+{
+    unary_function_types();
+};
+
+struct binary_function_types : qi::symbols<char, binary_function_impl>
+{
+    binary_function_types();
+};
+
+
+#ifdef __GNUC__
+template <typename Iterator>
+struct MAPNIK_DECL expression_grammar : qi::grammar<Iterator, expr_node(), space_type>
+#else
 template <typename Iterator>
 struct expression_grammar : qi::grammar<Iterator, expr_node(), space_type>
+#endif
 {
-    typedef qi::rule<Iterator, expr_node(), space_type> rule_type;
+    using rule_type = qi::rule<Iterator, expr_node(), space_type>;
 
-    explicit expression_grammar(mapnik::transcoder const& tr);
+    explicit expression_grammar(std::string const& encoding = "utf-8");
 
     qi::real_parser<double, qi::strict_real_policies<double> > strict_double;
     typename integer_parser<mapnik::value_integer>::type int__;
+    mapnik::transcoder tr_;
     boost::phoenix::function<unicode_impl> unicode_;
     boost::phoenix::function<regex_match_impl> regex_match_;
     boost::phoenix::function<regex_replace_impl> regex_replace_;
@@ -138,13 +191,23 @@ struct expression_grammar : qi::grammar<Iterator, expr_node(), space_type>
     rule_type unary_expr;
     rule_type not_expr;
     rule_type primary_expr;
+    qi::rule<Iterator, unary_function_call() , space_type> unary_function_expr;
+    qi::rule<Iterator, binary_function_call() , space_type> binary_function_expr;
     qi::rule<Iterator, std::string() > regex_match_expr;
     qi::rule<Iterator, expr_node(expr_node), qi::locals<std::string,std::string>, space_type> regex_replace_expr;
     qi::rule<Iterator, std::string() , space_type> attr;
-    qi::rule<Iterator, std::string(), qi::locals<char> > ustring;
+    qi::rule<Iterator, std::string() , space_type> global_attr;
+    qi::rule<Iterator, std::string(), qi::locals<char> > quoted_ustring;
+    qi::rule<Iterator, std::string(), space_type> ustring;
+
     qi::symbols<char const, char const> unesc_char;
     qi::rule<Iterator, char() > quote_char;
     geometry_types geom_type;
+    boolean_constants bool_const;
+    floating_point_constants float_const;
+    unary_function_types unary_func_type;
+    binary_function_types binary_func_type;
+
 };
 
 } // namespace

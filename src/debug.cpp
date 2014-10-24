@@ -26,6 +26,7 @@
 // stl
 #include <ctime>
 #include <stdexcept>
+#include <fstream>
 
 #ifndef MAPNIK_LOG_FORMAT
   #define MAPNIK_LOG_FORMAT  Mapnik LOG> %Y-%m-%d %H:%M:%S:
@@ -44,8 +45,8 @@ namespace mapnik {
 // mutexes
 
 #ifdef MAPNIK_THREADSAFE
-boost::mutex logger::severity_mutex_;
-boost::mutex logger::format_mutex_;
+std::mutex logger::severity_mutex_;
+std::mutex logger::format_mutex_;
 #endif
 
 
@@ -91,7 +92,7 @@ std::string logger::str()
         logger::format_env_check_ = false;
 
         const char* log_format = getenv("MAPNIK_LOG_FORMAT");
-        if (log_format != NULL)
+        if (log_format != nullptr)
         {
             logger::format_ = log_format;
         }
@@ -137,7 +138,7 @@ void logger::use_file(std::string const& filepath)
         else
         {
             std::stringstream s;
-            s << "cannot redirect log to file " << file_output_;
+            s << "cannot redirect log to file " << file_name_;
             throw std::runtime_error(s.str());
         }
     }

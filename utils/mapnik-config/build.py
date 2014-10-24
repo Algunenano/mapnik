@@ -1,3 +1,23 @@
+#
+# This file is part of Mapnik (c++ mapping toolkit)
+#
+# Copyright (C) 2013 Artem Pavlenko
+#
+# Mapnik is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+#
+#
 
 import re
 import os
@@ -9,7 +29,7 @@ Import('env')
 
 config_env = env.Clone()
 
-config_variables = '''#!/bin/sh
+config_variables = '''#!/bin/bash
 
 ## variables
 
@@ -25,10 +45,10 @@ CONFIG_MAPNIK_DEFINES='%(defines)s'
 CONFIG_MAPNIK_LIBNAME='%(mapnik_libname)s'
 CONFIG_MAPNIK_LIBPATH="%(mapnik_libpath)s"
 CONFIG_DEP_LIBS='%(dep_libs)s'
-CONFIG_MAPNIK_LDFLAGS='%(ldflags)s'
+CONFIG_MAPNIK_LDFLAGS="%(ldflags)s"
 CONFIG_MAPNIK_INCLUDE="${CONFIG_PREFIX}/include -I${CONFIG_PREFIX}/include/mapnik/agg"
-CONFIG_DEP_INCLUDES='%(dep_includes)s'
-CONFIG_CXXFLAGS='%(cxxflags)s'
+CONFIG_DEP_INCLUDES="%(dep_includes)s"
+CONFIG_CXXFLAGS="%(cxxflags)s"
 CONFIG_CXX='%(cxx)s'
 
 '''
@@ -51,7 +71,7 @@ dep_includes += ' '
 if config_env['HAS_CAIRO']:
     dep_includes += ''.join([' -I%s' % i for i in env['CAIRO_CPPPATHS'] if not i.startswith('#')])
 
-ldflags = config_env['CUSTOM_LDFLAGS'] + ''.join([' -L%s' % i for i in config_env['LIBPATH'] if not i.startswith('#')])
+ldflags = ''.join([' -L%s' % i for i in config_env['LIBPATH'] if not i.startswith('#')])
 ldflags += config_env['LIBMAPNIK_LINKFLAGS']
 
 dep_libs = ''.join([' -l%s' % i for i in env['LIBMAPNIK_LIBS']])
@@ -59,38 +79,31 @@ dep_libs = ''.join([' -l%s' % i for i in env['LIBMAPNIK_LIBS']])
 # remove local agg from public linking
 dep_libs = dep_libs.replace('-lagg','')
 
-git_revision = 'unknown'
-git_describe = 'unknown'
-# special GIT_REVISION/GIT_DESCRIBE files present only for official releases
-# where the git directory metadata is stripped
-# more info: https://github.com/mapnik/mapnik/wiki/MapnikReleaseSteps
-revision_release_file = '../../GIT_REVISION'
-if os.path.exists(revision_release_file):
-    git_revision = open(revision_release_file,'r').read()
-else:
+git_revision = 'N/A'
+git_describe = config_env['MAPNIK_VERSION_STRING']
+
+try:
     git_cmd = "git rev-list --max-count=1 HEAD"
     stdin, stderr = Popen(git_cmd, shell=True, stdout=PIPE, stderr=PIPE).communicate()
     if not stderr:
         git_revision = stdin.strip()
 
-describe_release_file = '../../GIT_DESCRIBE'
-if os.path.exists(describe_release_file):
-    git_describe = open(describe_release_file,'r').read()
-else:
     git_cmd = "git describe"
     stdin, stderr = Popen(git_cmd, shell=True, stdout=PIPE, stderr=PIPE).communicate()
     if not stderr:
         git_describe = stdin.strip()
+except:
+    pass
 
 # for fonts and input plugins we should try
 # to store the relative path, if feasible
 fontspath = config_env['MAPNIK_FONTS']
-lib_root = os.path.join(config_env['INSTALL_PREFIX'], config_env['LIBDIR_SCHEMA'])
+lib_root = os.path.join(config_env['PREFIX'], config_env['LIBDIR_SCHEMA'])
 if lib_root in fontspath:
-    fontspath = "${CONFIG_PREFIX}/" + os.path.relpath(fontspath,config_env['INSTALL_PREFIX'])
+    fontspath = "${CONFIG_PREFIX}/" + os.path.relpath(fontspath,config_env['PREFIX'])
 inputpluginspath = config_env['MAPNIK_INPUT_PLUGINS']
 if lib_root in inputpluginspath:
-    inputpluginspath = "${CONFIG_PREFIX}/" + os.path.relpath(inputpluginspath,config_env['INSTALL_PREFIX'])
+    inputpluginspath = "${CONFIG_PREFIX}/" + os.path.relpath(inputpluginspath,config_env['PREFIX'])
 
 lib_path = "${CONFIG_PREFIX}/" + config_env['LIBDIR_SCHEMA']
 
@@ -99,7 +112,7 @@ configuration = {
     "git_describe": git_describe,
     "version_string": config_env['MAPNIK_VERSION_STRING'],
     "version": config_env['MAPNIK_VERSION'],
-    "mapnik_libname": 'mapnik',
+    "mapnik_libname": env['MAPNIK_NAME'],
     "mapnik_libpath": lib_path,
     "ldflags": ldflags,
     "dep_libs": dep_libs,

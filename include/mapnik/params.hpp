@@ -26,9 +26,8 @@
 // mapnik
 #include <mapnik/config.hpp>
 #include <mapnik/value_types.hpp>
-
+#include <mapnik/util/variant.hpp>
 // boost
-#include <boost/variant/variant.hpp>
 #include <boost/optional.hpp>
 
 // stl
@@ -39,11 +38,33 @@ namespace mapnik
 {
 
 // fwd declare
-class boolean;
+class boolean_type;
 
-typedef boost::variant<value_null,value_integer,value_double,std::string> value_holder;
-typedef std::pair<std::string, value_holder> parameter;
-typedef std::map<std::string, value_holder> param_map;
+using value_holder_base = util::variant<value_null,value_integer,value_double,std::string>;
+
+struct value_holder : value_holder_base
+{
+    // default
+    value_holder()
+        : value_holder_base() {}
+
+    // copy
+    value_holder(const char* val)
+        : value_holder_base(val) {}
+
+    template <typename T>
+    value_holder(T const& obj)
+        : value_holder_base(typename detail::mapnik_value_type<T>::type(obj))
+    {}
+
+    // move
+    template <typename T>
+    value_holder(T && obj) noexcept
+        : value_holder_base(std::move(obj)) {}
+};
+
+using parameter = std::pair<std::string, value_holder>;
+using param_map = std::map<std::string, value_holder>;
 
 class MAPNIK_DECL parameters : public param_map
 {
@@ -69,23 +90,22 @@ boost::optional<value_double> parameters::get(std::string const& key,
                                   value_double const& default_opt_value) const;
 
 template MAPNIK_DECL
-boost::optional<int> parameters::get(std::string const& key) const;
-template MAPNIK_DECL
-boost::optional<int> parameters::get(std::string const& key,
-                         int const& default_opt_value) const;
-#ifdef BIGINT
-template MAPNIK_DECL
 boost::optional<value_integer> parameters::get(std::string const& key) const;
 template MAPNIK_DECL
 boost::optional<value_integer> parameters::get(std::string const& key,
                                    value_integer const& default_opt_value) const;
-#endif
 
 template MAPNIK_DECL
-boost::optional<mapnik::boolean> parameters::get(std::string const& key) const;
+boost::optional<mapnik::boolean_type> parameters::get(std::string const& key) const;
 template MAPNIK_DECL
-boost::optional<mapnik::boolean> parameters::get(std::string const& key,
-                                     mapnik::boolean const& default_opt_value) const;
+boost::optional<mapnik::boolean_type> parameters::get(std::string const& key,
+                                         mapnik::boolean_type const& default_opt_value) const;
+
+template MAPNIK_DECL
+boost::optional<mapnik::value_null> parameters::get(std::string const& key) const;
+template MAPNIK_DECL
+boost::optional<mapnik::value_null> parameters::get(std::string const& key,
+                                         mapnik::value_null const& default_opt_value) const;
 
 #endif
 

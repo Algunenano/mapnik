@@ -25,6 +25,7 @@
 
 // stl
 #include <string.h>
+#include <memory>
 
 // mapnik
 #include <mapnik/datasource.hpp>
@@ -32,9 +33,11 @@
 #include <mapnik/timer.hpp>
 
 // boost
-#include <boost/shared_ptr.hpp>
-#include <boost/make_shared.hpp>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
 #include <boost/algorithm/string.hpp>
+#pragma GCC diagnostic pop
 
 // sqlite
 extern "C" {
@@ -58,7 +61,12 @@ public:
         int mode = SQLITE_OPEN_READWRITE;
 #if SQLITE_VERSION_NUMBER >= 3006018
         // shared cache flag not available until >= 3.6.18
-        mode |= SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE;
+        // Don't use shared cache in SQLite prior to 3.7.15.
+        // https://github.com/mapnik/mapnik/issues/2483
+        if (sqlite3_libversion_number() >= 3007015)
+        {
+            mode |= SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE;
+        }
 #endif
         const int rc = sqlite3_open_v2 (file_.c_str(), &db_, mode, 0);
 #else
@@ -116,7 +124,7 @@ public:
         throw mapnik::datasource_exception (s.str());
     }
 
-    boost::shared_ptr<sqlite_resultset> execute_query(std::string const& sql)
+    std::shared_ptr<sqlite_resultset> execute_query(std::string const& sql)
     {
 #ifdef MAPNIK_STATS
         mapnik::progress_timer __stats__(std::clog, std::string("sqlite_resultset::execute_query ") + sql);
@@ -129,7 +137,7 @@ public:
             throw_sqlite_error(sql);
         }
 
-        return boost::make_shared<sqlite_resultset>(stmt);
+        return std::make_shared<sqlite_resultset>(stmt);
     }
 
     void execute(std::string const& sql)

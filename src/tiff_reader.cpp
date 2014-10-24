@@ -24,23 +24,23 @@
 #include <mapnik/debug.hpp>
 #include <mapnik/image_reader.hpp>
 
-// boost
-#include <boost/shared_ptr.hpp>
-
-// iostreams
-#include <boost/iostreams/device/file.hpp>
-#include <boost/iostreams/device/array.hpp>
-#include <boost/iostreams/stream.hpp>
-
 extern "C"
 {
 #include <tiffio.h>
 }
 
-namespace mapnik
-{
+// boost
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
+#include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/device/array.hpp>
+#include <boost/iostreams/stream.hpp>
+#pragma GCC diagnostic pop
 
-namespace impl {
+// stl
+#include <memory>
+
+namespace mapnik { namespace impl {
 
 static toff_t tiff_seek_proc(thandle_t fd, toff_t off, int whence)
 {
@@ -61,7 +61,7 @@ static toff_t tiff_seek_proc(thandle_t fd, toff_t off, int whence)
     return static_cast<toff_t>(in->tellg());
 }
 
-static int tiff_close_proc(thandle_t fd)
+static int tiff_close_proc(thandle_t)
 {
     return 0;
 }
@@ -86,16 +86,16 @@ static tsize_t tiff_read_proc(thandle_t fd, tdata_t buf, tsize_t size)
     return static_cast<tsize_t>(in->gcount());
 }
 
-static tsize_t tiff_write_proc(thandle_t fd, tdata_t buf, tsize_t size)
+static tsize_t tiff_write_proc(thandle_t , tdata_t , tsize_t)
 {
     return 0;
 }
 
-static void tiff_unmap_proc(thandle_t fd, tdata_t base, toff_t size)
+static void tiff_unmap_proc(thandle_t, tdata_t, toff_t)
 {
 }
 
-static int tiff_map_proc(thandle_t fd, tdata_t* pbase, toff_t* psize)
+static int tiff_map_proc(thandle_t, tdata_t* , toff_t*)
 {
     return 0;
 }
@@ -105,9 +105,9 @@ static int tiff_map_proc(thandle_t fd, tdata_t* pbase, toff_t* psize)
 template <typename T>
 class tiff_reader : public image_reader
 {
-    typedef boost::shared_ptr<TIFF> tiff_ptr;
-    typedef T source_type;
-    typedef boost::iostreams::stream<source_type> input_stream;
+    using tiff_ptr = std::shared_ptr<TIFF>;
+    using source_type = T;
+    using input_stream = boost::iostreams::stream<source_type>;
 
     struct tiff_closer
     {
@@ -131,6 +131,7 @@ private:
     int tile_height_;
     tiff_ptr tif_;
     bool premultiplied_alpha_;
+    bool has_alpha_;
 public:
     enum TiffType {
         generic=1,
@@ -142,6 +143,7 @@ public:
     virtual ~tiff_reader();
     unsigned width() const;
     unsigned height() const;
+    inline bool has_alpha() const { return has_alpha_; }
     bool premultiplied_alpha() const;
     void read(unsigned x,unsigned y,image_data_32& image);
 private:
@@ -152,7 +154,6 @@ private:
     void read_stripped(unsigned x,unsigned y,image_data_32& image);
     void read_tiled(unsigned x,unsigned y,image_data_32& image);
     TIFF* open(std::istream & input);
-    static void on_error(const char* /*module*/, const char* fmt, va_list argptr);
 };
 
 namespace
@@ -183,7 +184,8 @@ tiff_reader<T>::tiff_reader(std::string const& file_name)
       rows_per_strip_(0),
       tile_width_(0),
       tile_height_(0),
-      premultiplied_alpha_(false)
+      premultiplied_alpha_(false),
+      has_alpha_(false)
 {
     if (!stream_) throw image_reader_exception("TIFF reader: cannot open file "+ file_name);
     init();
@@ -199,7 +201,8 @@ tiff_reader<T>::tiff_reader(char const* data, std::size_t size)
       rows_per_strip_(0),
       tile_width_(0),
       tile_height_(0),
-      premultiplied_alpha_(false)
+      premultiplied_alpha_(false),
+      has_alpha_(false)
 {
     if (!stream_) throw image_reader_exception("TIFF reader: cannot open image stream ");
     stream_.seekg(0, std::ios::beg);
@@ -207,27 +210,15 @@ tiff_reader<T>::tiff_reader(char const* data, std::size_t size)
 }
 
 template <typename T>
-void tiff_reader<T>::on_error(const char* /*module*/, const char* fmt, va_list argptr)
-{
-  char msg[10240];
-  vsprintf(msg, fmt, argptr);
-  throw image_reader_exception(msg);
-}
-
-template <typename T>
 void tiff_reader<T>::init()
 {
+    // avoid calling TIFFs global structures
     TIFFSetWarningHandler(0);
-    // Note - we intentially set the error handling to null
-    // when opening the image for the first time to avoid
-    // leaking in TiffOpen: https://github.com/mapnik/mapnik/issues/1783
     TIFFSetErrorHandler(0);
 
     TIFF* tif = open(stream_);
 
     if (!tif) throw image_reader_exception("Can't open tiff file");
-
-    TIFFSetErrorHandler(on_error);
 
     char msg[1024];
 
@@ -246,14 +237,17 @@ void tiff_reader<T>::init()
             read_method_=stripped;
         }
         //TIFFTAG_EXTRASAMPLES
-        uint16 extrasamples;
-        uint16* sampleinfo;
-        TIFFGetFieldDefaulted(tif, TIFFTAG_EXTRASAMPLES,
-                              &extrasamples, &sampleinfo);
-        if (extrasamples == 1 &&
-            sampleinfo[0] == EXTRASAMPLE_ASSOCALPHA)
+        uint16 extrasamples = 0;
+        uint16* sampleinfo = nullptr;
+        if (TIFFGetField(tif, TIFFTAG_EXTRASAMPLES,
+                              &extrasamples, &sampleinfo))
         {
-            premultiplied_alpha_ = true;
+            has_alpha_ = true;
+            if (extrasamples == 1 &&
+                sampleinfo[0] == EXTRASAMPLE_ASSOCALPHA)
+            {
+                premultiplied_alpha_ = true;
+            }
         }
     }
     else
@@ -303,7 +297,7 @@ void tiff_reader<T>::read(unsigned x,unsigned y,image_data_32& image)
 }
 
 template <typename T>
-void tiff_reader<T>::read_generic(unsigned /*x*/,unsigned /*y*/,image_data_32& /*image*/)
+void tiff_reader<T>::read_generic(unsigned, unsigned, image_data_32&)
 {
     TIFF* tif = open(stream_);
     if (tif)

@@ -24,6 +24,7 @@
 #include <stdexcept>
 
 #ifdef _WINDOWS
+  #define NOMINMAX
   #include <windows.h>
   #define handle HMODULE
   #define dlsym GetProcAddress
@@ -56,7 +57,7 @@ PluginInfo::PluginInfo(std::string const& filename,
 #endif
           if (module_ && module_->dl)
           {
-                name_func* name = reinterpret_cast<name_func*>(dlsym(module_->dl, library_name.c_str()));
+                name_func name = reinterpret_cast<name_func>(dlsym(module_->dl, library_name.c_str()));
                 if (name) name_ = name();
           }
       }

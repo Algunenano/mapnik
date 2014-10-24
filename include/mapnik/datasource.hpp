@@ -28,11 +28,13 @@
 #include <mapnik/params.hpp>
 #include <mapnik/feature.hpp>
 #include <mapnik/query.hpp>
+#include <mapnik/featureset.hpp>
 #include <mapnik/feature_layer_desc.hpp>
 #include <mapnik/noncopyable.hpp>
+#include <mapnik/feature_style_processor_context.hpp>
 
 // boost
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <boost/optional.hpp>
 
 // stl
@@ -40,14 +42,6 @@
 #include <string>
 
 namespace mapnik {
-
-struct MAPNIK_DECL Featureset : private mapnik::noncopyable
-{
-    virtual feature_ptr next() = 0;
-    virtual ~Featureset() {}
-};
-
-typedef boost::shared_ptr<Featureset> featureset_ptr;
 
 class MAPNIK_DECL datasource_exception : public std::exception
 {
@@ -104,11 +98,23 @@ public:
         return params_;
     }
 
+    bool operator==(datasource const& rhs) const
+    {
+        return params_ == rhs.params();
+    }
+
     /*!
      * @brief Get the type of the datasource
      * @return The type of the datasource (Vector or Raster)
      */
     virtual datasource_t type() const = 0;
+
+    virtual processor_context_ptr get_context(feature_style_context_map&) const { return processor_context_ptr(); }
+    virtual featureset_ptr features_with_context(query const& q,processor_context_ptr /*ctx*/) const
+    {
+        // default implementation without context use features method
+        return features(q);
+    }
     virtual featureset_ptr features(query const& q) const = 0;
     virtual featureset_ptr features_at_point(coord2d const& pt, double tol = 0) const = 0;
     virtual box2d<double> envelope() const = 0;
@@ -119,9 +125,9 @@ protected:
     parameters params_;
 };
 
-typedef const char * datasource_name();
-typedef datasource* create_ds(parameters const& params);
-typedef void destroy_ds(datasource *ds);
+using datasource_name = const char* (*)();
+using create_ds = datasource* (*) (parameters const&);
+using destroy_ds = void (*) (datasource *);
 
 class datasource_deleter
 {
@@ -132,7 +138,7 @@ public:
     }
 };
 
-typedef boost::shared_ptr<datasource> datasource_ptr;
+using datasource_ptr = std::shared_ptr<datasource>;
 
 #ifdef MAPNIK_STATIC_PLUGINS
     #define DATASOURCE_PLUGIN(classname)

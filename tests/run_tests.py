@@ -7,7 +7,8 @@ try:
 except ImportError, e:
     sys.stderr.write("Unable to run python tests: the third party 'nose' module is required\nTo install 'nose' do:\n\tsudo pip install nose (or on debian systems: apt-get install python-nose): %s\n" % e)
     sys.exit(1)
-    
+
+import mapnik    
 from python_tests.utilities import TodoPlugin
 from nose.plugins.doctests import Doctest
 
@@ -56,8 +57,14 @@ def main():
         print("- mapnik path: %s" % mapnik.__file__)
         if hasattr(mapnik,'_mapnik'):
            print("- _mapnik.so path: %s" % mapnik._mapnik.__file__)
-        print("- Input plugins path: %s" % mapnik.inputpluginspath)
-        print("- Font path: %s" % mapnik.fontscollectionpath)
+        if hasattr(mapnik,'inputpluginspath'):
+            print ("- Input plugins path: %s" % mapnik.inputpluginspath)
+        if os.environ.has_key('MAPNIK_INPUT_PLUGINS_DIRECTORY'):
+            print ("- MAPNIK_INPUT_PLUGINS_DIRECTORY env: %s" % os.environ.get('MAPNIK_INPUT_PLUGINS_DIRECTORY'))
+        if hasattr(mapnik,'fontscollectionpath'):
+            print("- Font path: %s" % mapnik.fontscollectionpath)
+        if os.environ.has_key('MAPNIK_FONT_DIRECTORY'):
+            print ("- MAPNIK_FONT_DIRECTORY env: %s" % os.environ.get('MAPNIK_FONT_DIRECTORY'))
         print('')
         print("- Running nosetests:")
         print('')

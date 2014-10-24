@@ -21,9 +21,16 @@
  *****************************************************************************/
 
 
-#include <boost/python.hpp>
 #include <mapnik/image_scaling.hpp>
-#include "mapnik_enumeration.hpp"
+
+// boost
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
+#include <boost/python.hpp>
+#pragma GCC diagnostic pop
 
 void export_scaling_method()
 {
@@ -47,6 +54,5 @@ void export_scaling_method()
         .value("SINC", mapnik::SCALING_SINC)
         .value("LANCZOS", mapnik::SCALING_LANCZOS)
         .value("BLACKMAN", mapnik::SCALING_BLACKMAN)
-        .value("BILINEAR8", mapnik::SCALING_BILINEAR8)
         ;
 }

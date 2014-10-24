@@ -25,23 +25,12 @@
 
 // mapnik
 #include <mapnik/config.hpp>
-#include <mapnik/symbolizer.hpp>  // for transform_list_ptr
+#include <mapnik/symbolizer_base.hpp>  // for transform_list_ptr
 
 namespace mapnik {
 
-template <typename Iterator> struct transform_expression_grammar;
-
-typedef transform_expression_grammar<std::string::const_iterator>
-    transform_expression_grammar_string;
-
-MAPNIK_DECL transform_list_ptr parse_transform(std::string const& str);
-
 MAPNIK_DECL transform_list_ptr parse_transform(std::string const& str,
-                                               std::string const& encoding);
-
-MAPNIK_DECL bool parse_transform(transform_list& list,
-                                 std::string const& str,
-                                 transform_expression_grammar_string const& g);
+                                               std::string const& encoding="utf-8");
 
 } // namespace mapnik
 

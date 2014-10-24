@@ -29,15 +29,21 @@
 #include "dbfile.hpp"
 
 // boost
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
 #include <boost/spirit/include/qi.hpp>
-#include <boost/cstdint.hpp> // for int16_t and int32_t
+#ifdef SHAPE_MEMORY_MAPPED_FILE
+#include <boost/interprocess/mapped_region.hpp>
 #include <mapnik/mapped_memory_cache.hpp>
+#endif
+#pragma GCC diagnostic pop
 
 // stl
+#include <cstdint>
 #include <string>
+#include <cstring>
 #include <stdexcept>
-
-using mapnik::mapped_memory_cache;
 
 dbf_file::dbf_file()
     : num_records_(0),
@@ -60,7 +66,7 @@ dbf_file::dbf_file(std::string const& file_name)
 {
 
 #ifdef SHAPE_MEMORY_MAPPED_FILE
-    boost::optional<mapnik::mapped_region_ptr> memory = mapped_memory_cache::instance().find(file_name,true);
+    boost::optional<mapnik::mapped_region_ptr> memory = mapnik::mapped_memory_cache::instance().find(file_name,true);
     if (memory)
     {
         mapped_region_ = *memory;
@@ -141,6 +147,7 @@ void dbf_file::add_attribute(int col, mapnik::transcoder const& tr, mapnik::feat
     {
         std::string const& name=fields_[col].name_;
 
+        // NOTE: ensure types handled here are matched in shape_datasource.cpp
         switch (fields_[col].type_)
         {
         case 'C':
@@ -166,8 +173,11 @@ void dbf_file::add_attribute(int col, mapnik::transcoder const& tr, mapnik::feat
             }
             break;
         }
-        case 'N':
+        case 'N': // numeric
+        case 'O': // double
+        case 'F': // float
         {
+
             if (record_[fields_[col].offset_] == '*')
             {
                 // NOTE: we intentionally do not store null here
@@ -179,16 +189,24 @@ void dbf_file::add_attribute(int col, mapnik::transcoder const& tr, mapnik::feat
                 double val = 0.0;
                 const char *itr = record_+fields_[col].offset_;
                 const char *end = itr + fields_[col].length_;
-                if (qi::phrase_parse(itr,end,double_,ascii::space,val))
+                ascii::space_type space;
+                qi::double_type double_;
+                if (qi::phrase_parse(itr,end,double_,space,val))
+                {
                     f.put(name,val);
+                }
             }
             else
             {
                 mapnik::value_integer val = 0;
                 const char *itr = record_+fields_[col].offset_;
                 const char *end = itr + fields_[col].length_;
-                if (qi::phrase_parse(itr,end,int_,ascii::space,val))
+                ascii::space_type space;
+                qi::int_type int_;
+                if (qi::phrase_parse(itr,end,int_,space,val))
+                {
                     f.put(name,val);
+                }
             }
             break;
         }
@@ -210,7 +228,7 @@ void dbf_file::read_header()
         skip(22);
         std::streampos offset=0;
         char name[11];
-        memset(&name,0,11);
+        std::memset(&name,0,11);
         fields_.reserve(num_fields_);
         for (int i=0;i<num_fields_;++i)
         {
@@ -243,7 +261,7 @@ int dbf_file::read_short()
 {
     char b[2];
     file_.read(b,2);
-    boost::int16_t val;
+    std::int16_t val;
     mapnik::read_int16_ndr(b,val);
     return val;
 }
@@ -253,7 +271,7 @@ int dbf_file::read_int()
 {
     char b[4];
     file_.read(b,4);
-    boost::int32_t val;
+    std::int32_t val;
     mapnik::read_int32_ndr(b,val);
     return val;
 }

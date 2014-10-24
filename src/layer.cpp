@@ -21,15 +21,16 @@
  *****************************************************************************/
 
 // mapnik
-#include <mapnik/layer.hpp>
 #include <mapnik/datasource.hpp>
 #include <mapnik/datasource_cache.hpp>
+#include <mapnik/layer.hpp>
 
 // stl
 #include <string>
 
 namespace mapnik
 {
+
 layer::layer(std::string const& name, std::string const& srs)
     : name_(name),
       srs_(srs),
@@ -39,10 +40,13 @@ layer::layer(std::string const& name, std::string const& srs)
       queryable_(false),
       clear_label_cache_(false),
       cache_features_(false),
-      group_by_(""),
-      ds_() {}
+      group_by_(),
+      styles_(),
+      ds_(),
+      buffer_size_(),
+      maximum_extent_() {}
 
-layer::layer(const layer& rhs)
+layer::layer(layer const& rhs)
     : name_(rhs.name_),
       srs_(rhs.srs_),
       min_zoom_(rhs.min_zoom_),
@@ -57,34 +61,55 @@ layer::layer(const layer& rhs)
       buffer_size_(rhs.buffer_size_),
       maximum_extent_(rhs.maximum_extent_) {}
 
-layer& layer::operator=(layer const& rhs)
+layer::layer(layer && rhs)
+    : name_(std::move(rhs.name_)),
+      srs_(std::move(rhs.srs_)),
+      min_zoom_(std::move(rhs.min_zoom_)),
+      max_zoom_(std::move(rhs.max_zoom_)),
+      active_(std::move(rhs.active_)),
+      queryable_(std::move(rhs.queryable_)),
+      clear_label_cache_(std::move(rhs.clear_label_cache_)),
+      cache_features_(std::move(rhs.cache_features_)),
+      group_by_(std::move(rhs.group_by_)),
+      styles_(std::move(rhs.styles_)),
+      ds_(std::move(rhs.ds_)),
+      buffer_size_(std::move(rhs.buffer_size_)),
+      maximum_extent_(std::move(rhs.maximum_extent_)) {}
+
+layer& layer::operator=(layer rhs)
 {
-    layer tmp(rhs);
-    swap(tmp);
+    using std::swap;
+    std::swap(this->name_,rhs.name_);
+    std::swap(this->srs_, rhs.srs_);
+    std::swap(this->min_zoom_, rhs.min_zoom_);
+    std::swap(this->max_zoom_,rhs.max_zoom_);
+    std::swap(this->active_, rhs.active_);
+    std::swap(this->queryable_, rhs.queryable_);
+    std::swap(this->clear_label_cache_, rhs.clear_label_cache_);
+    std::swap(this->cache_features_, rhs.cache_features_);
+    std::swap(this->group_by_, rhs.group_by_);
+    std::swap(this->styles_, rhs.styles_);
+    std::swap(this->ds_, rhs.ds_);
+    std::swap(this->buffer_size_, rhs.buffer_size_);
+    std::swap(this->maximum_extent_, rhs.maximum_extent_);
     return *this;
 }
 
-bool layer::operator==(layer const& other) const
+bool layer::operator==(layer const& rhs) const
 {
-    return (this == &other);
-}
-
-void layer::swap(layer& rhs)
-{
-    using std::swap;
-    swap(name_, rhs.name_);
-    swap(srs_, rhs.srs_);
-    swap(min_zoom_, rhs.min_zoom_);
-    swap(max_zoom_, rhs.max_zoom_);
-    swap(active_, rhs.active_);
-    swap(queryable_, rhs.queryable_);
-    swap(clear_label_cache_, rhs.clear_label_cache_);
-    swap(cache_features_, rhs.cache_features_);
-    swap(group_by_,  rhs.group_by_);
-    swap(styles_, rhs.styles_);
-    swap(ds_, rhs.ds_);
-    swap(buffer_size_, rhs.buffer_size_);
-    swap(maximum_extent_, rhs.maximum_extent_);
+    return (name_ == rhs.name_) &&
+        (srs_ == rhs.srs_) &&
+        (min_zoom_ == rhs.min_zoom_) &&
+        (max_zoom_ == rhs.max_zoom_) &&
+        (active_ == rhs.active_) &&
+        (queryable_ == rhs.queryable_) &&
+        (clear_label_cache_ == rhs.clear_label_cache_) &&
+        (cache_features_ == rhs.cache_features_) &&
+        (group_by_ == rhs.group_by_) &&
+        (styles_ == rhs.styles_) &&
+        ((ds_ && rhs.ds_) ? *ds_ == *rhs.ds_ : ds_ == rhs.ds_) &&
+        (buffer_size_ == rhs.buffer_size_) &&
+        (maximum_extent_ == rhs.maximum_extent_);
 }
 
 layer::~layer() {}
@@ -209,7 +234,6 @@ void layer::reset_buffer_size()
     buffer_size_.reset();
 }
 
-
 box2d<double> layer::envelope() const
 {
     if (ds_) return ds_->envelope();
@@ -236,7 +260,7 @@ bool layer::cache_features() const
     return cache_features_;
 }
 
-void layer::set_group_by(std::string column)
+void layer::set_group_by(std::string const& column)
 {
     group_by_ = column;
 }

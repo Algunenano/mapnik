@@ -25,11 +25,15 @@
 
 // mapnik
 #include <mapnik/palette.hpp>
+#include <mapnik/config.hpp>
 
 // stl
 #include <vector>
 #include <iostream>
 #include <stdexcept>
+
+#include <mapnik/image_data.hpp>
+#include <mapnik/image_view.hpp>
 
 /* miniz.c porting issues:
   - duplicate symbols in python bindings require moving miniz.c include to just cpp file
@@ -37,6 +41,7 @@
   - avoiding including miniz.c here requires fwd declaring the two structs below
   - being able to fwd declare requires removing typedef from struct declarations in miniz.c
   - being able to fwd declare also requires using pointers to structs
+  - if updated, need to apply c++11 fix: https://github.com/mapnik/mapnik/issues/1967
 */
 
 // TODO: try using #define MINIZ_HEADER_FILE_ONLY
@@ -47,7 +52,7 @@ namespace mapnik { namespace MiniZ {
 
 using mapnik::rgb;
 
-class PNGWriter {
+class MAPNIK_DECL PNGWriter {
 
 public:
     PNGWriter(int level, int strategy);
@@ -77,6 +82,13 @@ private:
     static const unsigned char IDAT_tpl[];
     static const unsigned char IEND_tpl[];
 };
+
+extern template MAPNIK_DECL void PNGWriter::writeIDAT<image_data_8>(image_data_8 const& image);
+extern template MAPNIK_DECL void PNGWriter::writeIDAT<image_view<image_data_8> >(image_view<image_data_8> const& image);
+extern template MAPNIK_DECL void PNGWriter::writeIDAT<image_data_32>(image_data_32 const& image);
+extern template MAPNIK_DECL void PNGWriter::writeIDAT<image_view<image_data_32> >(image_view<image_data_32> const& image);
+extern template MAPNIK_DECL void PNGWriter::writeIDATStripAlpha<image_data_32>(image_data_32 const& image);
+extern template MAPNIK_DECL void PNGWriter::writeIDATStripAlpha<image_view<image_data_32> >(image_view<image_data_32> const& image);
 
 }}
 

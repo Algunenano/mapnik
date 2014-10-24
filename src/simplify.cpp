@@ -2,13 +2,17 @@
 #include <mapnik/simplify.hpp>
 
 // boost
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
+#pragma GCC diagnostic ignored "-Wredeclared-class-member"
 #include <boost/assign/list_of.hpp>
 #include <boost/bimap.hpp>
+#pragma GCC diagnostic pop
 
 namespace mapnik
 {
 
-typedef boost::bimap<simplify_algorithm_e, std::string> simplify_algorithm_lookup_type;
+using simplify_algorithm_lookup_type = boost::bimap<simplify_algorithm_e, std::string>;
 static const simplify_algorithm_lookup_type simplify_lookup = boost::assign::list_of<simplify_algorithm_lookup_type::relation>
     (radial_distance,"radial-distance")
     (douglas_peucker,"douglas-peucker")

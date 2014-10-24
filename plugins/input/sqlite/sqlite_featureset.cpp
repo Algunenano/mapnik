@@ -29,6 +29,7 @@
 #include <mapnik/feature_layer_desc.hpp>
 #include <mapnik/wkb.hpp>
 #include <mapnik/unicode.hpp>
+#include <mapnik/value_types.hpp>
 #include <mapnik/feature_factory.hpp>
 
 // ogr
@@ -42,7 +43,7 @@ using mapnik::geometry_utils;
 using mapnik::transcoder;
 using mapnik::feature_factory;
 
-sqlite_featureset::sqlite_featureset(boost::shared_ptr<sqlite_resultset> rs,
+sqlite_featureset::sqlite_featureset(std::shared_ptr<sqlite_resultset> rs,
                                      mapnik::context_ptr const& ctx,
                                      std::string const& encoding,
                                      mapnik::box2d<double> const& bbox,
@@ -123,8 +124,7 @@ feature_ptr sqlite_featureset::next()
             {
                 int text_col_size;
                 const char * text_data = rs_->column_text(i, text_col_size);
-                UnicodeString ustr = tr_->transcode(text_data, text_col_size);
-                feature->put(fld_name_str, ustr);
+                feature->put(fld_name_str, tr_->transcode(text_data, text_col_size));
                 break;
             }
 

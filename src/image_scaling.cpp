@@ -27,12 +27,17 @@
 //#include <mapnik/span_image_filter.hpp>
 
 // boost
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
+#pragma GCC diagnostic ignored "-Wredeclared-class-member"
 #include <boost/assign/list_of.hpp>
 #include <boost/bimap.hpp>
+#pragma GCC diagnostic pop
 
 // agg
 #include "agg_image_accessors.h"
 #include "agg_pixfmt_rgba.h"
+#include "agg_color_rgba.h"
 #include "agg_rasterizer_scanline_aa.h"
 #include "agg_renderer_scanline.h"
 #include "agg_rendering_buffer.h"
@@ -46,7 +51,7 @@
 namespace mapnik
 {
 
-typedef boost::bimap<scaling_method_e, std::string> scaling_method_lookup_type;
+using scaling_method_lookup_type = boost::bimap<scaling_method_e, std::string>;
 static const scaling_method_lookup_type scaling_lookup = boost::assign::list_of<scaling_method_lookup_type::relation>
     (SCALING_NEAR,"near")
     (SCALING_BILINEAR,"bilinear")
@@ -65,7 +70,6 @@ static const scaling_method_lookup_type scaling_lookup = boost::assign::list_of<
     (SCALING_SINC,"sinc")
     (SCALING_LANCZOS,"lanczos")
     (SCALING_BLACKMAN,"blackman")
-    (SCALING_BILINEAR8,"bilinear8")
     ;
 
 boost::optional<scaling_method_e> scaling_method_from_string(std::string const& name)
@@ -90,170 +94,6 @@ boost::optional<std::string> scaling_method_to_string(scaling_method_e scaling_m
     return mode;
 }
 
-// this has been replaced by agg impl - see https://github.com/mapnik/mapnik/issues/656
-template <typename Image>
-void scale_image_bilinear_old (Image & target,Image const& source, double x_off_f, double y_off_f)
-{
-
-    int source_width=source.width();
-    int source_height=source.height();
-
-    int target_width=target.width();
-    int target_height=target.height();
-
-    if (source_width<1 || source_height<1 ||
-        target_width<1 || target_height<1) return;
-    int x=0,y=0,xs=0,ys=0;
-    int tw2 = target_width/2;
-    int th2 = target_height/2;
-    int offs_x = rint((source_width-target_width-x_off_f*2*source_width)/2);
-    int offs_y = rint((source_height-target_height-y_off_f*2*source_height)/2);
-    unsigned yprt, yprt1, xprt, xprt1;
-
-    //no scaling or subpixel offset
-    if (target_height == source_height && target_width == source_width && offs_x == 0 && offs_y == 0){
-        for (y=0;y<target_height;++y)
-            target.setRow(y,source.getRow(y),target_width);
-        return;
-    }
-
-    for (y=0;y<target_height;++y)
-    {
-        ys = (y*source_height+offs_y)/target_height;
-        int ys1 = ys+1;
-        if (ys1>=source_height)
-            ys1--;
-        if (ys<0)
-            ys=ys1=0;
-        if (source_height/2<target_height)
-            yprt = (y*source_height+offs_y)%target_height;
-        else
-            yprt = th2;
-        yprt1 = target_height-yprt;
-        for (x=0;x<target_width;++x)
-        {
-            xs = (x*source_width+offs_x)/target_width;
-            if (source_width/2<target_width)
-                xprt = (x*source_width+offs_x)%target_width;
-            else
-                xprt = tw2;
-            xprt1 = target_width-xprt;
-            int xs1 = xs+1;
-            if (xs1>=source_width)
-                xs1--;
-            if (xs<0)
-                xs=xs1=0;
-
-            unsigned a = source(xs,ys);
-            unsigned b = source(xs1,ys);
-            unsigned c = source(xs,ys1);
-            unsigned d = source(xs1,ys1);
-            unsigned out=0;
-            unsigned t = 0;
-
-            for(int i=0; i<4; i++){
-                unsigned p,r,s;
-                // X axis
-                p = a&0xff;
-                r = b&0xff;
-                if (p!=r)
-                    r = (r*xprt+p*xprt1+tw2)/target_width;
-                p = c&0xff;
-                s = d&0xff;
-                if (p!=s)
-                    s = (s*xprt+p*xprt1+tw2)/target_width;
-                // Y axis
-                if (r!=s)
-                    r = (s*yprt+r*yprt1+th2)/target_height;
-                // channel up
-                out |= r << t;
-                t += 8;
-                a >>= 8;
-                b >>= 8;
-                c >>= 8;
-                d >>= 8;
-            }
-            target(x,y)=out;
-        }
-    }
-}
-
-
-template <typename Image>
-void scale_image_bilinear8 (Image & target,Image const& source, double x_off_f, double y_off_f)
-{
-
-    int source_width=source.width();
-    int source_height=source.height();
-
-    int target_width=target.width();
-    int target_height=target.height();
-
-    if (source_width<1 || source_height<1 ||
-        target_width<1 || target_height<1) return;
-    int x=0,y=0,xs=0,ys=0;
-    int tw2 = target_width/2;
-    int th2 = target_height/2;
-    int offs_x = rint((source_width-target_width-x_off_f*2*source_width)/2);
-    int offs_y = rint((source_height-target_height-y_off_f*2*source_height)/2);
-    unsigned yprt, yprt1, xprt, xprt1;
-
-    //no scaling or subpixel offset
-    if (target_height == source_height && target_width == source_width && offs_x == 0 && offs_y == 0){
-        for (y=0;y<target_height;++y)
-            target.setRow(y,source.getRow(y),target_width);
-        return;
-    }
-
-    for (y=0;y<target_height;++y)
-    {
-        ys = (y*source_height+offs_y)/target_height;
-        int ys1 = ys+1;
-        if (ys1>=source_height)
-            ys1--;
-        if (ys<0)
-            ys=ys1=0;
-        if (source_height/2<target_height)
-            yprt = (y*source_height+offs_y)%target_height;
-        else
-            yprt = th2;
-        yprt1 = target_height-yprt;
-        for (x=0;x<target_width;++x)
-        {
-            xs = (x*source_width+offs_x)/target_width;
-            if (source_width/2<target_width)
-                xprt = (x*source_width+offs_x)%target_width;
-            else
-                xprt = tw2;
-            xprt1 = target_width-xprt;
-            int xs1 = xs+1;
-            if (xs1>=source_width)
-                xs1--;
-            if (xs<0)
-                xs=xs1=0;
-
-            unsigned a = source(xs,ys);
-            unsigned b = source(xs1,ys);
-            unsigned c = source(xs,ys1);
-            unsigned d = source(xs1,ys1);
-            unsigned p,r,s;
-            // X axis
-            p = a&0xff;
-            r = b&0xff;
-            if (p!=r)
-                r = (r*xprt+p*xprt1+tw2)/target_width;
-            p = c&0xff;
-            s = d&0xff;
-            if (p!=s)
-                s = (s*xprt+p*xprt1+tw2)/target_width;
-            // Y axis
-            if (r!=s)
-                r = (s*yprt+r*yprt1+th2)/target_height;
-            target(x,y)=(0xff<<24) | (r<<16) | (r<<8) | r;
-        }
-    }
-}
-
 template <typename Image>
 void scale_image_agg(Image & target,
                      Image const& source,
@@ -262,14 +102,14 @@ void scale_image_agg(Image & target,
                      double image_ratio_y,
                      double x_off_f,
                      double y_off_f,
-                     double filter_radius)
+                     double filter_factor)
 {
     // "the image filters should work namely in the premultiplied color space"
     // http://old.nabble.com/Re:--AGG--Basic-image-transformations-p1110665.html
     // "Yes, you need to use premultiplied images only. Only in this case the simple weighted averaging works correctly in the image fitering."
     // http://permalink.gmane.org/gmane.comp.graphics.agg/3443
-    typedef agg::pixfmt_rgba32_pre pixfmt_pre;
-    typedef agg::renderer_base<pixfmt_pre> renderer_base_pre;
+    using pixfmt_pre = agg::pixfmt_rgba32_pre;
+    using renderer_base_pre = agg::renderer_base<pixfmt_pre>;
 
     // define some stuff we'll use soon
     agg::rasterizer_scanline_aa<> ras;
@@ -280,21 +120,20 @@ void scale_image_agg(Image & target,
     // initialize source AGG buffer
     agg::rendering_buffer rbuf_src((unsigned char*)source.getBytes(), source.width(), source.height(), source.width() * 4);
     pixfmt_pre pixf_src(rbuf_src);
-    typedef agg::image_accessor_clone<pixfmt_pre> img_src_type;
+    using img_src_type = agg::image_accessor_clone<pixfmt_pre>;
     img_src_type img_src(pixf_src);
 
     // initialize destination AGG buffer (with transparency)
     agg::rendering_buffer rbuf_dst((unsigned char*)target.getBytes(), target.width(), target.height(), target.width() * 4);
     pixfmt_pre pixf_dst(rbuf_dst);
     renderer_base_pre rb_dst_pre(pixf_dst);
-    rb_dst_pre.clear(agg::rgba(0, 0, 0, 0));
 
     // create a scaling matrix
     agg::trans_affine img_mtx;
     img_mtx /= agg::trans_affine_scaling(image_ratio_x, image_ratio_y);
 
     // create a linear interpolator for our scaling matrix
-    typedef agg::span_interpolator_linear<> interpolator_type;
+    using interpolator_type = agg::span_interpolator_linear<>;
     interpolator_type interpolator(img_mtx);
 
     // draw an anticlockwise polygon to render our image into
@@ -310,13 +149,12 @@ void scale_image_agg(Image & target,
     {
     case SCALING_NEAR:
     {
-        typedef agg::span_image_filter_rgba_nn<img_src_type, interpolator_type> span_gen_type;
+        using span_gen_type = agg::span_image_filter_rgba_nn<img_src_type, interpolator_type>;
         span_gen_type sg(img_src, interpolator);
         agg::render_scanlines_aa(ras, sl, rb_dst_pre, sa, sg);
         return;
     }
     case SCALING_BILINEAR:
-    case SCALING_BILINEAR8:
         filter.calculate(agg::image_filter_bilinear(), true); break;
     case SCALING_BICUBIC:
         filter.calculate(agg::image_filter_bicubic(), true); break;
@@ -343,26 +181,26 @@ void scale_image_agg(Image & target,
     case SCALING_MITCHELL:
         filter.calculate(agg::image_filter_mitchell(), true); break;
     case SCALING_SINC:
-        filter.calculate(agg::image_filter_sinc(filter_radius), true); break;
+        filter.calculate(agg::image_filter_sinc(filter_factor), true); break;
     case SCALING_LANCZOS:
-        filter.calculate(agg::image_filter_lanczos(filter_radius), true); break;
+        filter.calculate(agg::image_filter_lanczos(filter_factor), true); break;
     case SCALING_BLACKMAN:
-        filter.calculate(agg::image_filter_blackman(filter_radius), true); break;
+        filter.calculate(agg::image_filter_blackman(filter_factor), true); break;
     }
     // details on various resampling considerations
     // http://old.nabble.com/Re%3A-Newbie---texture-p5057255.html
 
     // high quality resampler
-    typedef agg::span_image_resample_rgba_affine<img_src_type> span_gen_type;
+    using span_gen_type = agg::span_image_resample_rgba_affine<img_src_type>;
 
     // faster, lower quality
-    //typedef agg::span_image_filter_rgba<img_src_type,interpolator_type> span_gen_type;
+    //using span_gen_type = agg::span_image_filter_rgba<img_src_type,interpolator_type>;
 
     // local, modified agg::span_image_resample_rgba_affine
     // dating back to when we were not handling alpha correctly
     // and this file helped work around symptoms
     // https://github.com/mapnik/mapnik/issues/1489
-    //typedef mapnik::span_image_resample_rgba_affine<img_src_type> span_gen_type;
+    //using span_gen_type = mapnik::span_image_resample_rgba_affine<img_src_type>;
     span_gen_type sg(img_src, interpolator, filter);
     agg::render_scanlines_aa(ras, sl, rb_dst_pre, sa, sg);
 }
@@ -374,11 +212,6 @@ template void scale_image_agg<image_data_32>(image_data_32& target,
                                              double image_ratio_y,
                                              double x_off_f,
                                              double y_off_f,
-                                             double filter_radius);
-
-template void scale_image_bilinear_old<image_data_32> (image_data_32& target,const image_data_32& source, double x_off_f, double y_off_f);
-
-template void scale_image_bilinear8<image_data_32> (image_data_32& target,const image_data_32& source, double x_off_f, double y_off_f);
-
+                                             double filter_factor);
 
 }

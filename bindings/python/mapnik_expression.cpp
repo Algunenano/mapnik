@@ -20,13 +20,22 @@
  *
  *****************************************************************************/
 
-// boost
-#include <boost/python.hpp>
-#include <boost/variant.hpp>
-#include <boost/noncopyable.hpp>
+#include <mapnik/config.hpp>
+#include "python_to_value.hpp"
 
+// boost
+#include "boost_std_shared_shim.hpp"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
+#include <boost/python.hpp>
+#include <boost/noncopyable.hpp>
+#pragma GCC diagnostic pop
 
 // mapnik
+#include <mapnik/util/variant.hpp>
 #include <mapnik/feature.hpp>
 #include <mapnik/expression.hpp>
 #include <mapnik/expression_string.hpp>
@@ -43,7 +52,7 @@ using mapnik::path_expression_ptr;
 // expression
 expression_ptr parse_expression_(std::string const& wkt)
 {
-    return parse_expression(wkt,"utf8");
+    return parse_expression(wkt);
 }
 
 std::string expression_to_string_(mapnik::expr_node const& expr)
@@ -51,15 +60,15 @@ std::string expression_to_string_(mapnik::expr_node const& expr)
     return mapnik::to_expression_string(expr);
 }
 
-mapnik::value expression_evaluate_(mapnik::expr_node const& expr, mapnik::feature_impl const& f)
+mapnik::value expression_evaluate_(mapnik::expr_node const& expr, mapnik::feature_impl const& f, boost::python::dict const& d)
 {
     // will be auto-converted to proper python type by `mapnik_value_to_python`
-    return boost::apply_visitor(mapnik::evaluate<mapnik::feature_impl,mapnik::value>(f),expr);
+    return mapnik::util::apply_visitor(mapnik::evaluate<mapnik::feature_impl,mapnik::value,mapnik::attributes>(f,mapnik::dict2attr(d)),expr);
 }
 
-bool expression_evaluate_to_bool_(mapnik::expr_node const& expr, mapnik::feature_impl const& f)
+bool expression_evaluate_to_bool_(mapnik::expr_node const& expr, mapnik::feature_impl const& f, boost::python::dict const& d)
 {
-    return boost::apply_visitor(mapnik::evaluate<mapnik::feature_impl,mapnik::value>(f),expr).to_bool();
+    return mapnik::util::apply_visitor(mapnik::evaluate<mapnik::feature_impl,mapnik::value,mapnik::attributes>(f,mapnik::dict2attr(d)),expr).to_bool();
 }
 
 // path expression
@@ -84,8 +93,8 @@ void export_expression()
     class_<mapnik::expr_node ,boost::noncopyable>("Expression",
                                                   "TODO"
                                                   "",no_init)
-        .def("evaluate", &expression_evaluate_)
-        .def("to_bool", &expression_evaluate_to_bool_)
+        .def("evaluate", &expression_evaluate_,(arg("feature"),arg("variables")=boost::python::dict()))
+        .def("to_bool", &expression_evaluate_to_bool_,(arg("feature"),arg("variables")=boost::python::dict()))
         .def("__str__",&expression_to_string_);
     ;
 

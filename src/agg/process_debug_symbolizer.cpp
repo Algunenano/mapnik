@@ -24,6 +24,7 @@
 #include <mapnik/feature.hpp>
 #include <mapnik/agg_renderer.hpp>
 #include <mapnik/graphics.hpp>
+#include <mapnik/symbolizer.hpp>
 #include <mapnik/label_collision_detector.hpp>
 
 namespace mapnik {
@@ -47,25 +48,27 @@ void draw_rect(image_32 &pixmap, box2d<double> const& box)
     }
 }
 
-template <typename T>
-void agg_renderer<T>::process(debug_symbolizer const& sym,
+template <typename T0, typename T1>
+void agg_renderer<T0,T1>::process(debug_symbolizer const& sym,
                               mapnik::feature_impl & feature,
                               proj_transform const& prj_trans)
 {
-    debug_symbolizer_mode_e mode = sym.get_mode();
+
+    debug_symbolizer_mode_enum mode = get<debug_symbolizer_mode_enum>(sym, keys::mode, feature, common_.vars_, DEBUG_SYM_MODE_COLLISION);
+
     if (mode == DEBUG_SYM_MODE_COLLISION)
     {
-        label_collision_detector4::query_iterator itr = detector_->begin(), end = detector_->end();
-        for (;itr!=end; itr++)
+        typename detector_type::query_iterator itr = common_.detector_->begin();
+        typename detector_type::query_iterator end = common_.detector_->end();
+        for ( ;itr!=end; ++itr)
         {
             draw_rect(pixmap_, itr->box);
         }
     }
     else if (mode == DEBUG_SYM_MODE_VERTEX)
     {
-        for (unsigned i=0; i<feature.num_geometries(); ++i)
+        for (auto const& geom : feature.paths())
         {
-            geometry_type const& geom = feature.get_geometry(i);
             double x;
             double y;
             double z = 0;
@@ -75,7 +78,7 @@ void agg_renderer<T>::process(debug_symbolizer const& sym,
             {
                 if (cmd == SEG_CLOSE) continue;
                 prj_trans.backward(x,y,z);
-                t_.forward(&x,&y);
+                common_.t_.forward(&x,&y);
                 pixmap_.setPixel(x,y,0xff0000ff);
                 pixmap_.setPixel(x-1,y-1,0xff0000ff);
                 pixmap_.setPixel(x+1,y+1,0xff0000ff);
@@ -90,4 +93,3 @@ template void agg_renderer<image_32>::process(debug_symbolizer const&,
                                               mapnik::feature_impl &,
                                               proj_transform const&);
 }
-

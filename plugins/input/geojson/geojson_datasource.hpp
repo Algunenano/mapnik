@@ -35,26 +35,65 @@
 
 // boost
 #include <boost/optional.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/geometry/geometries/box.hpp>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
 #include <boost/geometry/geometries/point_xy.hpp>
-#include <boost/geometry/algorithms/area.hpp>
+#include <boost/geometry/geometries/box.hpp>
 #include <boost/geometry/geometries/geometries.hpp>
+#include <boost/geometry.hpp>
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 105600
+#include <boost/geometry/index/rtree.hpp>
+#else
 #include <boost/geometry/extensions/index/rtree/rtree.hpp>
+#endif
+#pragma GCC diagnostic pop
 
 // stl
+#include <memory>
 #include <vector>
 #include <string>
 #include <map>
 #include <deque>
 
+
+#if BOOST_VERSION >= 105600
+template <std::size_t Max, std::size_t Min>
+struct geojson_linear : boost::geometry::index::linear<Max,Min> {};
+
+namespace boost { namespace geometry { namespace index { namespace detail { namespace rtree {
+
+template <std::size_t Max, std::size_t Min>
+struct options_type<geojson_linear<Max,Min> >
+{
+    using type = options<geojson_linear<Max, Min>,
+                         insert_default_tag,
+                         choose_by_content_diff_tag,
+                         split_default_tag,
+                         linear_tag,
+                         node_s_mem_static_tag>;
+};
+
+}}}}}
+
+#endif //BOOST_VERSION >= 105600
+
 class geojson_datasource : public mapnik::datasource
 {
 public:
-    typedef boost::geometry::model::d2::point_xy<double> point_type;
-    typedef boost::geometry::model::box<point_type> box_type;
-    typedef boost::geometry::index::rtree<box_type,std::size_t> spatial_index_type;
-    
+    using point_type = boost::geometry::model::point<double, 2, boost::geometry::cs::cartesian>;
+    using box_type = boost::geometry::model::box<point_type>;
+
+#if BOOST_VERSION >= 105600
+    using item_type = std::pair<box_type,std::size_t>;
+    using spatial_index_type = boost::geometry::index::rtree<item_type,geojson_linear<16,4> >;
+#else
+    using item_type = std::size_t;
+    using spatial_index_type = boost::geometry::index::rtree<box_type,std::size_t>;
+#endif
+
     // constructor
     geojson_datasource(mapnik::parameters const& params);
     virtual ~geojson_datasource ();
@@ -65,17 +104,17 @@ public:
     mapnik::box2d<double> envelope() const;
     mapnik::layer_descriptor get_descriptor() const;
     boost::optional<mapnik::datasource::geometry_t> get_geometry_type() const;
+    template <typename T>
+    void parse_geojson(T const& buffer);
 private:
     mapnik::datasource::datasource_t type_;
-    std::map<std::string, mapnik::parameters> statistics_;
     mapnik::layer_descriptor desc_;
-    std::string file_;
+    std::string filename_;
+    std::string inline_string_;
     mapnik::box2d<double> extent_;
-    boost::shared_ptr<mapnik::transcoder> tr_;
     std::vector<mapnik::feature_ptr> features_;
-    spatial_index_type tree_;
-    mutable std::deque<std::size_t> index_array_;
+    std::unique_ptr<spatial_index_type> tree_;
 };
 
 
-#endif // FILE_DATASOURCE_HPP
+#endif // GEOJSON_DATASOURCE_HPP

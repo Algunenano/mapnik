@@ -46,7 +46,7 @@ namespace mapnik
 class libxml2_loader : mapnik::noncopyable
 {
 public:
-    libxml2_loader(const char *encoding = NULL, int options = DEFAULT_OPTIONS, const char *url = NULL) :
+    libxml2_loader(const char *encoding = nullptr, int options = DEFAULT_OPTIONS, const char *url = nullptr) :
         ctx_(0),
         encoding_(encoding),
         options_(options),
@@ -107,7 +107,7 @@ public:
                                    base_path + "': file or directory does not exist");
             }
         }
-
+        // NOTE: base_path here helps libxml2 resolve entities correctly: https://github.com/mapnik/mapnik/issues/440
         xmlDocPtr doc = xmlCtxtReadMemory(ctx_, buffer.data(), buffer.length(), base_path.c_str(), encoding_, options_);
 
         load(doc, node);
@@ -150,15 +150,16 @@ public:
     }
 
 private:
-    void append_attributes(xmlAttr *attributes, xml_node &node)
+    void inline append_attributes(xmlAttr *attributes, xml_node & node)
     {
         for (; attributes; attributes = attributes->next )
         {
-            node.add_attribute((const char *)attributes->name, (const char *)attributes->children->content);
+            node.add_attribute(reinterpret_cast<const char *>(attributes->name),
+                               reinterpret_cast<const char *>(attributes->children->content));
         }
     }
 
-    void populate_tree(xmlNode *cur_node, xml_node &node)
+    void inline populate_tree(xmlNode *cur_node, xml_node &node)
     {
         for (; cur_node; cur_node = cur_node->next )
         {
@@ -166,18 +167,17 @@ private:
             {
             case XML_ELEMENT_NODE:
             {
-
-                xml_node &new_node = node.add_child((const char *)cur_node->name, cur_node->line, false);
+                xml_node &new_node = node.add_child(reinterpret_cast<const char *>(cur_node->name), cur_node->line, false);
                 append_attributes(cur_node->properties, new_node);
                 populate_tree(cur_node->children, new_node);
             }
             break;
             case XML_TEXT_NODE:
             {
-                std::string trimmed((const char*)cur_node->content);
+                std::string trimmed(reinterpret_cast<const char *>(cur_node->content));
                 mapnik::util::trim(trimmed);
                 if (trimmed.empty()) break; //Don't add empty text nodes
-                node.add_child(trimmed, cur_node->line, true);
+                node.add_child(trimmed.c_str(), cur_node->line, true);
             }
             break;
             case XML_COMMENT_NODE:

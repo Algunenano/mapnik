@@ -23,7 +23,7 @@
 #ifndef MAPNIK_VERTEX_HPP
 #define MAPNIK_VERTEX_HPP
 
-#include <sstream>
+#include <utility>
 
 namespace mapnik
 {
@@ -35,9 +35,10 @@ enum CommandType {
     SEG_CLOSE = (0x40 | 0x0f)
 };
 
+
 template <typename T,int dim>
 struct vertex {
-    typedef T coord_type;
+    using coord_type = T;
 };
 
 template <typename T>
@@ -45,7 +46,7 @@ struct vertex<T,2>
 {
     enum no_init_t { no_init };
 
-    typedef T coord_type;
+    using coord_type = T;
     coord_type x;
     coord_type y;
     unsigned cmd;
@@ -59,63 +60,48 @@ struct vertex<T,2>
     vertex(coord_type x_,coord_type y_,unsigned cmd_)
         : x(x_),y(y_),cmd(cmd_) {}
 
+    vertex(vertex<T,2> && rhs) noexcept
+        : x(std::move(rhs.x)),
+          y(std::move(rhs.y)),
+          cmd(std::move(rhs.cmd)) {}
+
+    vertex(vertex<T,2> const& rhs)
+        : x(rhs.x),
+          y(rhs.y),
+          cmd(rhs.cmd) {}
+
     template <typename T2>
-    vertex(const vertex<T2,2>& rhs)
+    vertex(vertex<T2,2> const& rhs)
         : x(coord_type(rhs.x)),
           y(coord_type(rhs.y)),
           cmd(rhs.cmd) {}
 
-    template <typename T2> vertex<T,2> operator=(const vertex<T2,2>& rhs)
+
+    vertex<T,2>& operator=(vertex<T,2> rhs)
     {
-        if (&cmd != &rhs.cmd)
-        {
-            x = coord_type(rhs.x);
-            y = coord_type(rhs.y);
-            cmd = rhs.cmd;
-        }
+        swap(rhs);
         return *this;
+    }
+
+    template <typename T2>
+    vertex<T,2>& operator=(vertex<T2,2> const& rhs)
+    {
+        vertex<T,2> tmp(rhs);
+        swap(tmp);
+        return *this;
+    }
+
+private:
+    void swap(vertex<T,2> & rhs)
+    {
+        std::swap(this->x,rhs.x);
+        std::swap(this->y,rhs.y);
+        std::swap(this->cmd,rhs.cmd);
     }
 };
 
-typedef vertex<double,2> vertex2d;
-typedef vertex<int,2> vertex2i;
-
-template <class charT,class traits,class T,int dim>
-inline std::basic_ostream<charT,traits>&
-operator << (std::basic_ostream<charT,traits>& out,
-             const vertex<T,dim>& c);
-
-template <class charT,class traits,class T>
-inline std::basic_ostream<charT,traits>&
-operator << (std::basic_ostream<charT,traits>& out,
-             const vertex<T,2>& v)
-{
-    std::basic_ostringstream<charT,traits> s;
-    s.copyfmt(out);
-    s.width(0);
-    switch (v.cmd)
-    {
-        case SEG_END: s << "End "; break;
-        case SEG_MOVETO: s << "MoveTo "; break;
-        case SEG_LINETO: s << "LineTo "; break;
-        case SEG_CLOSE: s << "Close "; break;
-    }
-    s << "(" << v.x << ", " << v.y << ")";
-    return out << s.str();
-}
-
-template <class charT,class traits,class T>
-inline std::basic_ostream<charT,traits>&
-operator << (std::basic_ostream<charT,traits>& out,
-             const vertex<T,3>& v)
-{
-    std::basic_ostringstream<charT,traits> s;
-    s.copyfmt(out);
-    s.width(0);
-    s<<"vertex3("<<v.x<<","<<v.y<<","<<v.z<<",cmd="<<v.cmd<<")";
-    out << s.str();
-    return out;
-}
+using vertex2d = vertex<double,2>;
+using vertex2i = vertex<int,2>;
 
 }
 

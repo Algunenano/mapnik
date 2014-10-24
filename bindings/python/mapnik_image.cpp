@@ -20,11 +20,19 @@
  *
  *****************************************************************************/
 
+#include <mapnik/config.hpp>
+
 // boost
+#include "boost_std_shared_shim.hpp"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 #include <boost/python.hpp>
 #include <boost/python/module.hpp>
 #include <boost/python/def.hpp>
-#include <boost/make_shared.hpp>
+#pragma GCC diagnostic pop
 
 // mapnik
 #include <mapnik/graphics.hpp>
@@ -35,8 +43,9 @@
 
 // cairo
 #if defined(HAVE_CAIRO) && defined(HAVE_PYCAIRO)
-#include <mapnik/cairo_context.hpp>
+#include <mapnik/cairo/cairo_context.hpp>
 #include <pycairo.h>
+#include <cairo.h>
 #endif
 
 using mapnik::image_32;
@@ -146,16 +155,16 @@ void set_pixel(mapnik::image_32 & im, unsigned x, unsigned y, mapnik::color cons
     im.setPixel(x, y, c.rgba());
 }
 
-boost::shared_ptr<image_32> open_from_file(std::string const& filename)
+std::shared_ptr<image_32> open_from_file(std::string const& filename)
 {
     boost::optional<std::string> type = type_from_filename(filename);
     if (type)
     {
-        std::auto_ptr<image_reader> reader(get_image_reader(filename,*type));
+        std::unique_ptr<image_reader> reader(get_image_reader(filename,*type));
         if (reader.get())
         {
 
-            boost::shared_ptr<image_32> image_ptr = boost::make_shared<image_32>(reader->width(),reader->height());
+            std::shared_ptr<image_32> image_ptr = std::make_shared<image_32>(reader->width(),reader->height());
             reader->read(0,0,image_ptr->data());
             return image_ptr;
         }
@@ -164,28 +173,28 @@ boost::shared_ptr<image_32> open_from_file(std::string const& filename)
     throw mapnik::image_reader_exception("Unsupported image format:" + filename);
 }
 
-boost::shared_ptr<image_32> fromstring(std::string const& str)
+std::shared_ptr<image_32> fromstring(std::string const& str)
 {
-    std::auto_ptr<image_reader> reader(get_image_reader(str.c_str(),str.size()));
+    std::unique_ptr<image_reader> reader(get_image_reader(str.c_str(),str.size()));
     if (reader.get())
     {
-        boost::shared_ptr<image_32> image_ptr = boost::make_shared<image_32>(reader->width(),reader->height());
+        std::shared_ptr<image_32> image_ptr = std::make_shared<image_32>(reader->width(),reader->height());
         reader->read(0,0,image_ptr->data());
         return image_ptr;
     }
     throw mapnik::image_reader_exception("Failed to load image from buffer" );
 }
 
-boost::shared_ptr<image_32> frombuffer(PyObject * obj)
+std::shared_ptr<image_32> frombuffer(PyObject * obj)
 {
     void const* buffer=0;
     Py_ssize_t buffer_len;
     if (PyObject_AsReadBuffer(obj, &buffer, &buffer_len) == 0)
     {
-        std::auto_ptr<image_reader> reader(get_image_reader(reinterpret_cast<char const*>(buffer),buffer_len));
+        std::unique_ptr<image_reader> reader(get_image_reader(reinterpret_cast<char const*>(buffer),buffer_len));
         if (reader.get())
         {
-            boost::shared_ptr<image_32> image_ptr = boost::make_shared<image_32>(reader->width(),reader->height());
+            std::shared_ptr<image_32> image_ptr = std::make_shared<image_32>(reader->width(),reader->height());
             reader->read(0,0,image_ptr->data());
             return image_ptr;
         }
@@ -205,10 +214,10 @@ void composite(image_32 & dst, image_32 & src, mapnik::composite_mode_e mode, fl
 }
 
 #if defined(HAVE_CAIRO) && defined(HAVE_PYCAIRO)
-boost::shared_ptr<image_32> from_cairo(PycairoSurface* py_surface)
+std::shared_ptr<image_32> from_cairo(PycairoSurface* py_surface)
 {
-    mapnik::cairo_surface_ptr surface(py_surface->surface, mapnik::cairo_surface_closer());
-    boost::shared_ptr<image_32> image_ptr = boost::make_shared<image_32>(surface);
+    mapnik::cairo_surface_ptr surface(cairo_surface_reference(py_surface->surface), mapnik::cairo_surface_closer());
+    std::shared_ptr<image_32> image_ptr = std::make_shared<image_32>(surface);
     return image_ptr;
 }
 #endif
@@ -251,9 +260,12 @@ void export_image()
         .value("saturation", mapnik::saturation)
         .value("color", mapnik::_color)
         .value("value", mapnik::_value)
+        .value("linear_dodge", mapnik::linear_dodge)
+        .value("linear_burn", mapnik::linear_burn)
+        .value("divide", mapnik::divide)
         ;
 
-    class_<image_32,boost::shared_ptr<image_32> >("Image","This class represents a 32 bit RGBA image.",init<int,int>())
+    class_<image_32,std::shared_ptr<image_32> >("Image","This class represents a 32 bit RGBA image.",init<int,int>())
         .def("width",&image_32::width)
         .def("height",&image_32::height)
         .def("view",&image_32::get_view)
@@ -272,6 +284,7 @@ void export_image()
            arg("mode")=mapnik::src_over,
            arg("opacity")=1.0f
          ))
+        .def("premultiplied",&image_32::premultiplied)
         .def("premultiply",&image_32::premultiply)
         .def("demultiply",&image_32::demultiply)
         .def("set_pixel",&set_pixel)

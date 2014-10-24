@@ -20,10 +20,18 @@
  *
  *****************************************************************************/
 
+#include <mapnik/config.hpp>
+
 // boost
+#include "boost_std_shared_shim.hpp"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 #include <boost/python.hpp>
-#include <boost/make_shared.hpp>
 #include <boost/noncopyable.hpp>
+#pragma GCC diagnostic pop
 
 //mapnik
 #include <mapnik/palette.hpp>
@@ -31,7 +39,7 @@
 // stl
 #include <stdexcept>
 
-static boost::shared_ptr<mapnik::rgba_palette> make_palette( std::string const& palette, std::string const& format )
+static std::shared_ptr<mapnik::rgba_palette> make_palette( std::string const& palette, std::string const& format )
 {
     mapnik::rgba_palette::palette_type type = mapnik::rgba_palette::PALETTE_RGBA;
     if (format == "rgb")
@@ -40,7 +48,7 @@ static boost::shared_ptr<mapnik::rgba_palette> make_palette( std::string const& 
         type = mapnik::rgba_palette::PALETTE_ACT;
     else
         throw std::runtime_error("invalid type passed for mapnik.Palette: must be either rgba, rgb, or act");
-    return boost::make_shared<mapnik::rgba_palette>(palette, type);
+    return std::make_shared<mapnik::rgba_palette>(palette, type);
 }
 
 void export_palette ()
@@ -48,7 +56,7 @@ void export_palette ()
     using namespace boost::python;
 
     class_<mapnik::rgba_palette,
-        boost::shared_ptr<mapnik::rgba_palette>,
+        std::shared_ptr<mapnik::rgba_palette>,
         boost::noncopyable >("Palette",no_init)
         //, init<std::string,std::string>(
         // ( arg("palette"), arg("type")),

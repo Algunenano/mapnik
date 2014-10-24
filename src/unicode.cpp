@@ -22,10 +22,14 @@
 
 // mapnik
 #include <mapnik/unicode.hpp>
+#include <mapnik/value_types.hpp>
 
 // stl
 #include <cstdlib>
 #include <string>
+
+// icu
+#include <unicode/ucnv.h>
 
 namespace mapnik {
 
@@ -39,11 +43,11 @@ transcoder::transcoder (std::string const& encoding)
     // TODO ??
 }
 
-UnicodeString transcoder::transcode(const char* data, boost::int32_t length) const
+mapnik::value_unicode_string transcoder::transcode(const char* data, std::int32_t length) const
 {
     UErrorCode err = U_ZERO_ERROR;
 
-    UnicodeString ustr(data,length,conv_,err);
+    mapnik::value_unicode_string ustr(data,length,conv_,err);
     if (ustr.isBogus())
     {
         ustr.remove();

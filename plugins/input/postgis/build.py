@@ -21,6 +21,7 @@
 
 Import ('plugin_base')
 Import ('env')
+from copy import copy
 
 PLUGIN_NAME = 'postgis'
 
@@ -33,30 +34,33 @@ plugin_sources = Split(
   """ % locals()
 )
 
-# Link Library to Dependencies
-libraries = ['pq']
-libraries.append('boost_system%s' % env['BOOST_APPEND'])
-libraries.append(env['ICU_LIB_NAME'])
-
-if env['THREADING'] == 'multi':
-    libraries.append('boost_thread%s' % env['BOOST_APPEND'])
+cxxflags = []
+plugin_env['LIBS'] = []
 
 if env['RUNTIME_LINK'] == 'static':
-    #cmd = 'pg_config --libs'
-    #plugin_env.ParseConfig(cmd)
-    # pg_config does not seem to report correct deps of libpq
-    # so resort to hardcoding for now
-    libraries.extend(['ldap', 'pam', 'ssl', 'crypto', 'krb5'])
+    # pkg-config is more reliable than pg_config across platforms
+    cmd = 'pkg-config libpq --libs --static'
+    try:
+        plugin_env.ParseConfig(cmd)
+    except OSError, e:
+        plugin_env.Append(LIBS='pq')
+else:
+    plugin_env.Append(LIBS='pq')
+
+# Link Library to Dependencies
+libraries = copy(plugin_env['LIBS'])
 
 if env['PLUGIN_LINKING'] == 'shared':
-    libraries.append('mapnik')
+    libraries.insert(0,env['MAPNIK_NAME'])
+    libraries.append(env['ICU_LIB_NAME'])
+    libraries.append('boost_system%s' % env['BOOST_APPEND'])
+    libraries.append('boost_regex%s' % env['BOOST_APPEND'])
 
     TARGET = plugin_env.SharedLibrary('../%s' % PLUGIN_NAME,
                                       SHLIBPREFIX='',
                                       SHLIBSUFFIX='.input',
                                       source=plugin_sources,
-                                      LIBS=libraries,
-                                      LINKFLAGS=env['CUSTOM_LDFLAGS'])
+                                      LIBS=libraries)
 
     # if the plugin links to libmapnik ensure it is built first
     Depends(TARGET, env.subst('../../../src/%s' % env['MAPNIK_LIB_NAME']))

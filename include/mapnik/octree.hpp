@@ -29,9 +29,9 @@
 #include <mapnik/noncopyable.hpp>
 
 // stl
+#include <algorithm>
 #include <vector>
 #include <deque>
-#include <algorithm>
 
 namespace mapnik {
 
@@ -62,7 +62,7 @@ class octree : private mapnik::noncopyable
                children_count(0),
                index(0)
         {
-            memset(&children_[0],0,sizeof(children_));
+            std::fill(children_,children_ + 8, nullptr);
         }
 
         ~node()
@@ -82,9 +82,9 @@ class octree : private mapnik::noncopyable
             return count == 0;
         }
         node * children_[8];
-        boost::uint64_t reds;
-        boost::uint64_t greens;
-        boost::uint64_t blues;
+        std::uint64_t reds;
+        std::uint64_t greens;
+        std::uint64_t blues;
         unsigned count;
         double reduce_cost;
         unsigned count_cum;
@@ -207,9 +207,9 @@ public:
             return;
         }
 
-        double mean_r = static_cast<double>(r->reds / r->count_cum);
-        double mean_g = static_cast<double>(r->greens / r->count_cum);
-        double mean_b = static_cast<double>(r->blues / r->count_cum);
+        double mean_r = static_cast<double>(r->reds) / r->count_cum;
+        double mean_g = static_cast<double>(r->greens) / r->count_cum;
+        double mean_b = static_cast<double>(r->blues) / r->count_cum;
         for (unsigned idx=0; idx < 8; ++idx)
         {
             if (r->children_[idx] != 0)
@@ -300,7 +300,7 @@ public:
             palette.push_back(rgb(byte(itr->reds/float(count)),
                                   byte(itr->greens/float(count)),
                                   byte(itr->blues/float(count))));
-            itr->index = palette.size() - 1;
+            itr->index = static_cast<unsigned>(palette.size()) - 1;
         }
         for (unsigned i=0; i < 8 ;++i)
         {

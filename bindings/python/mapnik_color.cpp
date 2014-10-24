@@ -20,8 +20,17 @@
  *
  *****************************************************************************/
 
+#include <mapnik/config.hpp>
+#include "boost_std_shared_shim.hpp"
+
 // boost
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+
 #include <boost/python.hpp>
+#pragma GCC diagnostic pop
 
 //mapnik
 #include <mapnik/color.hpp>
@@ -83,6 +92,7 @@ void export_color ()
         .def(self != self)
         .def_pickle(color_pickle_suite())
         .def("__str__",&color::to_string)
+        .def("packed",&color::rgba)
         .def("to_hex_string",&color::to_hex_string,
              "Returns the hexadecimal representation of this color.\n"
              "\n"

@@ -21,15 +21,19 @@
  *****************************************************************************/
 
 // mapnik
+
 #include <mapnik/feature_style_processor_impl.hpp>
 #include <mapnik/agg_renderer.hpp>
 #include <mapnik/graphics.hpp>
+
+#if defined(GRID_RENDERER)
 #include <mapnik/grid/grid_renderer.hpp>
 #include <mapnik/grid/grid.hpp>
+#endif
 
 #if defined(HAVE_CAIRO)
 #include <cairo.h>
-#include <mapnik/cairo_renderer.hpp>
+#include <mapnik/cairo/cairo_renderer.hpp>
 #endif
 
 #if defined(SVG_RENDERER)
@@ -41,14 +45,16 @@ namespace mapnik
 
 #if defined(HAVE_CAIRO)
 template class feature_style_processor<cairo_renderer<cairo_ptr> >;
-template class feature_style_processor<cairo_renderer<cairo_surface_ptr> >;
 #endif
 
 #if defined(SVG_RENDERER)
 template class feature_style_processor<svg_renderer<std::ostream_iterator<char> > >;
 #endif
 
+#if defined(GRID_RENDERER)
 template class feature_style_processor<grid_renderer<grid> >;
+#endif
+
 template class feature_style_processor<agg_renderer<image_32> >;
 
 }

@@ -27,7 +27,6 @@
 #include <mapnik/config.hpp>
 
 // stl
-#include <vector>
 #include <bitset>
 #include <iostream>
 #include <cstdlib>
@@ -138,7 +137,7 @@ protected:
 template <typename ENUM, int THE_MAX>
 class MAPNIK_DECL enumeration {
 public:
-    typedef ENUM native_type;
+    using native_type = ENUM;
 
     enumeration()
         :  value_() {}
@@ -317,16 +316,16 @@ operator>>(std::istream & is, mapnik::enumeration<ENUM, THE_MAX> & e)
 
 } // end of namespace
 
-/** Helper macro. Creates a typedef.
+/** Helper macro.
  * @relates mapnik::enumeration
  */
 #ifdef _MSC_VER
 #define DEFINE_ENUM( name, e)                   \
     template enumeration<e, e ## _MAX>;         \
-    typedef enumeration<e, e ## _MAX> name
+    using name = enumeration<e, e ## _MAX>;
 #else
 #define DEFINE_ENUM( name, e)                   \
-    typedef enumeration<e, e ## _MAX> name
+    using name = enumeration<e, e ## _MAX>;
 #endif
 
 /** Helper macro. Runs the verify_mapnik_enum() method during static initialization.
@@ -334,8 +333,8 @@ operator>>(std::istream & is, mapnik::enumeration<ENUM, THE_MAX> & e)
  */
 
 #define IMPLEMENT_ENUM( name, strings )                                 \
-    template <> const char ** name ::our_strings_ = strings;            \
-    template <> std::string name ::our_name_ = #name;                   \
-    template <> bool name ::our_verified_flag_( name ::verify_mapnik_enum(__FILE__, __LINE__));
+    template <> MAPNIK_DECL const char ** name ::our_strings_ = strings;            \
+    template <> MAPNIK_DECL std::string name ::our_name_ = #name;                   \
+    template <> MAPNIK_DECL bool name ::our_verified_flag_( name ::verify_mapnik_enum(__FILE__, __LINE__));
 
 #endif // MAPNIK_ENUMERATION_HPP

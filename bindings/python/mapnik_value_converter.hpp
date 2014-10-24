@@ -24,30 +24,26 @@
 
 // mapnik
 #include <mapnik/value.hpp>
-
+#include <mapnik/util/variant.hpp>
 // boost
 #include <boost/python.hpp>
 #include <boost/implicit_cast.hpp>
 
 namespace boost { namespace python {
 
-    struct value_converter : public boost::static_visitor<PyObject*>
+    struct value_converter : public mapnik::util::static_visitor<PyObject*>
     {
         PyObject * operator() (mapnik::value_integer val) const
         {
-#if PY_VERSION_HEX >= 0x03000000
-            return ::PyLong_FromLong(val);
-#else
-            return ::PyInt_FromLong(val);
-#endif
+            return ::PyLong_FromLongLong(val);
         }
 
-        PyObject * operator() (double val) const
+        PyObject * operator() (mapnik::value_double val) const
         {
             return ::PyFloat_FromDouble(val);
         }
 
-        PyObject * operator() (bool val) const
+        PyObject * operator() (mapnik::value_bool val) const
         {
             return ::PyBool_FromLong(val);
         }
@@ -75,7 +71,7 @@ namespace boost { namespace python {
     {
         static PyObject* convert(mapnik::value const& v)
         {
-            return boost::apply_visitor(value_converter(),v.base());
+            return mapnik::util::apply_visitor(value_converter(),v);
         }
 
     };
@@ -84,12 +80,11 @@ namespace boost { namespace python {
     {
         static PyObject* convert(mapnik::value_holder const& v)
         {
-            return boost::apply_visitor(value_converter(),v);
+            return mapnik::util::apply_visitor(value_converter(),v);
         }
     };
 
 
-    }
-}
+}}
 
 #endif // MAPNIK_PYTHON_BINDING_VALUE_CONVERTER_INCLUDED
