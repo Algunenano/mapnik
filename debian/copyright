@@ -21,7 +21,7 @@ Files-Excluded:
  tests/data/shp/new_zealand/ne_50m*
 
 Files: *
-Copyright: 2006-2013 Artem Pavlenko
+Copyright: 2006-2014 Artem Pavlenko
  2005-2012 Jean-Francois Doyon
  2010 Robert Coup
  2006 10East Corp.
