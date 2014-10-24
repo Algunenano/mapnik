@@ -1,5 +1,5 @@
-Description: fix raster calls wrong number of arguments
-Forwarded: TODO
+Description: fix mapnik::raster call
+Forwarded: https://github.com/mapnik/mapnik/pull/2548
 Last-Update: 2014-10-24
 Author: Jérémy Lal <kapouer@melix.org>
 --- a/plugins/input/rasterlite/rasterlite_featureset.cpp
