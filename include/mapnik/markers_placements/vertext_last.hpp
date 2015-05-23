@@ -32,7 +32,12 @@ class markers_vertex_last_placement : public markers_point_placement<Locator, De
 {
 public:
     markers_vertex_last_placement(Locator &locator, Detector &detector, markers_placement_params const& params)
-        : markers_point_placement<Locator, Detector>(locator, detector, params) {}
+        : markers_point_placement<Locator, Detector>(locator, detector, params)
+    {}
+
+    markers_vertex_last_placement(markers_vertex_last_placement && rhs)
+        : markers_point_placement<Locator, Detector>(std::move(rhs))
+    {}
 
     bool get_point(double &x, double &y, double &angle, bool ignore_placement)
     {
@@ -69,6 +74,10 @@ public:
         if (agg::is_line_to(command1))
         {
             angle = std::atan2(y0 - y1, x0 - x1);
+            if (!this->set_direction(angle))
+            {
+                return false;
+            }
         }
 
         box2d<double> box = this->perform_transform(angle, x, y);

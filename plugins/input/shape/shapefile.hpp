@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2011 Artem Pavlenko
+ * Copyright (C) 2014 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -38,7 +38,7 @@
 #include <mapnik/mapped_memory_cache.hpp>
 #include <boost/interprocess/streams/bufferstream.hpp>
 #endif
-#include <mapnik/noncopyable.hpp>
+#include <mapnik/util/noncopyable.hpp>
 
 using mapnik::box2d;
 using mapnik::read_int32_ndr;
@@ -131,7 +131,7 @@ struct shape_record
     }
 };
 
-class shape_file : mapnik::noncopyable
+class shape_file : mapnik::util::noncopyable
 {
 public:
 
@@ -220,30 +220,13 @@ public:
     inline double read_double()
     {
         double val;
-#ifndef MAPNIK_BIG_ENDIAN
         file_.read(reinterpret_cast<char*>(&val), 8);
-#else
-        char b[8];
-        file_.read(b, 8);
-        read_double_ndr(b, val);
-#endif
         return val;
     }
 
     inline void read_envelope(box2d<double>& envelope)
     {
-#ifndef MAPNIK_BIG_ENDIAN
         file_.read(reinterpret_cast<char*>(&envelope), sizeof(envelope));
-#else
-        char data[4 * 8];
-        file_.read(data,4 * 8);
-        double minx, miny, maxx, maxy;
-        read_double_ndr(data + 0 * 8, minx);
-        read_double_ndr(data + 1 * 8, miny);
-        read_double_ndr(data + 2 * 8, maxx);
-        read_double_ndr(data + 3 * 8, maxy);
-        envelope.init(minx, miny, maxx, maxy);
-#endif
     }
 
     inline void skip(std::streampos bytes)

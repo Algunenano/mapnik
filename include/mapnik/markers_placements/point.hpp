@@ -23,10 +23,18 @@
 #ifndef MAPNIK_MARKERS_PLACEMENTS_POINT_HPP
 #define MAPNIK_MARKERS_PLACEMENTS_POINT_HPP
 
+#include <mapnik/box2d.hpp>
 #include <mapnik/geom_util.hpp>
+#include <mapnik/geometry_types.hpp>
+#include <mapnik/util/math.hpp>
+#include <mapnik/label_collision_detector.hpp>
+#include <mapnik/symbolizer_enumerations.hpp>
+#include <mapnik/util/noncopyable.hpp>
 
 #include "agg_basics.h"
 #include "agg_trans_affine.h"
+
+#include <cmath>
 
 namespace mapnik {
 
@@ -38,10 +46,11 @@ struct markers_placement_params
     double max_error;
     bool allow_overlap;
     bool avoid_edges;
+    direction_enum direction;
 };
 
 template <typename Locator, typename Detector>
-class markers_point_placement
+class markers_point_placement : util::noncopyable
 {
 public:
     markers_point_placement(Locator &locator, Detector &detector, markers_placement_params const& params)
@@ -52,6 +61,14 @@ public:
     {
         rewind();
     }
+
+    markers_point_placement(markers_point_placement && rhs)
+        : locator_(rhs.locator_),
+          detector_(rhs.detector_),
+          params_(rhs.params_),
+          done_(rhs.done_)
+    {}
+
 
     // Start again at first marker. Returns the same list of markers only works when they were NOT added to the detector.
     void rewind()
@@ -68,7 +85,7 @@ public:
             return false;
         }
 
-        if (locator_.type() == mapnik::geometry_type::types::LineString)
+        if (locator_.type() == geometry::geometry_types::LineString)
         {
             if (!label::middle_point(locator_, x, y))
             {
@@ -132,6 +149,36 @@ protected:
         result.expand_to_include(xB, yB);
         result.expand_to_include(xD, yD);
         return result;
+    }
+
+    bool set_direction(double & angle)
+    {
+        switch (params_.direction)
+        {
+            case DIRECTION_UP:
+                angle = .0;
+                return true;
+            case DIRECTION_DOWN:
+                angle = M_PI;
+                return true;
+            case DIRECTION_AUTO:
+                angle = (std::fabs(util::normalize_angle(angle)) > 0.5 * M_PI) ? (angle + M_PI) : angle;
+                return true;
+            case DIRECTION_AUTO_DOWN:
+                angle = (std::fabs(util::normalize_angle(angle)) < 0.5 * M_PI) ? (angle + M_PI) : angle;
+                return true;
+            case DIRECTION_LEFT:
+                angle += M_PI;
+                return true;
+            case DIRECTION_LEFT_ONLY:
+                angle += M_PI;
+                return std::fabs(util::normalize_angle(angle)) < 0.5 * M_PI;
+            case DIRECTION_RIGHT_ONLY:
+                return std::fabs(util::normalize_angle(angle)) < 0.5 * M_PI;
+            case DIRECTION_RIGHT:
+            default:
+                return true;
+        }
     }
 };
 

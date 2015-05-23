@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2012 Artem Pavlenko
+ * Copyright (C) 2014 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -55,6 +55,33 @@ auto LONGLONG = qi::long_long_type();
 #endif
 auto FLOAT = qi::float_type();
 auto DOUBLE = qi::double_type();
+
+bool string2bool(std::string const& value, bool & result)
+{
+    if (value.empty() || value.size() > 5) {
+        return false;
+    } else if (value == "true") {
+        return result = true;
+    } else if (value == "false") {
+        result = false;
+        return true;
+    }
+    std::string val(value);
+    std::transform(val.begin(), val.end(), val.begin(), ::tolower);
+    if (val == "true" || val == "yes" || val == "1" || val == "on") {
+        return result = true;
+    } else if (val == "false" || val == "no" || val == "0" || val == "off") {
+        result = false;
+        return true;
+    }
+    return false;
+}
+
+bool string2bool(const char * iter, const char * end, bool & result)
+{
+    std::string val(iter,end);
+    return string2bool(val,result);
+}
 
 bool string2int(const char * iter, const char * end, int & result)
 {
