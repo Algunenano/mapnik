@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2011 Artem Pavlenko
+ * Copyright (C) 2014 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,7 +24,6 @@
 #define MAPNIK_UTILS_HPP
 
 #include <mapnik/config.hpp>
-#include <mapnik/unique_lock.hpp>
 
 // stl
 #include <stdexcept> // std::runtime_error
@@ -123,7 +122,7 @@ protected:
             if (! pInstance_)
             {
 #ifdef MAPNIK_THREADSAFE
-                mapnik::scoped_lock lock(mutex_);
+                std::lock_guard<std::mutex> lock(mutex_);
 #endif
                 if (! pInstance_)
                 {

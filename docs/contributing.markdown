@@ -1,5 +1,41 @@
 # Contributing
 
+## Testing
+
+Developers adding new features or fixing bugs should always write tests alongside.
+
+Mapnik has both C++ unit tests in `./test/unit` and visual tests in `./test/visual`.
+
+Test data for the unit and visual tests is pulled in from standalone repos via git submodules.
+
+After building Mapnik (see INSTALL.md), the submodules can be loaded and the tests can be run like:
+
+    make test
+
+Developers with commit access can update test data like:
+
+    cd test/data
+    git remote set-url origin git@github.com:mapnik/test-data
+    git commit -a -m "update test data"
+    git push origin HEAD:master
+
+And the visual test data can up updated like:
+
+    cd test/data-visual
+    git remote set-url origin git@github.com:mapnik/test-data-visual
+    git add styles/* images/*
+    git commit -a -m "add more visual tests"
+    git push origin HEAD:master
+
+After updating the test data you can then do:
+
+    # then go back to mapnik core
+    cd ../../
+    # the submodule should be marked dirty
+    git status
+    # now commit the changes to the submodule
+    git commit test/data test/data-visual -m "update visual tests and data"
+
 ## Community
 
 Mapnik is a creative community focused on making beautiful maps with beautiful software.
@@ -85,6 +121,21 @@ Mapnik is written in C++, and we try to follow general coding guidelines.
 
 If you see bits of code around that do not follow these please don't hesitate to flag the issue or correct it yourself.
 
+#### Prefix cmath functions with std::
+
+The avoids ambiguity and potential bugs of using old C library math directly.
+
+So always do `std::abs()` instead of `abs()`. Here is a script to fix your code in one fell swoop:
+
+
+```sh
+DIR=./bindings
+for i in {abs,fabs,tan,sin,cos,floor,ceil,atan2,acos,asin}; do
+    find $DIR -type f -name '*.cpp' -or -name '*.h' -or -name '*.hpp' | xargs perl -i -p -e "s/ $i\(/ std::$i\(/g;"
+    find $DIR -type f -name '*.cpp' -or -name '*.h' -or -name '*.hpp' | xargs perl -i -p -e "s/\($i\(/\(std::$i\(/g;"
+done
+```
+
 #### Avoid boost::lexical_cast
 
 It's slow both to compile and at runtime.
@@ -118,6 +169,9 @@ which triggers locks
 
     void my_function(std::string const& val); // if std::string or user type, pass by const&
 
+#### Use unique_ptr instead of new/delete
+
+#### Use std::copy instead of memcpy
 
 #### When to use shared_ptr and unique_ptr
 

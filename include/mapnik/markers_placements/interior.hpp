@@ -25,6 +25,7 @@
 
 #include <mapnik/markers_placements/point.hpp>
 #include <mapnik/geom_util.hpp>
+#include <mapnik/geometry_types.hpp>
 
 namespace mapnik {
 
@@ -37,6 +38,10 @@ public:
     {
     }
 
+    markers_interior_placement(markers_interior_placement && rhs)
+        : markers_point_placement<Locator, Detector>(std::move(rhs))
+    {}
+
     bool get_point(double &x, double &y, double &angle, bool ignore_placement)
     {
         if (this->done_)
@@ -44,12 +49,12 @@ public:
             return false;
         }
 
-        if (this->locator_.type() == mapnik::geometry_type::types::Point)
+        if (this->locator_.type() == geometry::geometry_types::Point)
         {
             return markers_point_placement<Locator, Detector>::get_point(x, y, angle, ignore_placement);
         }
 
-        if (this->locator_.type() == mapnik::geometry_type::types::LineString)
+        if (this->locator_.type() == geometry::geometry_types::LineString)
         {
             if (!label::middle_point(this->locator_, x, y))
             {

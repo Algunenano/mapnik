@@ -355,12 +355,22 @@ pgraster_datasource::pgraster_datasource(parameters const& params)
                 shared_ptr<ResultSet> rs = conn->executeQuery(s.str());
                 while (rs->next())
                 {
-                  overviews_.resize(overviews_.size()+1);
-                  pgraster_overview& ov = overviews_.back();
+                  pgraster_overview ov = pgraster_overview();
+
                   ov.schema = rs->getValue("sch");
                   ov.table = rs->getValue("tab");
                   ov.column = rs->getValue("col");
                   ov.scale = atof(rs->getValue("scl"));
+
+                  if(ov.scale == 0.0f)
+                  {
+                    MAPNIK_LOG_WARN(pgraster) << "pgraster_datasource: found invalid overview "
+                      << ov.schema << "." << ov.table << "." << ov.column << " with scale " << ov.scale;
+                    continue;
+                  }
+
+                  overviews_.push_back(ov);
+
                   MAPNIK_LOG_DEBUG(pgraster) << "pgraster_datasource: found overview " << ov.schema << "." << ov.table << "." << ov.column << " with scale " << ov.scale;
                 }
                 rs->close();
@@ -1191,7 +1201,7 @@ box2d<double> pgraster_datasource::envelope() const
     return extent_;
 }
 
-boost::optional<mapnik::datasource::geometry_t> pgraster_datasource::get_geometry_type() const
+boost::optional<mapnik::datasource_geometry_t> pgraster_datasource::get_geometry_type() const
 {
-    return boost::optional<mapnik::datasource::geometry_t>();
+    return boost::optional<mapnik::datasource_geometry_t>();
 }

@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2011 Artem Pavlenko
+ * Copyright (C) 2014 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,7 +26,7 @@
 // mapnik
 #include <mapnik/config.hpp>
 #include <mapnik/global.hpp>
-#include <mapnik/noncopyable.hpp>
+#include <mapnik/util/noncopyable.hpp>
 
 #define USE_DENSE_HASH_MAP
 
@@ -51,11 +51,11 @@ namespace mapnik {
 struct rgba;
 
 struct MAPNIK_DECL rgb {
-    byte r;
-    byte g;
-    byte b;
+    std::uint8_t r;
+    std::uint8_t g;
+    std::uint8_t b;
 
-    inline rgb(byte r_, byte g_, byte b_) : r(r_), g(g_), b(b_) {}
+    inline rgb(std::uint8_t r_, std::uint8_t g_, std::uint8_t b_) : r(r_), g(g_), b(b_) {}
     rgb(rgba const& c);
 
     inline bool operator==(const rgb& y) const
@@ -66,12 +66,12 @@ struct MAPNIK_DECL rgb {
 
 struct MAPNIK_DECL rgba
 {
-    byte r;
-    byte g;
-    byte b;
-    byte a;
+    std::uint8_t r;
+    std::uint8_t g;
+    std::uint8_t b;
+    std::uint8_t a;
 
-    inline rgba(byte r_, byte g_, byte b_, byte a_)
+    inline rgba(std::uint8_t r_, std::uint8_t g_, std::uint8_t b_, std::uint8_t a_)
         : r(r_),
           g(g_),
           b(b_),
@@ -103,7 +103,7 @@ struct MAPNIK_DECL rgba
 };
 
 
-class MAPNIK_DECL rgba_palette : private mapnik::noncopyable {
+class MAPNIK_DECL rgba_palette : private util::noncopyable {
 public:
     enum palette_type { PALETTE_RGBA = 0, PALETTE_RGB = 1, PALETTE_ACT = 2 };
 

@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2011 Artem Pavlenko
+ * Copyright (C) 2014 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,7 +26,7 @@
 // mapnik
 #include <mapnik/global.hpp>
 #include <mapnik/palette.hpp>
-#include <mapnik/noncopyable.hpp>
+#include <mapnik/util/noncopyable.hpp>
 
 // stl
 #include <algorithm>
@@ -49,7 +49,7 @@ struct RGBPolicy
 };
 
 template <typename T, typename InsertPolicy = RGBPolicy >
-class octree : private mapnik::noncopyable
+class octree : private util::noncopyable
 {
     struct node
     {
@@ -88,8 +88,8 @@ class octree : private mapnik::noncopyable
         unsigned count;
         double reduce_cost;
         unsigned count_cum;
-        byte children_count;
-        byte index;
+        std::uint8_t children_count;
+        std::uint8_t index;
     };
     struct node_cmp
     {
@@ -297,9 +297,9 @@ public:
         if (itr->count != 0)
         {
             unsigned count = itr->count;
-            palette.push_back(rgb(byte(itr->reds/float(count)),
-                                  byte(itr->greens/float(count)),
-                                  byte(itr->blues/float(count))));
+            palette.push_back(rgb(std::uint8_t(itr->reds/float(count)),
+                                  std::uint8_t(itr->greens/float(count)),
+                                  std::uint8_t(itr->blues/float(count))));
             itr->index = static_cast<unsigned>(palette.size()) - 1;
         }
         for (unsigned i=0; i < 8 ;++i)

@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2011 Artem Pavlenko
+ * Copyright (C) 2014 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,13 +25,13 @@
 #include <mapnik/value_types.hpp>
 #include <mapnik/debug.hpp>
 #include <mapnik/box2d.hpp>
-#include <mapnik/geometry.hpp>
 #include <mapnik/feature.hpp>
 #include <mapnik/feature_layer_desc.hpp>
 #include <mapnik/wkb.hpp>
 #include <mapnik/unicode.hpp>
 #include <mapnik/value_types.hpp>
 #include <mapnik/feature_factory.hpp>
+#include <mapnik/geometry_correct.hpp>
 
 // ogr
 #include "ogr_featureset.hpp"
@@ -101,7 +101,9 @@ feature_ptr ogr_featureset::next()
         OGRGeometry* geom = poFeature->GetGeometryRef();
         if (geom && ! geom->IsEmpty())
         {
-            ogr_converter::convert_geometry(geom, feature);
+            auto geom_corrected = ogr_converter::convert_geometry(geom);
+            mapnik::geometry::correct(geom_corrected);
+            feature->set_geometry(std::move(geom_corrected));
         }
         else
         {

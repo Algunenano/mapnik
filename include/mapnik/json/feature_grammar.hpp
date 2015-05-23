@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2013 Artem Pavlenko
+ * Copyright (C) 2014 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,7 +27,6 @@
 #include <mapnik/json/geometry_grammar.hpp>
 #include <mapnik/value.hpp>
 #include <mapnik/feature.hpp>
-#include <mapnik/geometry_container.hpp>
 #include <mapnik/unicode.hpp>
 #include <mapnik/value.hpp>
 #include <mapnik/json/generic_json.hpp>
@@ -42,11 +41,9 @@ namespace mapnik { namespace json {
 namespace qi = boost::spirit::qi;
 namespace phoenix = boost::phoenix;
 namespace fusion = boost::fusion;
-namespace standard_wide =  boost::spirit::standard_wide;
-using standard_wide::space_type;
 
 class attribute_value_visitor
-    : public mapnik::util::static_visitor<mapnik::value>
+
 {
 public:
     attribute_value_visitor(mapnik::transcoder const& tr)
@@ -79,13 +76,13 @@ struct put_property
     mapnik::transcoder const& tr_;
 };
 
-struct extract_geometry
+struct set_geometry_impl
 {
-    using result_type =  mapnik::geometry_container&;
-    template <typename T>
-    result_type operator() (T & feature) const
+    using result_type =  void;
+    template <typename T0, typename T1>
+    result_type operator() (T0 & feature, T1 && geom) const
     {
-        return feature.paths();
+        return feature.set_geometry(std::move(geom));
     }
 };
 
@@ -99,7 +96,6 @@ struct feature_grammar :
     // start
     // generic JSON
     generic_json<Iterator> json_;
-
     // geoJSON
     qi::rule<Iterator,void(FeatureType&),space_type> feature; // START
     qi::rule<Iterator,space_type> feature_type;
@@ -107,9 +103,11 @@ struct feature_grammar :
     qi::rule<Iterator,void(FeatureType &),space_type> properties;
     qi::rule<Iterator,qi::locals<std::string>, void(FeatureType &),space_type> attributes;
     qi::rule<Iterator, json_value(), space_type> attribute_value;
-
+    qi::rule<Iterator, qi::locals<std::int32_t>, std::string(), space_type> stringify_object;
+    qi::rule<Iterator, qi::locals<std::int32_t>, std::string(), space_type> stringify_array;
+    // functions
     phoenix::function<put_property> put_property_;
-    phoenix::function<extract_geometry> extract_geometry_;
+    phoenix::function<set_geometry_impl> set_geometry;
     // error handler
     boost::phoenix::function<ErrorHandler> const error_handler;
     // geometry
