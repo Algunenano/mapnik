@@ -1,9 +1,10 @@
-mapnik (3.0.0~rc1+dfsg-1) unstable; urgency=medium
+mapnik (3.0.0~rc2+ds-1) UNRELEASED; urgency=medium
 
-  * Imported Upstream version 3.0.0~rc1+dfsg
+  * Imported Upstream version 3.0.0~rc2+ds
+  * Python bindings are now in separate upstream project
   * Copyright:
     + syntax fixes
-    + exclude more test files to ease maintenance
+    + all DFSG-exluded files are now in separate upstream project
     + boost files moved to deps
   * Watch: fix mangling, watch rc releases
   * Build-Depends:
@@ -13,13 +14,10 @@ mapnik (3.0.0~rc1+dfsg-1) unstable; urgency=medium
     + libharfbuzz-dev
   * Patches:
     + unapply previous patches, applied upstream
-    + add patches fixing mapnik::raster call, and removing
-      exit calls, forwarded upstream
   * Rules:
     + disable building with rpath
     + build new plugins: pgraster, topojson
   * Standards-Version 3.9.6
-  * Clean pyc
 
  -- Jérémy Lal <kapouer@melix.org>  Sat, 25 Oct 2014 00:06:02 +0200
 
