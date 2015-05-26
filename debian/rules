@@ -23,6 +23,16 @@ SCONS_FLAGS += CUSTOM_CFLAGS="$(shell dpkg-buildflags --get CFLAGS) -g0"
 SCONS_FLAGS += CUSTOM_LDFLAGS="$(shell dpkg-buildflags --get LDFLAGS) -g0"
 SCONS_FLAGS += CUSTOM_DEFINES="$(shell dpkg-buildflags --get CPPFLAGS) -g0"
 
+override_dh_auto_configure:
+	mkdir -p scons
+	ln -s /usr/bin/scons scons/scons.py
+	dh_auto_configure
+
+override_dh_clean:
+	rm -f scons/scons.py
+	rmdir scons || true
+	dh_clean
+
 override_dh_install-arch:
 	dh_install
 	mv $(CURDIR)/debian/mapnik-utils/usr/bin/upgrade_map_xml.py \
