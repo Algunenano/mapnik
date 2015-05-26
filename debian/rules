@@ -23,22 +23,35 @@ SCONS_FLAGS += CUSTOM_CFLAGS="$(shell dpkg-buildflags --get CFLAGS) -g0"
 SCONS_FLAGS += CUSTOM_LDFLAGS="$(shell dpkg-buildflags --get LDFLAGS) -g0"
 SCONS_FLAGS += CUSTOM_DEFINES="$(shell dpkg-buildflags --get CPPFLAGS) -g0"
 
-override_dh_auto_configure:
-	mkdir -p scons
-	ln -s /usr/bin/scons scons/scons.py
-	dh_auto_configure
+override_dh_auto_configure: debian/stamps/configure-python
+debian/stamps/configure-python:
+	-mkdir build-python
+	-mkdir debian/stamps
+	cp -r bindings demo deps fonts include plugins src tests utils SConstruct build-python
+	touch $@
+	$(SCONS) -C build-python configure \
+		$(SCONS_FLAGS) \
+		CCFLAGS="$(CFLAGS)" \
+		DESTDIR=$(CURDIR)/debian/tmp
 
-override_dh_clean:
-	rm -f scons/scons.py
-	rmdir scons || true
+override_dh_auto_build:	debian/stamps/build-python
+debian/stamps/build-python:
+	$(SCONS) -C build-python
+
+override_dh_prep:
+	dh_prep -Xdebian/tmp
+
+override_dh_auto_install:	debian/stamps/install-python
+debian/stamps/install-python:
+	$(SCONS) -C build-python install
+
+override_dh_auto_clean:
+	rm -rf build-python
+	rm -rf debian/stamps
 	dh_clean
 
-override_dh_install-arch:
-	dh_install
-	mv $(CURDIR)/debian/mapnik-utils/usr/bin/upgrade_map_xml.py \
-		$(CURDIR)/debian/mapnik-utils/usr/bin/upgrade-map-xml
-
-override_dh_auto_test:
+override_dh_auto_test: debian/stamps/test-python
+debian/stamps/test-python:
 	# nothing yet
 
 %:
