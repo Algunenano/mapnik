@@ -28,10 +28,6 @@ Files: debian/rules
 Copyright: Christoph Egger 2010-2011
 License: BSD-3-clause
 
-Files: deps/boost/geometry/*
-Copyright: 2008 Federico J. Fernandez
-License: BSL-1.0
-
 Files: deps/boost/gil/*
 Copyright: 2004-2007 Christian Henning
 License: BSL-1.0
