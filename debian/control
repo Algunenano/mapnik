@@ -91,6 +91,7 @@ Depends:
  , libboost-regex-dev
  , libboost-program-options-dev
  , libicu-dev
+ , libharfbuzz-dev
  , libpng-dev
  , libjpeg-dev
  , libtiff-dev
