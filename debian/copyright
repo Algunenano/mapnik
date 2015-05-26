@@ -1,24 +1,11 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Contact: https://github.com/mapnik/mapnik/issues
 Source: https://github.com/mapnik/mapnik/
- Repackaged to exclude non-DFSG files in
-  tests/data/fonts/XB\ Zar.ttf (cannot find upstream)
-  tests/data/fonts/LICENCE.txt (refers to a dead url)
- other files being excluded to ease copyright maintenance.
+ Repackaged to ease copyright maintenance
 Files-Excluded:
- tests/data/fonts/XB?Zar.ttf
- tests/data/fonts/LICENCE.txt
- tests/data/fonts/DejaVuSansMono-BoldOblique.ttf
- tests/data/fonts/NotoSans-Regular.ttc
- tests/visual_tests/fonts/*
  scons/*
  fonts/dejavu*
  fonts/unifont*
- tests/data/csv/10m-land.csv
- tests/data/raster/*
- tests/data/shp/ne_110m*
- tests/data/shp/world_merc*
- tests/data/shp/new_zealand/ne_50m*
 
 Files: *
 Copyright: 2006-2014 Artem Pavlenko
