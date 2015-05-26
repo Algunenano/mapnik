@@ -27,7 +27,7 @@ override_dh_auto_configure: debian/stamps/configure-python
 debian/stamps/configure-python:
 	-mkdir build-python
 	-mkdir debian/stamps
-	cp -r bindings demo deps fonts include plugins src tests utils SConstruct build-python
+	cp -r demo deps fonts include plugins src test utils SConstruct build-python
 	touch $@
 	$(SCONS) -C build-python configure \
 		$(SCONS_FLAGS) \
