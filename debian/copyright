@@ -27,8 +27,6 @@ License: GPL-2+
 Files: debian/rules
 Copyright: Christoph Egger 2010-2011
 License: BSD-3-clause
-Comment: the method for building multiple python versions using scons
- was taken from debian/rules file of debian package "fife".
 
 Files: deps/boost/geometry/*
 Copyright: 2008 Federico J. Fernandez
