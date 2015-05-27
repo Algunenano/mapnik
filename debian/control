@@ -9,6 +9,7 @@ Build-Depends:
  scons
  , debhelper (>= 9~)
  , libtool
+ , libboost-dev (>= 1.56)
  , libboost-filesystem-dev
  , libboost-system-dev
  , libboost-thread-dev
