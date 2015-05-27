@@ -1,6 +1,6 @@
-mapnik (3.0.0~rc2+ds-1) UNRELEASED; urgency=medium
+mapnik (3.0.0~rc3+ds-1) UNRELEASED; urgency=medium
 
-  * Imported Upstream version 3.0.0~rc2+ds
+  * Imported Upstream version 3.0.0~rc3+ds
   * Python bindings are now in separate upstream project
   * Copyright:
     + syntax fixes
