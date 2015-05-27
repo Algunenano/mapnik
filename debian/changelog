@@ -1,4 +1,4 @@
-mapnik (3.0.0~rc3+ds-1) UNRELEASED; urgency=medium
+mapnik (3.0.0~rc3+ds-1) experimental; urgency=medium
 
   * Imported Upstream version 3.0.0~rc3+ds
   * Python bindings are now in separate upstream project
@@ -19,7 +19,7 @@ mapnik (3.0.0~rc3+ds-1) UNRELEASED; urgency=medium
     + build new plugins: pgraster, topojson
   * Standards-Version 3.9.6
 
- -- Jérémy Lal <kapouer@melix.org>  Sat, 25 Oct 2014 00:06:02 +0200
+ -- Jérémy Lal <kapouer@melix.org>  Wed, 27 May 2015 18:22:19 +0200
 
 mapnik (2.2.0+ds1-7) unstable; urgency=medium
 
