@@ -1,0 +1,16 @@
+Description: remove gcc ftemplate-depth-300 flag
+ it can use a lot of memory, and default value works on debian
+Forwarded: not-needed, https://github.com/mapnik/mapnik/commit/b01b21f24
+Author: Jérémy Lal <kapouer@melix.org>
+Last-Update: 2013-10-12
+--- a/SConstruct
++++ b/SConstruct
+@@ -1733,7 +1733,7 @@
+ 
+         # Common flags for g++/clang++ CXX compiler.
+         # TODO: clean up code more to make -Wsign-conversion -Wconversion -Wshadow viable
+-        common_cxx_flags = '-Wall -Wsign-compare %s %s -ftemplate-depth-300 ' % (env['WARNING_CXXFLAGS'], pthread)
++        common_cxx_flags = '-Wall -Wsign-compare %s %s ' % (env['WARNING_CXXFLAGS'], pthread)
+ 
+         # https://github.com/mapnik/mapnik/issues/1835
+         if sys.platform == 'darwin' and env['CXX'] == 'g++':
