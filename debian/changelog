@@ -1,6 +1,5 @@
 mapnik (3.0.0~rc3+ds-2) UNRELEASED; urgency=medium
 
-  * Some boost:geometry features are only available since version 1.56.
   * Restore ftemplate-depth patch - it saves memory usage during compilation.
 
  -- Jérémy Lal <kapouer@melix.org>  Sat, 13 Jun 2015 17:38:53 +0200
