@@ -1,3 +1,10 @@
+mapnik (3.0.0~rc3+ds-3) UNRELEASED; urgency=medium
+
+  * Do not append CPPFLAGS to CUSTOM_DEFINES (Closes: #791482)
+    Thanks to James Cowgill.
+
+ -- Jérémy Lal <kapouer@melix.org>  Mon, 06 Jul 2015 23:56:48 +0200
+
 mapnik (3.0.0~rc3+ds-2) unstable; urgency=medium
 
   * Restore ftemplate-depth patch - it saves memory usage during compilation.
