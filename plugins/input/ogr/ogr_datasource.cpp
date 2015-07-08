@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2014 Artem Pavlenko
+ * Copyright (C) 2015 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -31,7 +31,7 @@
 #include <mapnik/boolean.hpp>
 #include <mapnik/geom_util.hpp>
 #include <mapnik/timer.hpp>
-#include <mapnik/utils.hpp>
+#include <mapnik/util/utf_conv_win.hpp>
 #include <mapnik/util/trim.hpp>
 
 // boost
@@ -330,7 +330,6 @@ void ogr_datasource::init(mapnik::parameters const& params)
 
             const std::string fld_name = fld->GetNameRef();
             const OGRFieldType type_oid = fld->GetType();
-
             switch (type_oid)
             {
             case OFTInteger:

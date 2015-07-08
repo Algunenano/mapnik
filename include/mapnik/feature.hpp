@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2014 Artem Pavlenko
+ * Copyright (C) 2015 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -115,13 +115,13 @@ public:
     template <typename T>
     inline void put(context_type::key_type const& key, T const& val)
     {
-        put(key, std::move(value(val)));
+        put(key, value(val));
     }
 
     template <typename T>
     inline void put_new(context_type::key_type const& key, T const& val)
     {
-        put_new(key,std::move(value(val)));
+        put_new(key, value(val));
     }
 
     inline void put(context_type::key_type const& key, value && val)

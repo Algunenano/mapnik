@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2014 Artem Pavlenko
+ * Copyright (C) 2015 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -31,12 +31,16 @@
 
 // mapnik
 #include <mapnik/global.hpp>
-#include <mapnik/utils.hpp>
+#include <mapnik/util/utf_conv_win.hpp>
 #include <mapnik/box2d.hpp>
 #ifdef SHAPE_MEMORY_MAPPED_FILE
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
 #include <boost/interprocess/mapped_region.hpp>
-#include <mapnik/mapped_memory_cache.hpp>
 #include <boost/interprocess/streams/bufferstream.hpp>
+#pragma GCC diagnostic pop
+#include <mapnik/mapped_memory_cache.hpp>
 #endif
 #include <mapnik/util/noncopyable.hpp>
 
@@ -72,8 +76,8 @@ template <typename Tag>
 struct shape_record
 {
     typename Tag::data_type data;
-    size_t size;
-    mutable size_t pos;
+    std::size_t size;
+    mutable std::size_t pos;
 
     explicit shape_record(size_t size_)
         : data(Tag::alloc(size_)),
@@ -129,6 +133,8 @@ struct shape_record
     {
         return (size - pos);
     }
+
+    std::size_t length() {return size;}
 };
 
 class shape_file : mapnik::util::noncopyable

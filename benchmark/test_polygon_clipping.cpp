@@ -19,7 +19,6 @@
 // agg
 #include "agg_conv_clip_polygon.h"
 // clipper
-#include "clipper.hpp"
 #include "agg_path_storage.h"
 // rendering
 #include "agg_basics.h"
@@ -247,10 +246,10 @@ public:
         std::string expect = expected_+".png";
         std::string actual = expected_+"_actual.png";
         mapnik::geometry::multi_polygon<double> mp;
-        for (auto const& geom: result)
+        for (auto const& _geom: result)
         {
             //std::clog << boost::geometry::dsv(geom) << "\n";
-            mp.emplace_back(geom);
+            mp.emplace_back(_geom);
         }
         mapnik::geometry::geometry<double> geom2(mp);
         auto env = mapnik::geometry::envelope(geom2);
@@ -288,9 +287,9 @@ public:
             std::deque<mapnik::geometry::polygon<double> > result;
             boost::geometry::intersection(extent_,poly,result);
             unsigned count = 0;
-            for (auto const& geom : result)
+            for (auto const& _geom : result)
             {
-                mapnik::geometry::polygon_vertex_adapter<double> va(geom);
+                mapnik::geometry::polygon_vertex_adapter<double> va(_geom);
                 unsigned cmd;
                 double x,y;
                 while ((cmd = va.vertex(&x, &y)) != mapnik::SEG_END) {
@@ -307,6 +306,8 @@ public:
     }
 };
 
+/*
+Commented out section because clipper moved out of mapnik core.
 inline void process_polynode_branch(ClipperLib::PolyNode* polynode,
                              mapnik::geometry::multi_polygon<double> & mp)
 {
@@ -491,6 +492,7 @@ public:
         return valid;
     }
 };
+*/
 
 int main(int argc, char** argv)
 {
@@ -518,9 +520,11 @@ int main(int argc, char** argv)
         test3 test_runner(params,wkt_in,clipping_box);
         run(test_runner,"clipping polygon with boost");
     }
+    /*
     {
         test4 test_runner(params,wkt_in,clipping_box);
         run(test_runner,"clipping polygon with clipper_tree");
     }
+    */
     return 0;
 }

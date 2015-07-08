@@ -1,7 +1,7 @@
 #
 # This file is part of Mapnik (c++ mapping toolkit)
 #
-# Copyright (C) 2013 Artem Pavlenko
+# Copyright (C) 2015 Artem Pavlenko
 #
 # Mapnik is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -192,7 +192,6 @@ source = Split(
     layer.cpp
     map.cpp
     load_map.cpp
-    memory.cpp
     palette.cpp
     marker_helpers.cpp
     transform_expression_grammar.cpp
@@ -340,12 +339,6 @@ source += Split(
     agg/process_debug_symbolizer.cpp
     """
     )
-
-# clipper
-source += Split(
-    """
-     ../deps/clipper/src/clipper.cpp
-    """)
 
 if env['RUNTIME_LINK'] == "static":
     source += glob.glob('../deps/agg/src/' + '*.cpp')
