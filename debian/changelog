@@ -1,11 +1,11 @@
-mapnik (3.0.0+ds-1) UNRELEASED; urgency=medium
+mapnik (3.0.0+ds-1) unstable; urgency=medium
 
   * Do not append CPPFLAGS to CUSTOM_DEFINES (Closes: #791482)
     Thanks to James Cowgill.
   * Imported Upstream version 3.0.0+ds
   * Remove deps/clipper from copyright section
 
- -- Jérémy Lal <kapouer@melix.org>  Mon, 06 Jul 2015 23:56:48 +0200
+ -- Jérémy Lal <kapouer@melix.org>  Wed, 08 Jul 2015 22:15:48 +0200
 
 mapnik (3.0.0~rc3+ds-2) unstable; urgency=medium
 
