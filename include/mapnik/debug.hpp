@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2014 Artem Pavlenko
+ * Copyright (C) 2015 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,7 +25,7 @@
 
 // mapnik (should not depend on anything that need to use this)
 #include <mapnik/config.hpp>
-#include <mapnik/utils.hpp>
+#include <mapnik/util/singleton.hpp>
 #include <mapnik/util/noncopyable.hpp>
 
 // std

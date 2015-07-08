@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2014 Artem Pavlenko
+ * Copyright (C) 2015 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -108,7 +108,9 @@ struct agg_renderer_process_visitor_l
         pattern_source source(image, opacity);
         pattern_type pattern (filter,source);
         renderer_type ren(ren_base, pattern);
-        ren.clip_box(0,0,common_.width_,common_.height_);
+        double half_stroke = std::max(marker.width()/2.0,marker.height()/2.0);
+        int rast_clip_padding = static_cast<int>(std::round(half_stroke));
+        ren.clip_box(-rast_clip_padding,-rast_clip_padding,common_.width_+rast_clip_padding,common_.height_+rast_clip_padding);
         rasterizer_type ras(ren);
 
         agg::trans_affine tr;
@@ -119,7 +121,6 @@ struct agg_renderer_process_visitor_l
         if (clip)
         {
             double padding = (double)(common_.query_extent_.width()/pixmap_.width());
-            double half_stroke = marker.width()/2.0;
             if (half_stroke > 1)
                 padding *= half_stroke;
             if (std::fabs(offset) > 0)
@@ -177,7 +178,9 @@ struct agg_renderer_process_visitor_l
         pattern_source source(image, opacity);
         pattern_type pattern (filter,source);
         renderer_type ren(ren_base, pattern);
-        ren.clip_box(0,0,common_.width_,common_.height_);
+        double half_stroke = std::max(marker.width()/2.0,marker.height()/2.0);
+        int rast_clip_padding = static_cast<int>(std::round(half_stroke));
+        ren.clip_box(-rast_clip_padding,-rast_clip_padding,common_.width_+rast_clip_padding,common_.height_+rast_clip_padding);
         rasterizer_type ras(ren);
 
         agg::trans_affine tr;
@@ -188,7 +191,6 @@ struct agg_renderer_process_visitor_l
         if (clip)
         {
             double padding = (double)(common_.query_extent_.width()/pixmap_.width());
-            double half_stroke = marker.width()/2.0;
             if (half_stroke > 1)
                 padding *= half_stroke;
             if (std::fabs(offset) > 0)
@@ -235,6 +237,13 @@ void  agg_renderer<T0,T1>::process(line_pattern_symbolizer const& sym,
 
     std::string filename = get<std::string, keys::file>(sym, feature, common_.vars_);
     if (filename.empty()) return;
+    ras_ptr->reset();
+    if (gamma_method_ != GAMMA_POWER || gamma_ != 1.0)
+    {
+        ras_ptr->gamma(agg::gamma_power());
+        gamma_method_ = GAMMA_POWER;
+        gamma_ = 1.0;
+    }
     std::shared_ptr<mapnik::marker const> marker = marker_cache::instance().find(filename, true);
     agg_renderer_process_visitor_l<buffer_type> visitor(common_,
                                          pixmap_,

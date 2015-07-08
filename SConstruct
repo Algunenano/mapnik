@@ -1593,7 +1593,6 @@ if not preconfigured:
     # prepend to make sure we link locally
     env.Prepend(CPPPATH = '#deps/agg/include')
     env.Prepend(LIBPATH = '#deps/agg')
-    env.Prepend(CPPPATH = '#deps/clipper/include')
     # prepend deps dir for auxillary headers
     env.Prepend(CPPPATH = '#deps')
 
@@ -1771,8 +1770,8 @@ if not preconfigured:
             env.Append(CPPDEFINES = ndebug_defines)
 
         # Common flags for g++/clang++ CXX compiler.
-        # TODO: clean up code more to make -Wextra -Wsign-compare -Wsign-conversion -Wconversion -Wshadow viable
-        common_cxx_flags = '-Wall %s %s -ftemplate-depth-300 ' % (env['WARNING_CXXFLAGS'], pthread)
+        # TODO: clean up code more to make -Wextra -Wsign-compare -Wsign-conversion -Wconversion viable
+        common_cxx_flags = '-Wall %s %s -ftemplate-depth-300 -Wsign-compare -Wshadow ' % (env['WARNING_CXXFLAGS'], pthread)
 
         if 'clang++' in env['CXX']:
             common_cxx_flags += ' -Wno-unknown-pragmas -Wno-unsequenced '

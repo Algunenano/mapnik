@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2014 Artem Pavlenko
+ * Copyright (C) 2015 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -47,8 +47,6 @@
 
 namespace mapnik {
 
-class proj_transform;
-struct glyph_info;
 class text_symbolizer_helper;
 
 using svg::svg_path_adapter;
@@ -95,7 +93,7 @@ struct virtual_renderer_common : private util::noncopyable
 // This should allow us to re-use as much as possible of the
 // existing symbolizer layout and rendering code while still
 // being able to interpose our own decisions about whether
-// a collision has occured or not.
+// a collision has occurred or not.
 
 // Thunk for rendering a particular instance of a point - this
 // stores all the arguments necessary to re-render this point
@@ -117,13 +115,7 @@ struct vector_marker_render_thunk  : util::noncopyable
                                composite_mode_e comp_op,
                                bool snap_to_pixels);
 
-    vector_marker_render_thunk(vector_marker_render_thunk && rhs)
-      : src_(std::move(rhs.src_)),
-        attrs_(std::move(rhs.attrs_)),
-        tr_(std::move(rhs.tr_)),
-        opacity_(std::move(rhs.opacity_)),
-        comp_op_(std::move(rhs.comp_op_)),
-        snap_to_pixels_(std::move(rhs.snap_to_pixels_)) {}
+    vector_marker_render_thunk(vector_marker_render_thunk && rhs);
 };
 
 struct raster_marker_render_thunk  : util::noncopyable
@@ -140,12 +132,7 @@ struct raster_marker_render_thunk  : util::noncopyable
                                composite_mode_e comp_op,
                                bool snap_to_pixels);
 
-    raster_marker_render_thunk(raster_marker_render_thunk && rhs)
-      : src_(rhs.src_),
-        tr_(std::move(rhs.tr_)),
-        opacity_(std::move(rhs.opacity_)),
-        comp_op_(std::move(rhs.comp_op_)),
-        snap_to_pixels_(std::move(rhs.snap_to_pixels_)) {}
+    raster_marker_render_thunk(raster_marker_render_thunk && rhs);
 };
 
 using helper_ptr = std::unique_ptr<text_symbolizer_helper>;
@@ -164,12 +151,7 @@ struct text_render_thunk : util::noncopyable
                       double opacity, composite_mode_e comp_op,
                       halo_rasterizer_enum halo_rasterizer);
 
-    text_render_thunk(text_render_thunk && rhs)
-      : helper_(std::move(rhs.helper_)),
-        placements_(std::move(rhs.placements_)),
-        opacity_(std::move(rhs.opacity_)),
-        comp_op_(std::move(rhs.comp_op_)),
-        halo_rasterizer_(std::move(rhs.halo_rasterizer_)) {}
+    text_render_thunk(text_render_thunk && rhs);
 
 };
 
@@ -229,7 +211,7 @@ void render_offset_placements(placements_list const& placements,
                               pixel_position const& offset,
                               F render_text) {
 
-    for (glyph_positions_ptr glyphs : placements)
+    for (auto const& glyphs : placements)
     {
         // move the glyphs to the correct offset
         pixel_position base_point = glyphs->get_base_point();
@@ -298,9 +280,9 @@ void render_group_symbolizer(group_symbolizer const& sym,
 
     // run feature or sub feature through the group rules & symbolizers
     // for each index value in the range
-    int start = get<value_integer>(sym, keys::start_column);
-    int end = start + get<value_integer>(sym, keys::num_columns);
-    for (int col_idx = start; col_idx < end; ++col_idx)
+    value_integer start = get<value_integer>(sym, keys::start_column);
+    value_integer end = start + get<value_integer>(sym, keys::num_columns);
+    for (value_integer col_idx = start; col_idx < end; ++col_idx)
     {
         // create sub feature with indexed column values
         feature_ptr sub_feature = feature_factory::create(sub_feature_ctx, col_idx);
@@ -313,7 +295,7 @@ void render_group_symbolizer(group_symbolizer const& sym,
                 if (col_name.size() == 1)
                 {
                     // column name is '%' by itself, so give the index as the value
-                    sub_feature->put(col_name, (value_integer)col_idx);
+                    sub_feature->put(col_name, col_idx);
                 }
                 else
                 {
@@ -359,10 +341,10 @@ void render_group_symbolizer(group_symbolizer const& sym,
                 render_thunk_extractor extractor(bounds, thunks, *sub_feature, common.vars_, prj_trans,
                                                  virtual_renderer, clipping_extent);
 
-                for (auto const& sym : *rule)
+                for (auto const& _sym : *rule)
                 {
                     // TODO: construct layout and obtain bounding box
-                    util::apply_visitor(extractor, sym);
+                    util::apply_visitor(extractor, _sym);
                 }
 
                 // add the bounding box to the layout manager
@@ -395,7 +377,7 @@ void render_group_symbolizer(group_symbolizer const& sym,
             rpt_key_expr = get<expression_ptr>(sym, keys::repeat_key);
         }
 
-        // evalute the repeat key with the matched sub feature if we have one
+        // evaluate the repeat key with the matched sub feature if we have one
         if (rpt_key_expr)
         {
             rpt_key_value = util::apply_visitor(evaluate<Feature,value_type,attributes>(*match_feature,common.vars_),

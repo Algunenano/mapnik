@@ -52,7 +52,7 @@ struct point
     }
     friend inline bool operator!= (point<T> const& a, point <T> const& b)
     {
-        return a.x != b.x  || a.y != b.y; 
+        return a.x != b.x  || a.y != b.y;
     }
     value_type x;
     value_type y;
@@ -74,7 +74,7 @@ struct line_string : std::vector<point<T> >
 };
 
 template <typename T>
-struct linear_ring : line_string<T> 
+struct linear_ring : line_string<T>
 {
     linear_ring() = default;
     linear_ring(std::size_t size)
@@ -87,7 +87,7 @@ struct linear_ring : line_string<T>
     linear_ring(line_string<T> const& other)
         : line_string<T>(other) {}
     linear_ring& operator=(linear_ring const&) = default;
-            
+
 };
 
 template <typename T>
@@ -96,6 +96,7 @@ struct polygon
     linear_ring<T> exterior_ring;
     std::vector<linear_ring<T>> interior_rings;
 
+    polygon() = default;
     inline void set_exterior_ring(linear_ring<T> && ring)
     {
         exterior_ring = std::move(ring);
@@ -128,15 +129,29 @@ struct geometry_collection;
 
 struct geometry_empty {};
 
+
 template <typename T>
-using geometry = mapnik::util::variant<geometry_empty,
-                                       point<T>,
-                                       line_string<T>,
-                                       polygon<T>,
-                                       multi_point<T>,
-                                       multi_line_string<T>,
-                                       multi_polygon<T>,
-                                       mapnik::util::recursive_wrapper<geometry_collection<T> > >;
+using geometry_base = mapnik::util::variant<geometry_empty,
+                                            point<T>,
+                                            line_string<T>,
+                                            polygon<T>,
+                                            multi_point<T>,
+                                            multi_line_string<T>,
+                                            multi_polygon<T>,
+                                            mapnik::util::recursive_wrapper<geometry_collection<T> > >;
+template <typename T>
+struct geometry : geometry_base<T>
+{
+    using value_type = T;
+
+    geometry()
+        : geometry_base<T>() {} // empty
+
+    template <typename G>
+    geometry(G && geom)
+        : geometry_base<T>(std::forward<G>(geom)) {}
+
+};
 
 template <typename T>
 struct geometry_collection : std::vector<geometry<T>> {};

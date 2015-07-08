@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2014 Artem Pavlenko
+ * Copyright (C) 2015 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -82,7 +82,7 @@ void grid_renderer<T>::process(line_pattern_symbolizer const& sym,
 
     ras_ptr->reset();
 
-    int stroke_width = mark->width();
+    std::size_t stroke_width = mark->width();
 
     agg::trans_affine tr;
     auto transform = get_optional<transform_type>(sym, keys::geometry_transform);
@@ -116,8 +116,9 @@ void grid_renderer<T>::process(line_pattern_symbolizer const& sym,
     put<value_double>(line, keys::smooth, value_double(smooth));
 
     using vertex_converter_type = vertex_converter<clip_line_tag, transform_tag,
-                                                   offset_transform_tag, affine_transform_tag,
-                                                   simplify_tag, smooth_tag, stroke_tag>;
+                                                   affine_transform_tag,
+                                                   simplify_tag,smooth_tag,
+                                                   offset_transform_tag,stroke_tag>;
     vertex_converter_type converter(clipping_extent,line,common_.t_,prj_trans,tr,feature,common_.vars_,common_.scale_factor_);
     if (clip) converter.set<clip_line_tag>(); // optional clip (default: true)
     converter.set<transform_tag>(); // always transform

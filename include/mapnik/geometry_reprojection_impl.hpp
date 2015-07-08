@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2014 Artem Pavlenko
+ * Copyright (C) 2015 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -161,7 +161,7 @@ geometry_collection<T> reproject_internal(geometry_collection<T> const & c, proj
     for (auto const& g : c)
     {
 
-        geometry<T> new_g(std::move(reproject_copy(g, proj_trans, n_err)));
+        geometry<T> new_g = reproject_copy(g, proj_trans, n_err);
         if (!new_g.template is<geometry_empty>())
         {
             new_c.emplace_back(std::move(new_g));
@@ -195,7 +195,7 @@ struct geom_reproj_copy_visitor {
     geometry<T> operator() (line_string<T> const& ls)
     {
         geometry<T> geom; // default empty
-        int intial_err = n_err_;
+        unsigned int intial_err = n_err_;
         line_string<T> new_ls = reproject_internal(ls, proj_trans_, n_err_);
         if (n_err_ > intial_err || new_ls.empty()) return geom;
         geom = std::move(new_ls);
