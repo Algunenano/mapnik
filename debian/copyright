@@ -40,8 +40,6 @@ Comment: upstream mapnik forgot to update deps/agg/copying, see
  https://github.com/mapnik/mapnik/issues/1982
 
 Files: deps/agg/include/agg_conv_offset.h
- deps/clipper/src/clipper.cpp
- deps/clipper/include/clipper.hpp
 Copyright: 2010-2015 Angus Johnson
 License: BSL-1.0
 
