@@ -2,6 +2,7 @@ mapnik (3.0.0+ds-2) UNRELEASED; urgency=medium
 
   * Team upload.
   * Add gbp.conf to use pristine-tar by default.
+  * Override dh_install to use --list-missing.
 
  -- Bas Couwenberg <sebastic@debian.org>  Thu, 09 Jul 2015 19:30:12 +0200
 

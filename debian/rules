@@ -53,6 +53,9 @@ override_dh_auto_test: debian/stamps/test-python
 debian/stamps/test-python:
 	# nothing yet
 
+override_dh_install:
+	dh_install --list-missing
+
 %:
 	dh $@
 
