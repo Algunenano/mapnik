@@ -54,6 +54,8 @@ debian/stamps/test-python:
 	# nothing yet
 
 override_dh_install:
+	# Don't install nik2img, as requested by upstream
+	$(RM) debian/*/usr/bin/nik2img
 	dh_install --list-missing
 
 %:
