@@ -8,6 +8,7 @@ mapnik (3.0.0+ds-2) UNRELEASED; urgency=medium
   * Include static libs in libmapnik-dev for python-mapnik and
     node-mapnik build.
   * Don't install nik2img by upstream request.
+  * Exclude mips* from supported architectures.
 
   [ Jérémy Lal ]
   * Add a short explanation and a link to upstream explanation into

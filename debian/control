@@ -38,7 +38,7 @@ Vcs-Git: git://anonscm.debian.org/pkg-grass/mapnik.git
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=pkg-grass/mapnik.git
 
 Package: libmapnik3.0
-Architecture: any
+Architecture: any-amd64 any-i386 arm64 armel armhf powerpc ppc64el s390x sparc alpha hppa m68k powerpcspe ppc64 sh4 sparc64 x32
 Depends:
  ${shlibs:Depends}
  , ${misc:Depends}
@@ -78,7 +78,7 @@ Description: C++ toolkit for developing GIS applications (dummy)
 
 Package: libmapnik-dev
 Section: libdevel
-Architecture: any
+Architecture: any-amd64 any-i386 arm64 armel armhf powerpc ppc64el s390x sparc alpha hppa m68k powerpcspe ppc64 sh4 sparc64 x32
 Breaks: libmapnik2-dev (<< 2.2.0+ds1-1~)
 Replaces: libmapnik2-dev (<< 2.2.0+ds1-1~)
 Depends:
@@ -122,7 +122,7 @@ Description: C++ toolkit for developing GIS applications (devel)
 
 Package: mapnik-utils
 Section: utils
-Architecture: any
+Architecture: any-amd64 any-i386 arm64 armel armhf powerpc ppc64el s390x sparc alpha hppa m68k powerpcspe ppc64 sh4 sparc64 x32
 Depends:
  ${shlibs:Depends}
  , ${misc:Depends}
