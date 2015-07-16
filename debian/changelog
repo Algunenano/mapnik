@@ -1,4 +1,4 @@
-mapnik (3.0.0+ds-2) UNRELEASED; urgency=medium
+mapnik (3.0.0+ds-2) unstable; urgency=medium
 
   * Team upload.
 
@@ -14,7 +14,7 @@ mapnik (3.0.0+ds-2) UNRELEASED; urgency=medium
   * Add a short explanation and a link to upstream explanation into
     README.Debian.
 
- -- Bas Couwenberg <sebastic@debian.org>  Thu, 09 Jul 2015 19:30:12 +0200
+ -- Bas Couwenberg <sebastic@debian.org>  Thu, 16 Jul 2015 18:46:44 +0200
 
 mapnik (3.0.0+ds-1) unstable; urgency=medium
 
