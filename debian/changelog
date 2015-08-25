@@ -3,6 +3,7 @@ mapnik (3.0.3+ds-1) UNRELEASED; urgency=medium
   * Team upload.
   * New upstream release.
   * Update watch file repacksuffix and use common mangling options.
+  * Update copyright file, sort & align copyright holders.
 
  -- Bas Couwenberg <sebastic@debian.org>  Tue, 25 Aug 2015 20:20:54 +0200
 
