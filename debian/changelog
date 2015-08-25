@@ -4,6 +4,10 @@ mapnik (3.0.3+ds-1) UNRELEASED; urgency=medium
   * New upstream release.
   * Update watch file repacksuffix and use common mangling options.
   * Update copyright file, sort & align copyright holders.
+  * Refresh patches.
+  * Tweak watch file to support v3.0.0-rc-offset.
+  * Restructure control file with cme, change:
+    - Update Vcs-Browser URL to use cgit instead of gitweb, and HTTPS.
 
  -- Bas Couwenberg <sebastic@debian.org>  Tue, 25 Aug 2015 20:20:54 +0200
 
