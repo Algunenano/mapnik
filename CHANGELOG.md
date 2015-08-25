@@ -6,6 +6,26 @@ Developers: Please commit along with changes.
 
 For a complete change history, see the git log.
 
+## 3.0.2
+
+Released: July 31, 2015
+
+(Packaged from 8305e74)
+
+#### Summary
+
+This release is centered around improvements to the SVG parsing within mapnik. Most work was done in pull request #3003.
+
+- Added container to log SVG parsing errors
+- Reimplemented to use rapidxml for parsing XML (DOM)
+- Support both xml:id and id attributes ( xml:id takes precedence )
+- Added parse_id_from_url using boost::spirit
+- Added error tracking when parsing doubles
+- Unit tests for svg_parser to improve coverage
+- Fixed rx/ry validation for rounded_rect
+- Fixed dimensions parsing
+- Remove libxml2 dependency
+
 ## 3.0.1
 
 Released: July 27th, 2015
@@ -14,7 +34,7 @@ Released: July 27th, 2015
 
 #### Summary
 
-The 3.0.1 fixes a few bugs in geojson parsing, svg parsing, and rendering. It also avoids a potential hang when using `line-geometry-transform` and includes a speedup for text rendering compared to v3.0.0. It is fully back compatibility with v3.0.0 and everyone is encouraged to upgrade.
+The 3.0.1 fixes a few bugs in geojson parsing, svg parsing, and rendering. It also avoids a potential hang when using `line-geometry-transform` and includes a speedup for text rendering compared to v3.0.0. It is fully back compatible with v3.0.0 and everyone is encouraged to upgrade.
 
 - Fixed text placement performance after #2949 (#2963)
 - Fixed rendering behavior for `text-minimum-path-length` which regressed in 3.0.0 (#2990)
@@ -24,6 +44,7 @@ The 3.0.1 fixes a few bugs in geojson parsing, svg parsing, and rendering. It al
 - Fixed parsing of GeoJSON when unknown properties encountered at `FeatureCollection` level (#2983)
 - Fixed parsing of GeoJSON when properties contained `{}` (#2964)
 - Fixed potential hang due to invalid use of `line-geometry-transform` (6d6cb15)
+- Moved unmaintained plugins out of core: `osm`, `occi`, and `rasterlite` (#2980)
 
 ## 3.0.0
 
