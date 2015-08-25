@@ -9,6 +9,9 @@ mapnik (3.0.3+ds-1) UNRELEASED; urgency=medium
   * Restructure control file with cme, change:
     - Update Vcs-Browser URL to use cgit instead of gitweb, and HTTPS.
   * Add upstream metadata.
+  * Drop librasterlite dependency, input driver removed in 3.0.1 due to
+    deprecation of librasterlite by its developer. See also:
+    https://github.com/mapnik/mapnik/issues/2977
 
  -- Bas Couwenberg <sebastic@debian.org>  Tue, 25 Aug 2015 20:20:54 +0200
 

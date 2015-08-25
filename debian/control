@@ -29,7 +29,6 @@ Build-Depends: scons,
                libgdal-dev,
                libsqlite3-dev,
                libcurl4-gnutls-dev,
-               librasterlite-dev,
                libwebp-dev
 Standards-Version: 3.9.6
 Vcs-Browser: https://anonscm.debian.org/cgit/pkg-grass/mapnik.git
@@ -99,7 +98,6 @@ Depends: ${misc:Depends},
          libgdal-dev,
          libsqlite3-dev,
          libcurl4-gnutls-dev,
-         librasterlite-dev
 Recommends: mapnik-doc
 Breaks: libmapnik2-dev (<< 2.2.0+ds1-1~)
 Replaces: libmapnik2-dev (<< 2.2.0+ds1-1~)
