@@ -25,15 +25,13 @@
 #include <mapnik/view_transform.hpp>
 #include <mapnik/expression_evaluator.hpp>
 #include <mapnik/text/placement_finder_impl.hpp>
+#include <mapnik/text/placements/base.hpp>
 #include <mapnik/text/text_layout.hpp>
 #include <mapnik/text/glyph_info.hpp>
 #include <mapnik/text/text_properties.hpp>
 #include <mapnik/text/glyph_positions.hpp>
 #include <mapnik/vertex_cache.hpp>
 #include <mapnik/util/math.hpp>
-
-// agg
-#include "agg_conv_clip_polyline.h"
 
 // stl
 #include <vector>
@@ -145,7 +143,7 @@ bool placement_finder::find_point_placement(pixel_position const& pos)
         /* For point placements it is faster to just check the bounding box. */
         if (collision(bbox, layouts_.text(), false)) return false;
 
-        if (layout.num_lines()) bboxes.push_back(std::move(bbox));
+        if (layout.glyphs_count()) bboxes.push_back(std::move(bbox));
 
         pixel_position layout_offset = layout_center - glyphs->get_base_point();
         layout_offset.y = -layout_offset.y;
@@ -180,7 +178,7 @@ bool placement_finder::find_point_placement(pixel_position const& pos)
     }
 
     // add_marker first checks for collision and then updates the detector.
-    if (has_marker_ && !add_marker(glyphs, pos)) return false;
+    if (has_marker_ && !add_marker(glyphs, pos, bboxes)) return false;
 
     box2d<double> label_box;
     bool first = true;
@@ -420,14 +418,15 @@ void placement_finder::set_marker(marker_info_ptr m, box2d<double> box, bool mar
 }
 
 
-bool placement_finder::add_marker(glyph_positions_ptr & glyphs, pixel_position const& pos) const
+bool placement_finder::add_marker(glyph_positions_ptr & glyphs, pixel_position const& pos, std::vector<box2d<double>> & bboxes) const
 {
     pixel_position real_pos = (marker_unlocked_ ? pos : glyphs->get_base_point()) + marker_displacement_;
     box2d<double> bbox = marker_box_;
     bbox.move(real_pos.x, real_pos.y);
-    glyphs->set_marker(marker_, real_pos);
     if (collision(bbox, layouts_.text(), false)) return false;
     detector_.insert(bbox);
+    bboxes.push_back(std::move(bbox));
+    glyphs->set_marker(marker_, real_pos);
     return true;
 }
 

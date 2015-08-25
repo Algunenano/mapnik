@@ -6,6 +6,67 @@ Developers: Please commit along with changes.
 
 For a complete change history, see the git log.
 
+## Future
+
+Released: YYYY XX, 2015
+
+(Packaged from xxxx)
+
+## 3.0.3
+
+Released: August 12, 2015
+
+(Packaged from 3d262c7)
+
+#### Summary
+
+- Fixed an issue with fields over size of int32 in OGR plugin (https://github.com/mapnik/node-mapnik/issues/499)
+- Added 3 new image-filters to simulate types of colorblindness (`color-blind-protanope`,`color-blind-deuteranope`,`color-blind-tritanope`)
+- Fix so that null text boxes have no bounding boxes when attempting placement ( 162f82cba5b0fb984c425586c6a4b354917abc47 )
+- Patch to add legacy method for setting JPEG quality in images ( #3024 )
+- Added `filter_image` method which can modify an image in place or return a new image that is filtered.
+- Added missing typedef's in mapnik::geometry to allow experiementing with different containers 
+
+## 3.0.2
+
+Released: July 31, 2015
+
+(Packaged from 8305e74)
+
+#### Summary
+
+This release is centered around improvements to the SVG parsing within mapnik. Most work was done in pull request #3003.
+
+- Added container to log SVG parsing errors
+- Reimplemented to use rapidxml for parsing XML (DOM)
+- Support both xml:id and id attributes ( xml:id takes precedence )
+- Added parse_id_from_url using boost::spirit
+- Added error tracking when parsing doubles
+- Unit tests for svg_parser to improve coverage
+- Fixed rx/ry validation for rounded_rect
+- Fixed dimensions parsing
+- Remove libxml2 dependency
+
+## 3.0.1
+
+Released: July 27th, 2015
+
+(Packaged from 28f6f4d)
+
+#### Summary
+
+The 3.0.1 fixes a few bugs in geojson parsing, svg parsing, and rendering. It also avoids a potential hang when using `line-geometry-transform` and includes a speedup for text rendering compared to v3.0.0. It is fully back compatible with v3.0.0 and everyone is encouraged to upgrade.
+
+- Fixed text placement performance after #2949 (#2963)
+- Fixed rendering behavior for `text-minimum-path-length` which regressed in 3.0.0 (#2990)
+- Fixed handling of `xml:id` in SVG parsing (#2989)
+- Fixed handling of out of range `rx` and `ry` in SVG `rect` (#2991)
+- Fixed reporting of envelope from `mapnik::memory_datasource` when new features are added (#2985)
+- Fixed parsing of GeoJSON when unknown properties encountered at `FeatureCollection` level (#2983)
+- Fixed parsing of GeoJSON when properties contained `{}` (#2964)
+- Fixed potential hang due to invalid use of `line-geometry-transform` (6d6cb15)
+- Moved unmaintained plugins out of core: `osm`, `occi`, and `rasterlite` (#2980)
+
 ## 3.0.0
 
 Released: July 7th, 2015
