@@ -1,4 +1,4 @@
-mapnik (3.0.3+ds-1) UNRELEASED; urgency=medium
+mapnik (3.0.3+ds-1) unstable; urgency=medium
 
   * Team upload.
   * New upstream release.
@@ -12,8 +12,9 @@ mapnik (3.0.3+ds-1) UNRELEASED; urgency=medium
   * Drop librasterlite dependency, input driver removed in 3.0.1 due to
     deprecation of librasterlite by its developer. See also:
     https://github.com/mapnik/mapnik/issues/2977
+  * Rebuild for gdal transition.
 
- -- Bas Couwenberg <sebastic@debian.org>  Tue, 25 Aug 2015 20:20:54 +0200
+ -- Bas Couwenberg <sebastic@debian.org>  Tue, 25 Aug 2015 20:34:51 +0200
 
 mapnik (3.0.0+ds-2) unstable; urgency=medium
 
