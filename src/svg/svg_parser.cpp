@@ -135,17 +135,8 @@ double parse_double_optional_percent(const char* str, bool &percent)
     qi::char_type char_;
 
     double val = 0.0;
-    char unit='\0';
-    parse(str, str + std::strlen(str),double_[ref(val)=_1] >> *char_('%')[ref(unit)=_1]);
-    if (unit =='%')
-    {
-        percent = true;
-        val/=100.0;
-    }
-    else
-    {
-        percent = false;
-    }
+    parse(str, str + std::strlen(str),double_[ref(val)=_1, ref(percent) = false]
+          >> -char_('%')[ref(val)/100.0, ref(percent) = true]);
     return val;
 }
 
@@ -498,7 +489,8 @@ void parse_path(svg_parser & parser, xmlTextReaderPtr reader)
             {
                 xmlFree(value);
                 xmlChar *id_value;
-                id_value = xmlTextReaderGetAttribute(reader, BAD_CAST "id");
+                id_value = xmlTextReaderGetAttribute(reader, BAD_CAST "xml:id");
+                if (!id_value) id_value = xmlTextReaderGetAttribute(reader, BAD_CAST "id");
                 if (id_value)
                 {
                     std::string id_string((const char *) id_value);
@@ -688,6 +680,7 @@ void parse_ellipse(svg_parser & parser, xmlTextReaderPtr reader)
 
 void parse_rect(svg_parser & parser, xmlTextReaderPtr reader)
 {
+    // http://www.w3.org/TR/SVGTiny12/shapes.html#RectElement
     xmlChar *value;
     double x = 0.0;
     double y = 0.0;
@@ -728,6 +721,7 @@ void parse_rect(svg_parser & parser, xmlTextReaderPtr reader)
     if (value)
     {
         rx = parse_double((const char*)value);
+        if ( rx > 0.5 * w ) rx = 0.5 * w;
         xmlFree(value);
     }
     else rounded = false;
@@ -736,6 +730,7 @@ void parse_rect(svg_parser & parser, xmlTextReaderPtr reader)
     if (value)
     {
         ry = parse_double((const char*)value);
+        if ( ry > 0.5 * h ) ry = 0.5 * h;
         if (!rounded)
         {
             rx = ry;
@@ -865,7 +860,9 @@ bool parse_common_gradient(svg_parser & parser, xmlTextReaderPtr reader)
     xmlChar *value;
 
     std::string id;
-    value = xmlTextReaderGetAttribute(reader, BAD_CAST "id");
+    value = xmlTextReaderGetAttribute(reader, BAD_CAST "xml:id");
+    if (!value) value = xmlTextReaderGetAttribute(reader, BAD_CAST "id");
+
     if (value)
     {
         // start a new gradient
