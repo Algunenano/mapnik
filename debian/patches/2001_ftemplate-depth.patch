@@ -5,7 +5,7 @@ Author: Jérémy Lal <kapouer@melix.org>
 Last-Update: 2015-06-19
 --- a/SConstruct
 +++ b/SConstruct
-@@ -1771,7 +1771,7 @@
+@@ -1769,7 +1769,7 @@ if not preconfigured:
  
          # Common flags for g++/clang++ CXX compiler.
          # TODO: clean up code more to make -Wextra -Wsign-compare -Wsign-conversion -Wconversion viable
