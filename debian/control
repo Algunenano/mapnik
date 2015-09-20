@@ -3,7 +3,8 @@ Maintainer: Debian GIS Project <pkg-grass-devel@lists.alioth.debian.org>
 Uploaders: Debian OpenStreetMap Team <pkg-osm-maint@lists.alioth.debian.org>,
            David Paleino <dapal@debian.org>,
            Francesco Paolo Lovergine <frankie@debian.org>,
-           Jérémy Lal <kapouer@melix.org>
+           Jérémy Lal <kapouer@melix.org>,
+           Bas Couwenberg <sebastic@debian.org>
 Section: libs
 Priority: optional
 Build-Depends: scons,

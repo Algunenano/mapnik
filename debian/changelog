@@ -1,6 +1,7 @@
 mapnik (3.0.5+ds-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * Add myself to Uploaders.
 
  -- Bas Couwenberg <sebastic@debian.org>  Sun, 20 Sep 2015 11:58:11 +0200
 
