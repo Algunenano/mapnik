@@ -37,6 +37,13 @@
 #include <mapnik/util/trim.hpp>
 #include <mapnik/util/geometry_to_ds_type.hpp>
 #include <mapnik/value_types.hpp>
+
+#ifdef CSV_MEMORY_MAPPED_FILE
+#include <boost/interprocess/mapped_region.hpp>
+#include <boost/interprocess/streams/bufferstream.hpp>
+#include <mapnik/mapped_memory_cache.hpp>
+#endif
+
 // stl
 #include <sstream>
 #include <fstream>
@@ -102,17 +109,36 @@ csv_datasource::csv_datasource(parameters const& params)
     }
     else
     {
-#if defined (_WINDOWS)
+#if defined (CSV_MEMORY_MAPPED_FILE)
+        using file_source_type = boost::interprocess::ibufferstream;
+        file_source_type in;
+        mapnik::mapped_region_ptr mapped_region;
+        boost::optional<mapnik::mapped_region_ptr> memory =
+            mapnik::mapped_memory_cache::instance().find(filename_, true);
+        if (memory)
+        {
+            mapped_region = *memory;
+            in.buffer(static_cast<char*>(mapped_region->get_address()),mapped_region->get_size());
+        }
+        else
+        {
+            throw std::runtime_error("could not create file mapping for " + filename_);
+        }
+#elif defined (_WINDOWS)
         std::ifstream in(mapnik::utf8_to_utf16(filename_),std::ios_base::in | std::ios_base::binary);
-#else
-        std::ifstream in(filename_.c_str(),std::ios_base::in | std::ios_base::binary);
-#endif
         if (!in.is_open())
         {
             throw mapnik::datasource_exception("CSV Plugin: could not open: '" + filename_ + "'");
         }
+#else
+        std::ifstream in(filename_.c_str(),std::ios_base::in | std::ios_base::binary);
+        if (!in.is_open())
+        {
+            throw mapnik::datasource_exception("CSV Plugin: could not open: '" + filename_ + "'");
+        }
+#endif
         parse_csv(in, escape_, separator_, quote_);
-        in.close();
+        //in.close(); no need to call close, rely on dtor
     }
 }
 
@@ -135,7 +161,6 @@ void csv_datasource::parse_csv(T & stream,
     // get first line
     std::string csv_line;
     std::getline(stream,csv_line,stream.widen(newline));
-
     // if user has not passed a separator manually
     // then attempt to detect by reading first line
 
@@ -236,22 +261,22 @@ void csv_datasource::parse_csv(T & stream,
                   [ & ](std::string const& header){ ctx_->push(header); });
 
     mapnik::transcoder tr(desc_.get_encoding());
+    auto pos = stream.tellg();
 
     // handle rare case of a single line of data and user-provided headers
     // where a lack of a newline will mean that std::getline returns false
     bool is_first_row = false;
     if (!has_newline)
     {
-        stream >> csv_line;
+        stream.setstate(std::ios::failbit);
+        pos = 0;
         if (!csv_line.empty())
         {
             is_first_row = true;
         }
     }
-
     std::vector<item_type> boxes;
-    auto pos = stream.tellg();
-    while (std::getline(stream, csv_line, stream.widen(newline)) || is_first_row)
+    while (is_first_row || std::getline(stream, csv_line, stream.widen(newline)))
     {
         if ((row_limit_ > 0) && (line_number++ > row_limit_))
         {
@@ -463,42 +488,23 @@ mapnik::layer_descriptor csv_datasource::get_descriptor() const
     return desc_;
 }
 
-boost::optional<mapnik::datasource_geometry_t> csv_datasource::get_geometry_type() const
+template <typename T>
+boost::optional<mapnik::datasource_geometry_t> csv_datasource::get_geometry_type_impl(T & stream) const
 {
     boost::optional<mapnik::datasource_geometry_t> result;
     int multi_type = 0;
     auto itr = tree_->qbegin(boost::geometry::index::intersects(extent_));
     auto end = tree_->qend();
-    mapnik::context_ptr ctx = std::make_shared<mapnik::context_type>();
     for (std::size_t count = 0; itr !=end &&  count < 5; ++itr, ++count)
     {
         csv_datasource::item_type const& item = *itr;
         std::size_t file_offset = item.second.first;
         std::size_t size = item.second.second;
-
-        std::string str;
-        if (inline_string_.empty())
-        {
-#if defined (_WINDOWS)
-            std::ifstream in(mapnik::utf8_to_utf16(filename_),std::ios_base::in | std::ios_base::binary);
-#else
-            std::ifstream in(filename_.c_str(),std::ios_base::in | std::ios_base::binary);
-#endif
-            if (!in.is_open())
-            {
-                throw mapnik::datasource_exception("CSV Plugin: could not open: '" + filename_ + "'");
-            }
-            in.seekg(file_offset);
-            std::vector<char> record;
-            record.resize(size);
-            in.read(record.data(), size);
-            str = std::string(record.begin(), record.end());
-        }
-        else
-        {
-            str = inline_string_.substr(file_offset, size);
-        }
-
+        stream.seekg(file_offset);
+        std::vector<char> record;
+        record.resize(size);
+        stream.read(record.data(), size);
+        std::string str(record.begin(), record.end());
         try
         {
             auto values = csv_utils::parse_line(str, separator_);
@@ -522,6 +528,28 @@ boost::optional<mapnik::datasource_geometry_t> csv_datasource::get_geometry_type
         }
     }
     return result;
+}
+
+boost::optional<mapnik::datasource_geometry_t> csv_datasource::get_geometry_type() const
+{
+    if (inline_string_.empty())
+    {
+#if defined (_WINDOWS)
+        std::ifstream in(mapnik::utf8_to_utf16(filename_),std::ios_base::in | std::ios_base::binary);
+#else
+        std::ifstream in(filename_.c_str(),std::ios_base::in | std::ios_base::binary);
+#endif
+        if (!in.is_open())
+        {
+            throw mapnik::datasource_exception("CSV Plugin: could not open: '" + filename_ + "'");
+        }
+        return get_geometry_type_impl(in);
+    }
+    else
+    {
+        std::stringstream in(inline_string_);
+        return get_geometry_type_impl(in);
+    }
 }
 
 mapnik::featureset_ptr csv_datasource::features(mapnik::query const& q) const
@@ -550,9 +578,9 @@ mapnik::featureset_ptr csv_datasource::features(mapnik::query const& q) const
     mapnik::box2d<double> const& box = q.get_bbox();
     if (extent_.intersects(box))
     {
-        csv_featureset::array_type index_array;
         if (tree_)
         {
+            csv_featureset::array_type index_array;
             tree_->query(boost::geometry::index::intersects(box),std::back_inserter(index_array));
             std::sort(index_array.begin(),index_array.end(),
                       [] (item_type const& item0, item_type const& item1)

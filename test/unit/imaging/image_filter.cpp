@@ -119,14 +119,11 @@ SECTION("test agg stack blur") {
 
 } // END SECTION
 
-SECTION("test scale-hsla") {
+SECTION("test scale-hsla 1") {
     
     mapnik::image_rgba8 im(3,3);
     mapnik::fill(im,mapnik::color("blue"));
     mapnik::set_pixel(im, 1, 1, mapnik::color("red"));
-
-    // Should throw because a value is greater then 1.0
-    REQUIRE_THROWS(mapnik::filter::filter_image(im, "scale-hsla(0.0,1.5,0.0,1.0,0.0,0.5,0.0,0.5)"););
 
     mapnik::filter::filter_image(im, "scale-hsla(0.0,0.5,0.0,1.0,0.0,0.5,0.0,0.5)");
 
@@ -140,6 +137,35 @@ SECTION("test scale-hsla") {
     CHECK(im(2,1) == 0x80004000);
     CHECK(im(2,2) == 0x80004000);
     
+} // END SECTION
+
+SECTION("test scale-hsla 2") {
+
+    mapnik::image_rgba8 im(3,3);
+    mapnik::set_pixel(im, 0, 0, mapnik::color(255, 0, 0));
+    mapnik::set_pixel(im, 0, 1, mapnik::color(147, 112, 219));
+    mapnik::set_pixel(im, 0, 2, mapnik::color(128, 128, 128));
+    mapnik::set_pixel(im, 1, 0, mapnik::color(72, 209, 204));
+    mapnik::set_pixel(im, 1, 1, mapnik::color(218, 112, 214));
+    mapnik::set_pixel(im, 1, 2, mapnik::color(30, 144, 255));
+    mapnik::set_pixel(im, 2, 0, mapnik::color(238, 130, 238));
+    mapnik::set_pixel(im, 2, 1, mapnik::color(154, 205, 50));
+    mapnik::set_pixel(im, 2, 2, mapnik::color(160, 82, 45));
+
+    // Should not throw on values out of [0, 1]
+    // https://github.com/mapnik/mapnik/issues/3052
+    REQUIRE_NOTHROW(mapnik::filter::filter_image(im, "scale-hsla(0.0,1.5,-1.0,1.0,-1.0,2.0,1.0,1.0)"););
+
+    CHECK(im(0,0) == 0xff0000ff);
+    CHECK(im(0,1) == 0xffefeff4);
+    CHECK(im(0,2) == 0xff818181);
+    CHECK(im(1,0) == 0xffb895a5);
+    CHECK(im(1,1) == 0xffededf3);
+    CHECK(im(1,2) == 0xffd75aff);
+    CHECK(im(2,0) == 0xffffffff);
+    CHECK(im(2,1) == 0xff649b64);
+    CHECK(im(2,2) == 0xff2e343b);
+
 } // END SECTION
 
 SECTION("test emboss") {
@@ -310,16 +336,56 @@ SECTION("test colorize-alpha - two color") {
 
     mapnik::filter::filter_image(im, "colorize-alpha(green,blue)");
 
-    CHECK(im(0,0) == 0xfffc0000);
-    CHECK(im(0,1) == 0xfffc0000);
-    CHECK(im(0,2) == 0xfffc0000);
-    CHECK(im(1,0) == 0xfffc0000);
-    CHECK(im(1,1) == 0xfffc0000);
-    CHECK(im(1,2) == 0xfffc0000);
-    CHECK(im(2,0) == 0xfffc0000);
-    CHECK(im(2,1) == 0xfffc0000);
-    CHECK(im(2,2) == 0xfffc0000);
+    CHECK(im(0,0) == 0xfffd0000);
+    CHECK(im(0,1) == 0xfffd0000);
+    CHECK(im(0,2) == 0xfffd0000);
+    CHECK(im(1,0) == 0xfffd0000);
+    CHECK(im(1,1) == 0xfffd0000);
+    CHECK(im(1,2) == 0xfffd0000);
+    CHECK(im(2,0) == 0xfffd0000);
+    CHECK(im(2,1) == 0xfffd0000);
+    CHECK(im(2,2) == 0xfffd0000);
     
+} // END SECTION
+
+SECTION("test colorize-alpha - one color with transparency") {
+
+    mapnik::image_rgba8 im(3,3);
+    mapnik::fill(im,mapnik::color("#0000ffaa"));
+    mapnik::set_pixel(im, 1, 1, mapnik::color("#aaaaaaaa"));
+
+    mapnik::filter::filter_image(im, "colorize-alpha(#0000ff99)");
+
+    CHECK(im(0,0) == 0x66660000);
+    CHECK(im(0,1) == 0x66660000);
+    CHECK(im(0,2) == 0x66660000);
+    CHECK(im(1,0) == 0x66660000);
+    CHECK(im(1,1) == 0x66660000);
+    CHECK(im(1,2) == 0x66660000);
+    CHECK(im(2,0) == 0x66660000);
+    CHECK(im(2,1) == 0x66660000);
+    CHECK(im(2,2) == 0x66660000);
+
+} // END SECTION
+
+SECTION("test colorize-alpha - two color with transparency") {
+
+    mapnik::image_rgba8 im(3,3);
+    mapnik::fill(im,mapnik::color("#0000ffaa"));
+    mapnik::set_pixel(im, 1, 1, mapnik::color("#aaaaaaaa"));
+
+    mapnik::filter::filter_image(im, "colorize-alpha(#0000ff00,#00ff00ff)");
+
+    CHECK(im(0,0) == 0x70264a00);
+    CHECK(im(0,1) == 0x70264a00);
+    CHECK(im(0,2) == 0x70264a00);
+    CHECK(im(1,0) == 0x70264a00);
+    CHECK(im(1,1) == 0x70264a00);
+    CHECK(im(1,2) == 0x70264a00);
+    CHECK(im(2,0) == 0x70264a00);
+    CHECK(im(2,1) == 0x70264a00);
+    CHECK(im(2,2) == 0x70264a00);
+
 } // END SECTION
 
 SECTION("test color-blind-protanope") {
