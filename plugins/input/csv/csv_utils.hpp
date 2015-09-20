@@ -44,6 +44,10 @@
 #include <cstdio>
 #include <algorithm>
 
+#ifndef _WINDOWS
+#define CSV_MEMORY_MAPPED_FILE
+#endif
+
 namespace csv_utils
 {
 
@@ -141,7 +145,9 @@ std::tuple<char,bool> autodect_newline(T & stream, std::size_t file_length)
     // autodetect newlines
     char newline = '\n';
     bool has_newline = false;
-    for (std::size_t lidx = 0; lidx < file_length && lidx < 4000; ++lidx)
+    static std::size_t const max_size = 4000;
+    std::size_t size = std::min(file_length, max_size);
+    for (std::size_t lidx = 0; lidx < size; ++lidx)
     {
         char c = static_cast<char>(stream.get());
         if (c == '\r')

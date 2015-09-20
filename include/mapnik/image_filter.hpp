@@ -505,6 +505,7 @@ void apply_filter(Src & src, colorize_alpha const& op)
                 uint8_t & a = get_color(src_it[x], alpha_t());
                 if ( a > 0)
                 {
+                    a = (c.alpha() * a + 255) >> 8;
                     r = (c.red() * a + 255) >> 8;
                     g = (c.green() * a + 255) >> 8;
                     b = (c.blue() * a + 255) >> 8;
@@ -528,10 +529,10 @@ void apply_filter(Src & src, colorize_alpha const& op)
             {
                 stop_offset = offset;
             }
-            grad_lut.add_color(stop_offset, agg::rgba(c.red()/256.0,
-                                                      c.green()/256.0,
-                                                      c.blue()/256.0,
-                                                      c.alpha()/256.0));
+            grad_lut.add_color(stop_offset, agg::rgba(c.red()/255.0,
+                                                      c.green()/255.0,
+                                                      c.blue()/255.0,
+                                                      c.alpha()/255.0));
             offset += step;
         }
         if (grad_lut.build_lut())
@@ -549,12 +550,10 @@ void apply_filter(Src & src, colorize_alpha const& op)
                     if ( a > 0)
                     {
                         agg::rgba8 c = grad_lut[a];
+                        a = (c.a * a + 255) >> 8;
                         r = (c.r * a + 255) >> 8;
                         g = (c.g * a + 255) >> 8;
                         b = (c.b * a + 255) >> 8;
-                        if (r>a) r=a;
-                        if (g>a) g=a;
-                        if (b>a) b=a;
         #if 0
                         // rainbow
                         r = 0;
