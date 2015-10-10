@@ -4,10 +4,14 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+NJOBS := -j1
+ifneq (,$(filter parallel=%,$(subst $(COMMA), ,$(DEB_BUILD_OPTIONS))))
+NJOBS := -j$(subst parallel=,,$(filter parallel=%,$(subst $(COMMA), ,$(DEB_BUILD_OPTIONS))))
+endif
+
 # scons flags
-# Disable parallel build - it exhausts memory on s390, mipsel, mips
 SCONS = $(shell which scons)
-SCONS_FLAGS := -j1
+SCONS_FLAGS := $(NJOBS)
 # -O2
 SCONS_FLAGS += OPTIMIZATION=2
 SCONS_FLAGS += FULL_LIB_PATH=False
@@ -23,7 +27,7 @@ SCONS_FLAGS += CUSTOM_CFLAGS="$(shell dpkg-buildflags --get CFLAGS) $(shell dpkg
 SCONS_FLAGS += CUSTOM_LDFLAGS="$(shell dpkg-buildflags --get LDFLAGS) -g0"
 
 %:
-	dh $@
+	dh $@ --parallel
 
 override_dh_auto_clean:
 	rm -rf build-python
