@@ -22,6 +22,14 @@ SCONS_FLAGS += CUSTOM_CXXFLAGS="$(shell dpkg-buildflags --get CXXFLAGS) $(shell 
 SCONS_FLAGS += CUSTOM_CFLAGS="$(shell dpkg-buildflags --get CFLAGS) $(shell dpkg-buildflags --get CPPFLAGS) -g0"
 SCONS_FLAGS += CUSTOM_LDFLAGS="$(shell dpkg-buildflags --get LDFLAGS) -g0"
 
+%:
+	dh $@
+
+override_dh_auto_clean:
+	rm -rf build-python
+	rm -rf debian/stamps
+	dh_clean
+
 override_dh_auto_configure: debian/stamps/configure-python
 debian/stamps/configure-python:
 	-mkdir build-python
@@ -37,27 +45,19 @@ override_dh_auto_build:	debian/stamps/build-python
 debian/stamps/build-python:
 	$(SCONS) -C build-python
 
-override_dh_prep:
-	dh_prep -Xdebian/tmp
-
-override_dh_auto_install:	debian/stamps/install-python
-debian/stamps/install-python:
-	$(SCONS) -C build-python install
-
-override_dh_auto_clean:
-	rm -rf build-python
-	rm -rf debian/stamps
-	dh_clean
-
 override_dh_auto_test: debian/stamps/test-python
 debian/stamps/test-python:
 	# nothing yet
+
+override_dh_auto_install: debian/stamps/install-python
+debian/stamps/install-python:
+	$(SCONS) -C build-python install
 
 override_dh_install:
 	# Don't install nik2img, as requested by upstream
 	$(RM) debian/*/usr/bin/nik2img
 	dh_install --list-missing
 
-%:
-	dh $@
+override_dh_prep:
+	dh_prep -Xdebian/tmp
 
