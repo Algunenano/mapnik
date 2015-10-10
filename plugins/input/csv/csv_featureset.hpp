@@ -31,20 +31,24 @@
 #include <cstdio>
 
 #ifdef CSV_MEMORY_MAPPED_FILE
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
 #include <boost/interprocess/mapped_region.hpp>
 #include <boost/interprocess/streams/bufferstream.hpp>
+#pragma GCC diagnostic pop
 #include <mapnik/mapped_memory_cache.hpp>
 #endif
 
 class csv_featureset : public mapnik::Featureset
 {
-
     using locator_type = detail::geometry_column_locator;
 public:
     using array_type = std::deque<csv_datasource::item_type>;
     csv_featureset(std::string const& filename,
                    locator_type const& locator,
-                   std::string const& separator,
+                   char separator,
+                   char quote,
                    std::vector<std::string> const& headers,
                    mapnik::context_ptr const& ctx,
                    array_type && index_array);
@@ -59,7 +63,8 @@ private:
     using file_ptr = std::unique_ptr<std::FILE, int (*)(std::FILE *)>;
     file_ptr file_;
 #endif
-    std::string const& separator_;
+    char separator_;
+    char quote_;
     std::vector<std::string> const& headers_;
     const array_type index_array_;
     array_type::const_iterator index_itr_;

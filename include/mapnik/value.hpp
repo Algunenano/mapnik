@@ -72,42 +72,41 @@ using value_base = util::variant<value_null, value_bool, value_integer,value_dou
 namespace impl {
 
 struct equals
-
 {
     bool operator() (value_integer lhs, value_double rhs) const
     {
-        return  lhs == rhs;
+        return static_cast<value_double>(lhs) == rhs;
     }
 
     bool operator() (value_bool lhs, value_double rhs) const
     {
-        return  lhs == rhs;
+        return static_cast<value_double>(lhs) == rhs;
     }
 
     bool operator() (value_double lhs, value_integer rhs) const
     {
-        return  lhs == rhs;
+        return lhs == static_cast<value_double>(rhs);
     }
 
     bool operator() (value_bool lhs, value_integer rhs) const
     {
-        return  lhs == rhs;
+        return static_cast<value_integer>(lhs) == rhs;
     }
 
     bool operator() (value_integer lhs, value_bool rhs) const
     {
-        return  lhs == rhs;
+        return lhs == static_cast<value_integer>(rhs);
     }
 
     bool operator() (value_double lhs, value_bool rhs) const
     {
-        return  lhs == rhs;
+        return static_cast<value_double>(lhs) == rhs;
     }
 
     bool operator() (value_unicode_string const& lhs,
                      value_unicode_string const& rhs) const
     {
-        return  (lhs == rhs) ? true: false;
+        return (lhs == rhs) ? true: false;
     }
 
     template <typename T>
@@ -140,32 +139,32 @@ struct not_equals
 
     bool operator() (value_integer lhs, value_double rhs) const
     {
-        return  lhs != rhs;
+        return static_cast<value_double>(lhs) != rhs;
     }
 
     bool operator() (value_bool lhs, value_double rhs) const
     {
-        return  lhs != rhs;
+        return static_cast<value_double>(lhs) != rhs;
     }
 
     bool operator() (value_double lhs, value_integer rhs) const
     {
-        return  lhs != rhs;
+        return  lhs != static_cast<value_double>(rhs);
     }
 
     bool operator() (value_bool lhs, value_integer rhs) const
     {
-        return  lhs != rhs;
+        return static_cast<value_integer>(lhs) != rhs;
     }
 
     bool operator() (value_integer lhs, value_bool rhs) const
     {
-        return  lhs != rhs;
+        return lhs != static_cast<value_integer>(rhs);
     }
 
     bool operator() (value_double lhs, value_bool rhs) const
     {
-        return  lhs != rhs;
+        return  lhs != static_cast<value_double>(rhs);
     }
 
     bool operator() (value_unicode_string const& lhs,
@@ -993,8 +992,8 @@ inline bool value::is_null() const
 namespace std
 {
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wmismatched-tags"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmismatched-tags"
 
 template <>
 struct hash<mapnik::value>
@@ -1005,7 +1004,7 @@ struct hash<mapnik::value>
     }
 };
 
-#pragma clang diagnostic pop
+#pragma GCC diagnostic pop
 
 }
 

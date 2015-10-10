@@ -6,11 +6,23 @@ Developers: Please commit along with changes.
 
 For a complete change history, see the git log.
 
-## Future
+## 3.0.6
 
-Released: YYYY XX, 2015
+Released: October 7, 2015
 
-(Packaged from xxxx)
+(Packaged from 3cebe97)
+
+#### Summary
+
+- PostGIS plugin: added `key_field_as_attribute` option. Defaults to `True` to preserve current behavior of having the `key_field` added both
+  as an attribute and as the `feature.id` value. If `key_field_as_attribute=false` is passed then the attribute is discarded (https://github.com/mapnik/mapnik/issues/3115)
+- CSV plugin has been further optimized and has gained experimental support for on-disk indexes (https://github.com/mapnik/mapnik/issues/3089)
+- SVG parser now fallsback to using `viewbox` if explicit dimensions are lacking (https://github.com/mapnik/mapnik/issues/3081)
+- Visual tests: new command line arguments `--agg`, `--cairo`, `--svg`, `--grid` for selecting renderers (https://github.com/mapnik/mapnik/pull/3074)
+- Visual tests: new command line argument `--scale-factor` or abbreviated `-s` for setting scale factor (https://github.com/mapnik/mapnik/pull/3074)
+- Fixed parsing colors in hexadecimal notation (https://github.com/mapnik/mapnik/pull/3075)
+- Removed mapnik::Feature type alias of mapnik::feature_impl (https://github.com/mapnik/mapnik/pull/3099)
+- Fixed linking order for plugins to avoid possible linking errors on linux systems (https://github.com/mapnik/mapnik/issues/3105)
 
 ## 3.0.5
 
