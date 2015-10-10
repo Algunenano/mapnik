@@ -1,9 +1,9 @@
-mapnik (3.0.6+ds-1) UNRELEASED; urgency=medium
+mapnik (3.0.6+ds-1) unstable; urgency=medium
 
   * New upstream release.
   * Re-enable parallel builds, problematic architectures no longer supported.
 
- -- Bas Couwenberg <sebastic@debian.org>  Sat, 10 Oct 2015 11:49:29 +0200
+ -- Bas Couwenberg <sebastic@debian.org>  Sat, 10 Oct 2015 15:59:25 +0200
 
 mapnik (3.0.5+ds-1) unstable; urgency=medium
 
