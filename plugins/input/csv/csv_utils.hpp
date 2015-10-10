@@ -52,30 +52,30 @@ namespace csv_utils
 {
 
 static const mapnik::csv_line_grammar<char const*> line_g;
+static const mapnik::csv_white_space_skipper<char const*> skipper;
 
 template <typename Iterator>
-static mapnik::csv_line parse_line(Iterator start, Iterator end, std::string const& separator, std::size_t num_columns)
+static mapnik::csv_line parse_line(Iterator start, Iterator end, char separator, char quote, std::size_t num_columns)
 {
     mapnik::csv_line values;
     if (num_columns > 0) values.reserve(num_columns);
-    boost::spirit::standard::blank_type blank;
-    if (!boost::spirit::qi::phrase_parse(start, end, (line_g)(boost::phoenix::cref(separator)), blank, values))
+    if (!boost::spirit::qi::phrase_parse(start, end, (line_g)(separator, quote), skipper, values))
     {
         throw std::runtime_error("Failed to parse CSV line:\n" + std::string(start, end));
     }
     return values;
 }
 
-static inline mapnik::csv_line parse_line(std::string const& line_str, std::string const& separator)
+static inline mapnik::csv_line parse_line(std::string const& line_str, char separator, char quote)
 {
     auto start = line_str.c_str();
     auto end   = start + line_str.length();
-    return parse_line(start, end, separator, 0);
+    return parse_line(start, end, separator, quote, 0);
 }
 
 static inline bool is_likely_number(std::string const& value)
 {
-    return( strspn( value.c_str(), "e-.+0123456789" ) == value.size() );
+    return (std::strspn( value.c_str(), "e-.+0123456789" ) == value.size());
 }
 
 struct ignore_case_equal_pred
@@ -92,6 +92,43 @@ inline bool ignore_case_equal(std::string const& s0, std::string const& s1)
                       s1.begin(), ignore_case_equal_pred());
 }
 
+template <class CharT, class Traits, class Allocator>
+std::basic_istream<CharT, Traits>& getline_csv(std::istream& is, std::basic_string<CharT,Traits,Allocator>& s, CharT delim, CharT quote)
+{
+    typename std::basic_string<CharT,Traits,Allocator>::size_type nread = 0;
+    typename std::basic_istream<CharT, Traits>::sentry sentry(is, true);
+    if (sentry)
+    {
+        std::basic_streambuf<CharT, Traits>* buf = is.rdbuf();
+        s.clear();
+        bool has_quote = false;
+        while (nread < s.max_size())
+        {
+            int c1 = buf->sbumpc();
+            if (Traits::eq_int_type(c1, Traits::eof()))
+            {
+                is.setstate(std::ios_base::eofbit);
+                break;
+            }
+            else
+            {
+                ++nread;
+                CharT c = Traits::to_char_type(c1);
+                if (Traits::eq(c, quote))
+                    has_quote = !has_quote;
+                if (!Traits::eq(c, delim) || has_quote)
+                    s.push_back(c);
+                else
+                    break;// Character is extracted but not appended.
+            }
+        }
+    }
+    if (nread == 0 || nread >= s.max_size())
+        is.setstate(std::ios_base::failbit);
+
+    return is;
+}
+
 }
 
 
@@ -104,9 +141,9 @@ std::size_t file_length(T & stream)
     return stream.tellg();
 }
 
-static inline std::string detect_separator(std::string const& str)
+static inline char detect_separator(std::string const& str)
 {
-    std::string separator = ","; // default
+    char separator = ','; // default
     int num_commas = std::count(str.begin(), str.end(), ',');
     // detect tabs
     int num_tabs = std::count(str.begin(), str.end(), '\t');
@@ -114,7 +151,7 @@ static inline std::string detect_separator(std::string const& str)
     {
         if (num_tabs > num_commas)
         {
-            separator = "\t";
+            separator = '\t';
             MAPNIK_LOG_DEBUG(csv) << "csv_datasource: auto detected tab separator";
         }
     }
@@ -123,7 +160,7 @@ static inline std::string detect_separator(std::string const& str)
         int num_pipes = std::count(str.begin(), str.end(), '|');
         if (num_pipes > num_commas)
         {
-            separator = "|";
+            separator = '|';
             MAPNIK_LOG_DEBUG(csv) << "csv_datasource: auto detected '|' separator";
         }
         else // semicolons
@@ -131,7 +168,7 @@ static inline std::string detect_separator(std::string const& str)
             int num_semicolons = std::count(str.begin(), str.end(), ';');
             if (num_semicolons > num_commas)
             {
-                separator = ";";
+                separator = ';';
                 MAPNIK_LOG_DEBUG(csv) << "csv_datasource: auto detected ';' separator";
             }
         }
@@ -140,11 +177,13 @@ static inline std::string detect_separator(std::string const& str)
 }
 
 template <typename T>
-std::tuple<char,bool> autodect_newline(T & stream, std::size_t file_length)
+std::tuple<char,bool,char> autodect_newline_and_quote(T & stream, std::size_t file_length)
 {
     // autodetect newlines
     char newline = '\n';
     bool has_newline = false;
+    char quote = '"';
+    bool has_quote = false;
     static std::size_t const max_size = 4000;
     std::size_t size = std::min(file_length, max_size);
     for (std::size_t lidx = 0; lidx < size; ++lidx)
@@ -154,15 +193,20 @@ std::tuple<char,bool> autodect_newline(T & stream, std::size_t file_length)
         {
             newline = '\r';
             has_newline = true;
-            break;
+            //break;
         }
         if (c == '\n')
         {
             has_newline = true;
-            break;
+            //break;
+        }
+        else if (!has_quote && c == '\'')
+        {
+            quote = '\'';
+            has_quote = true;
         }
     }
-    return std::make_tuple(newline,has_newline);
+    return std::make_tuple(newline, has_newline, quote);
 }
 
 
