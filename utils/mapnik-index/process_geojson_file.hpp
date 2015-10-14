@@ -20,22 +20,17 @@
  *
  *****************************************************************************/
 
-#ifndef MAPNIK_VERSION_HPP
-#define MAPNIK_VERSION_HPP
+#ifndef MAPNIK_UTILS_PROCESS_GEOJSON_FILE_HPP
+#define MAPNIK_UTILS_PROCESS_GEOJSON_FILE_HPP
 
-#define MAPNIK_MAJOR_VERSION 3
-#define MAPNIK_MINOR_VERSION 0
-#define MAPNIK_PATCH_VERSION 7
+#include <utility>
+#include <mapnik/box2d.hpp>
 
-#define MAPNIK_VERSION (MAPNIK_MAJOR_VERSION*100000) + (MAPNIK_MINOR_VERSION*100) + (MAPNIK_PATCH_VERSION)
+namespace mapnik { namespace detail {
 
-#ifndef MAPNIK_STRINGIFY
-#define MAPNIK_STRINGIFY(n) MAPNIK_STRINGIFY_HELPER(n)
-#define MAPNIK_STRINGIFY_HELPER(n) #n
-#endif
+template <typename T>
+std::pair<bool, box2d<double>> process_geojson_file(T & boxes, std::string const& filename);
 
-#define MAPNIK_VERSION_STRING   MAPNIK_STRINGIFY(MAPNIK_MAJOR_VERSION) "." \
-                                MAPNIK_STRINGIFY(MAPNIK_MINOR_VERSION) "." \
-                                MAPNIK_STRINGIFY(MAPNIK_PATCH_VERSION)
+}}
 
-#endif // MAPNIK_VERSION_HPP
+#endif // MAPNIK_UTILS_PROCESS_GEOJSON_FILE_HPP
