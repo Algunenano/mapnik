@@ -5,12 +5,12 @@ Author: Jérémy Lal <kapouer@melix.org>
 Last-Update: 2015-06-19
 --- a/SConstruct
 +++ b/SConstruct
-@@ -1770,7 +1770,7 @@ if not preconfigured:
+@@ -1764,7 +1764,7 @@ if not preconfigured:
  
- 	# Common flags for g++/clang++ CXX compiler.
- 	# TODO: clean up code more to make -Wextra -Wsign-compare -Wsign-conversion -Wconversion viable
--	common_cxx_flags = '-Wall %s %s -ftemplate-depth-300 -Wsign-compare -Wshadow ' % (env['WARNING_CXXFLAGS'], pthread)
-+	common_cxx_flags = '-Wall %s %s -Wsign-compare -Wshadow ' % (env['WARNING_CXXFLAGS'], pthread)
+         # Common flags for g++/clang++ CXX compiler.
+         # TODO: clean up code more to make -Wextra -Wsign-compare -Wsign-conversion -Wconversion viable
+-        common_cxx_flags = '-Wall %s %s -ftemplate-depth-300 -Wsign-compare -Wshadow ' % (env['WARNING_CXXFLAGS'], pthread)
++        common_cxx_flags = '-Wall %s %s -Wsign-compare -Wshadow ' % (env['WARNING_CXXFLAGS'], pthread)
  
- 	if 'clang++' in env['CXX']:
- 	    common_cxx_flags += ' -Wno-unknown-pragmas -Wno-unsequenced '
+         if 'clang++' in env['CXX']:
+             common_cxx_flags += ' -Wno-unknown-pragmas -Wno-unsequenced '
