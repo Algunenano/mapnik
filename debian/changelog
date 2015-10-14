@@ -1,6 +1,7 @@
 mapnik (3.0.7+ds-1) UNRELEASED; urgency=medium
 
   * New upstream release.
+  * Don't install mapnik-render, like nik2img before the rename.
 
  -- Bas Couwenberg <sebastic@debian.org>  Wed, 14 Oct 2015 09:01:04 +0200
 

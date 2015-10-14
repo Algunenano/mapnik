@@ -58,8 +58,8 @@ debian/stamps/install-python:
 	$(SCONS) -C build-python install
 
 override_dh_install:
-	# Don't install nik2img, as requested by upstream
-	$(RM) debian/*/usr/bin/nik2img
+	# Don't install mapnik-render (previously nik2img), as requested by upstream
+	$(RM) debian/*/usr/bin/mapnik-render
 	dh_install --list-missing
 
 override_dh_prep:
