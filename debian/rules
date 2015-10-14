@@ -47,7 +47,7 @@ debian/stamps/configure-python:
 
 override_dh_auto_build:	debian/stamps/build-python
 debian/stamps/build-python:
-	$(SCONS) -C build-python
+	$(SCONS) $(NJOBS) -C build-python
 
 override_dh_auto_test: debian/stamps/test-python
 debian/stamps/test-python:
@@ -55,7 +55,7 @@ debian/stamps/test-python:
 
 override_dh_auto_install: debian/stamps/install-python
 debian/stamps/install-python:
-	$(SCONS) -C build-python install
+	$(SCONS) $(NJOBS) -C build-python install
 
 override_dh_install:
 	# Don't install mapnik-render (previously nik2img), as requested by upstream
