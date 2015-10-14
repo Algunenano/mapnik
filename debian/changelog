@@ -1,8 +1,8 @@
-mapnik (3.0.7+ds-4) UNRELEASED; urgency=medium
+mapnik (3.0.7+ds-4) unstable; urgency=medium
 
   * Fix typo in NJOBS variable for non parallel builds on arm64 & armel.
 
- -- Bas Couwenberg <sebastic@debian.org>  Wed, 14 Oct 2015 22:40:05 +0200
+ -- Bas Couwenberg <sebastic@debian.org>  Wed, 14 Oct 2015 22:42:36 +0200
 
 mapnik (3.0.7+ds-3) unstable; urgency=medium
 
