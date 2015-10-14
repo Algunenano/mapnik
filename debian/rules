@@ -9,8 +9,10 @@ ifneq (,$(filter parallel=%,$(subst $(COMMA), ,$(DEB_BUILD_OPTIONS))))
 NJOBS := -j$(subst parallel=,,$(filter parallel=%,$(subst $(COMMA), ,$(DEB_BUILD_OPTIONS))))
 endif
 
+DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
+
 # Disable parallel builds for problematic architectures
-ifeq (,$(findstring $(DEB_HOST_ARCH),"arm64 armel"))
+ifneq (,$(findstring $(DEB_HOST_ARCH),"arm64 armel"))
 	NJBOS = -j1
 endif
 
