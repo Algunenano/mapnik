@@ -13,7 +13,7 @@ DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 
 # Disable parallel builds for problematic architectures
 ifneq (,$(findstring $(DEB_HOST_ARCH),"arm64 armel"))
-	NJBOS = -j1
+	NJOBS = -j1
 endif
 
 # scons flags
