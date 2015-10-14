@@ -9,6 +9,11 @@ ifneq (,$(filter parallel=%,$(subst $(COMMA), ,$(DEB_BUILD_OPTIONS))))
 NJOBS := -j$(subst parallel=,,$(filter parallel=%,$(subst $(COMMA), ,$(DEB_BUILD_OPTIONS))))
 endif
 
+# Disable parallel builds for problematic architectures
+ifeq (,$(findstring $(DEB_HOST_ARCH),"arm64 armel"))
+	NJBOS = -j1
+endif
+
 # scons flags
 SCONS = $(shell which scons)
 SCONS_FLAGS := $(NJOBS)
