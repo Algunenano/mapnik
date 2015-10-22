@@ -1,3 +1,10 @@
+mapnik (3.0.7+ds-5) UNRELEASED; urgency=medium
+
+  * Don't remove mapnik-render anymore, upstream says it's suitable for
+    inclusion now.
+
+ -- Bas Couwenberg <sebastic@debian.org>  Thu, 22 Oct 2015 09:22:11 +0200
+
 mapnik (3.0.7+ds-4) unstable; urgency=medium
 
   * Fix typo in NJOBS variable for non parallel builds on arm64 & armel.
