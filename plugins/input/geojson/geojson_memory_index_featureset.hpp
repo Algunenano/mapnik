@@ -20,22 +20,33 @@
  *
  *****************************************************************************/
 
-#ifndef MAPNIK_VERSION_HPP
-#define MAPNIK_VERSION_HPP
+#ifndef GEOJSON_MEMORY_INDEX_FEATURESET_HPP
+#define GEOJSON_MEMORY_INDEX_FEATURESET_HPP
 
-#define MAPNIK_MAJOR_VERSION 3
-#define MAPNIK_MINOR_VERSION 0
-#define MAPNIK_PATCH_VERSION 8
+#include <mapnik/feature.hpp>
+#include "geojson_datasource.hpp"
 
-#define MAPNIK_VERSION (MAPNIK_MAJOR_VERSION*100000) + (MAPNIK_MINOR_VERSION*100) + (MAPNIK_PATCH_VERSION)
+#include <deque>
+#include <cstdio>
 
-#ifndef MAPNIK_STRINGIFY
-#define MAPNIK_STRINGIFY(n) MAPNIK_STRINGIFY_HELPER(n)
-#define MAPNIK_STRINGIFY_HELPER(n) #n
-#endif
+class geojson_memory_index_featureset : public mapnik::Featureset
+{
+public:
+    using array_type = std::deque<geojson_datasource::item_type>;
+    using file_ptr = std::unique_ptr<std::FILE, int (*)(std::FILE *)>;
 
-#define MAPNIK_VERSION_STRING   MAPNIK_STRINGIFY(MAPNIK_MAJOR_VERSION) "." \
-                                MAPNIK_STRINGIFY(MAPNIK_MINOR_VERSION) "." \
-                                MAPNIK_STRINGIFY(MAPNIK_PATCH_VERSION)
+    geojson_memory_index_featureset(std::string const& filename,
+                             array_type && index_array);
+    virtual ~geojson_memory_index_featureset();
+    mapnik::feature_ptr next();
 
-#endif // MAPNIK_VERSION_HPP
+private:
+    file_ptr file_;
+    mapnik::value_integer feature_id_ = 1;
+    const array_type index_array_;
+    array_type::const_iterator index_itr_;
+    array_type::const_iterator index_end_;
+    mapnik::context_ptr ctx_;
+};
+
+#endif // GEOJSON_MEMORY_INDEX_FEATURESET_HPP

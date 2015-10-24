@@ -23,7 +23,9 @@
 #include "process_csv_file.hpp"
 #include "../../plugins/input/csv/csv_utils.hpp"
 #include <mapnik/geometry_envelope.hpp>
+#include <mapnik/util/utf_conv_win.hpp>
 
+#if defined(MAPNIK_MEMORY_MAPPED_FILE)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Wsign-conversion"
@@ -31,15 +33,19 @@
 #include <boost/interprocess/streams/bufferstream.hpp>
 #pragma GCC diagnostic pop
 #include <mapnik/mapped_memory_cache.hpp>
+#endif
+
+#include <fstream>
 
 namespace mapnik { namespace detail {
 
 template <typename T>
 std::pair<bool,box2d<double>> process_csv_file(T & boxes, std::string const& filename, std::string const& manual_headers, char separator, char quote)
 {
+    mapnik::box2d<double> extent;
+#if defined(MAPNIK_MEMORY_MAPPED_FILE)
     using file_source_type = boost::interprocess::ibufferstream;
     file_source_type csv_file;
-    mapnik::box2d<double> extent;
     mapnik::mapped_region_ptr mapped_region;
     boost::optional<mapnik::mapped_region_ptr> memory =
         mapnik::mapped_memory_cache::instance().find(filename, true);
@@ -53,6 +59,18 @@ std::pair<bool,box2d<double>> process_csv_file(T & boxes, std::string const& fil
         std::clog << "Error : cannot mmap " << filename << std::endl;
         return std::make_pair(false, extent);
     }
+#else
+ #if defined(_WINDOWS)
+    std::ifstream csv_file(mapnik::utf8_to_utf16(filename),std::ios_base::in | std::ios_base::binary);
+ #else
+    std::ifstream csv_file(filename.c_str(),std::ios_base::in | std::ios_base::binary);
+ #endif
+    if (!csv_file.is_open())
+    {
+        std::clog << "Error : cannot open " << filename << std::endl;
+        return std::make_pair(false, extent);
+    }
+#endif
     auto file_length = ::detail::file_length(csv_file);
     // set back to start
     csv_file.seekg(0, std::ios::beg);
@@ -68,7 +86,7 @@ std::pair<bool,box2d<double>> process_csv_file(T & boxes, std::string const& fil
     csv_utils::getline_csv(csv_file, csv_line, newline, quote);
     if (separator == 0) separator = ::detail::detect_separator(csv_line);
     csv_file.seekg(0, std::ios::beg);
-    int line_number = 1;
+    int line_number = 0;
     ::detail::geometry_column_locator locator;
     std::vector<std::string> headers;
     std::clog << "Parsing CSV using SEPARATOR=" << separator << " QUOTE=" << quote << std::endl;
@@ -96,6 +114,7 @@ std::pair<bool,box2d<double>> process_csv_file(T & boxes, std::string const& fil
                     std::size_t index = 0;
                     for (auto & header : headers)
                     {
+                        mapnik::util::trim(header);
                         if (header.empty())
                         {
                             // create a placeholder for the empty header
@@ -123,14 +142,17 @@ std::pair<bool,box2d<double>> process_csv_file(T & boxes, std::string const& fil
         }
     }
 
-    if (locator.type == ::detail::geometry_column_locator::UNKNOWN)
+    std::size_t num_headers = headers.size();
+    if (!::detail::valid(locator, num_headers))
     {
-        std::clog << "CSV index: could not detect column headers with the name of wkt, geojson, x/y, or "
-                  << "latitude/longitude - this is required for reading geometry data" << std::endl;
+        std::clog << "CSV index: could not detect column(s) with the name(s) of wkt, geojson, x/y, or "
+                  << "latitude/longitude in:\n"
+                  << csv_line
+                  << "\n - this is required for reading geometry data"
+                  << std::endl;
         return std::make_pair(false, extent);
     }
 
-    std::size_t num_headers = headers.size();
     auto pos = csv_file.tellg();
 
     // handle rare case of a single line of data and user-provided headers
@@ -145,9 +167,9 @@ std::pair<bool,box2d<double>> process_csv_file(T & boxes, std::string const& fil
             is_first_row = true;
         }
     }
-
     while (is_first_row || csv_utils::getline_csv(csv_file, csv_line, newline, quote))
     {
+        ++line_number;
         auto record_offset = pos;
         auto record_size = csv_line.length();
         pos = csv_file.tellg();
@@ -169,12 +191,12 @@ std::pair<bool,box2d<double>> process_csv_file(T & boxes, std::string const& fil
             unsigned num_fields = values.size();
             if (num_fields > num_headers || num_fields < num_headers)
             {
+                // skip this row
                 std::ostringstream s;
                 s << "CSV Index: # of columns("
                   << num_fields << ") > # of headers("
-                  << num_headers << ") parsed for row " << line_number << "\n";
-                std::clog << s.str() << std::endl;
-                return std::make_pair(false, extent);
+                  << num_headers << ") parsed for row " << line_number;
+                throw mapnik::datasource_exception(s.str());
             }
 
             auto geom = ::detail::extract_geometry(values, locator);
@@ -191,8 +213,12 @@ std::pair<bool,box2d<double>> process_csv_file(T & boxes, std::string const& fil
                 s << "CSV Index: expected geometry column: could not parse row "
                   << line_number << " "
                   << values[locator.index] << "'";
-                std::clog << s.str() << std::endl;;
+                throw mapnik::datasource_exception(s.str());
             }
+        }
+        catch (mapnik::datasource_exception const& ex )
+        {
+            std::clog << ex.what() << " at line: " << line_number << std::endl;
         }
         catch (std::exception const& ex)
         {
@@ -201,7 +227,6 @@ std::pair<bool,box2d<double>> process_csv_file(T & boxes, std::string const& fil
               << " - found " << headers.size() << " with values like: " << csv_line << "\n"
               << " and got error like: " << ex.what();
             std::clog << s.str() << std::endl;
-            return std::make_pair(false, extent);
         }
     }
     return std::make_pair(true, extent);;

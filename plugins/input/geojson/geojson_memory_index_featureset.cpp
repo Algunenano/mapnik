@@ -30,9 +30,9 @@
 #include <string>
 #include <vector>
 
-#include "large_geojson_featureset.hpp"
+#include "geojson_memory_index_featureset.hpp"
 
-large_geojson_featureset::large_geojson_featureset(std::string const& filename,
+geojson_memory_index_featureset::geojson_memory_index_featureset(std::string const& filename,
                                                    array_type && index_array)
 :
 #ifdef _WINDOWS
@@ -48,9 +48,9 @@ large_geojson_featureset::large_geojson_featureset(std::string const& filename,
     if (!file_) throw std::runtime_error("Can't open " + filename);
 }
 
-large_geojson_featureset::~large_geojson_featureset() {}
+geojson_memory_index_featureset::~geojson_memory_index_featureset() {}
 
-mapnik::feature_ptr large_geojson_featureset::next()
+mapnik::feature_ptr geojson_memory_index_featureset::next()
 {
     if (index_itr_ != index_end_)
     {
@@ -65,13 +65,12 @@ mapnik::feature_ptr large_geojson_featureset::next()
         using chr_iterator_type = char const*;
         chr_iterator_type start = json.data();
         chr_iterator_type end = start + json.size();
-
         static const mapnik::transcoder tr("utf8");
         static const mapnik::json::feature_grammar<chr_iterator_type,mapnik::feature_impl> grammar(tr);
         using namespace boost::spirit;
         standard::space_type space;
-        mapnik::feature_ptr feature(mapnik::feature_factory::create(ctx_,1));
-        if (!qi::phrase_parse(start, end, (grammar)(boost::phoenix::ref(*feature)), space))
+        mapnik::feature_ptr feature(mapnik::feature_factory::create(ctx_, feature_id_++));
+        if (!qi::phrase_parse(start, end, (grammar)(boost::phoenix::ref(*feature)), space) || start != end)
         {
             throw std::runtime_error("Failed to parse geojson feature");
         }

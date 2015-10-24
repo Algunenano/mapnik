@@ -41,7 +41,7 @@
 #include <mapnik/util/fs.hpp>
 #include <mapnik/util/spatial_index.hpp>
 #include <mapnik/geom_util.hpp>
-#ifdef CSV_MEMORY_MAPPED_FILE
+#if defined(MAPNIK_MEMORY_MAPPED_FILE)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Wsign-conversion"
@@ -125,7 +125,7 @@ csv_datasource::csv_datasource(parameters const& params)
     }
     else
     {
-#if defined (CSV_MEMORY_MAPPED_FILE)
+#if defined (MAPNIK_MEMORY_MAPPED_FILE)
         using file_source_type = boost::interprocess::ibufferstream;
         file_source_type in;
         mapnik::mapped_region_ptr mapped_region;
@@ -195,7 +195,7 @@ void csv_datasource::parse_csv(T & stream)
                           << "' quote: '" << quote_ << "'";
     stream.seekg(0, std::ios::beg);
 
-    int line_number = 1;
+    int line_number = 0;
     if (!manual_headers_.empty())
     {
         std::size_t index = 0;
@@ -230,7 +230,7 @@ void csv_datasource::parse_csv(T & stream)
                                 s << "CSV Plugin: expected a column header at line ";
                                 s << line_number << ", column " << index;
                                 s << " - ensure this row contains valid header fields: '";
-                                s << csv_line << "'\n";
+                                s << csv_line;
                                 throw mapnik::datasource_exception(s.str());
                             }
                             else
@@ -261,16 +261,19 @@ void csv_datasource::parse_csv(T & stream)
         }
     }
 
-    if (locator_.type == detail::geometry_column_locator::UNKNOWN)
+    std::size_t num_headers = headers_.size();
+    if (!detail::valid(locator_, num_headers))
     {
-        throw mapnik::datasource_exception("CSV Plugin: could not detect column headers with the name of wkt, geojson, x/y, or "
-                                           "latitude/longitude - this is required for reading geometry data");
+        std::string str("CSV Plugin: could not detect column(s) with the name(s) of wkt, geojson, x/y, or ");
+        str += "latitude/longitude in:\n";
+        str += csv_line;
+        str += "\n - this is required for reading geometry data";
+        throw mapnik::datasource_exception(str);
     }
 
     mapnik::value_integer feature_count = 0;
     bool extent_started = false;
 
-    std::size_t num_headers = headers_.size();
     std::for_each(headers_.begin(), headers_.end(),
                   [ & ](std::string const& header){ ctx_->push(header); });
 
@@ -294,8 +297,8 @@ void csv_datasource::parse_csv(T & stream)
     std::vector<item_type> boxes;
     while (is_first_row || csv_utils::getline_csv(stream, csv_line, newline, quote_))
     {
-
-        if ((row_limit_ > 0) && (line_number++ > row_limit_))
+        ++line_number;
+        if ((row_limit_ > 0) && (line_number > row_limit_))
         {
             MAPNIK_LOG_DEBUG(csv) << "csv_datasource: row limit hit, exiting at feature: " << feature_count;
             break;
@@ -326,7 +329,7 @@ void csv_datasource::parse_csv(T & stream)
                 std::ostringstream s;
                 s << "CSV Plugin: # of columns("
                   << num_fields << ") > # of headers("
-                  << num_headers << ") parsed for row " << line_number << "\n";
+                  << num_headers << ") parsed for row " << line_number;
                 throw mapnik::datasource_exception(s.str());
             }
 
@@ -353,18 +356,6 @@ void csv_datasource::parse_csv(T & stream)
                 for (std::size_t i = 0; i < num_headers; ++i)
                 {
                     std::string const& header = headers_.at(i);
-                    if (beg == end) // there are more headers than column values for this row
-                    {
-                        // add an empty string here to represent a missing value
-                        // not using null type here since nulls are not a csv thing
-                        if (feature_count == 1)
-                        {
-                            desc_.add_descriptor(mapnik::attribute_descriptor(header, mapnik::String));
-                        }
-                        // continue here instead of break so that all missing values are
-                        // encoded consistenly as empty strings
-                        continue;
-                    }
                     std::string value = mapnik::util::trim_copy(*beg++);
                     int value_length = value.length();
                     if (locator_.index == i && (locator_.type == detail::geometry_column_locator::WKT
@@ -431,7 +422,7 @@ void csv_datasource::parse_csv(T & stream)
                 std::ostringstream s;
                 s << "CSV Plugin: expected geometry column: could not parse row "
                   << line_number << " "
-                  << values[locator_.index] << "'";
+                  << values.at(locator_.index) << "'";
                 throw mapnik::datasource_exception(s.str());
             }
         }
@@ -440,7 +431,7 @@ void csv_datasource::parse_csv(T & stream)
             if (strict_) throw ex;
             else
             {
-                MAPNIK_LOG_ERROR(csv) << ex.what();
+                MAPNIK_LOG_ERROR(csv) << ex.what() << " at line: " << line_number;
             }
         }
         catch (std::exception const& ex)

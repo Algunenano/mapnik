@@ -20,33 +20,46 @@
  *
  *****************************************************************************/
 
-#ifndef LARGE_GEOJSON_FEATURESET_HPP
-#define LARGE_GEOJSON_FEATURESET_HPP
+#ifndef GEOJSON_INDEX_FEATURESET_HPP
+#define GEOJSON_INDEX_FEATURESET_HPP
 
-#include <mapnik/feature.hpp>
 #include "geojson_datasource.hpp"
+#include <mapnik/feature.hpp>
+#include <mapnik/geom_util.hpp>
+
+#if defined(MAPNIK_MEMORY_MAPPED_FILE)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#include <boost/interprocess/mapped_region.hpp>
+#include <boost/interprocess/streams/bufferstream.hpp>
+#pragma GCC diagnostic pop
+#include <mapnik/mapped_memory_cache.hpp>
+#endif
 
 #include <deque>
 #include <cstdio>
 
-class large_geojson_featureset : public mapnik::Featureset
+class geojson_index_featureset : public mapnik::Featureset
 {
+    using value_type = std::pair<std::size_t, std::size_t>;
 public:
-    using array_type = std::deque<geojson_datasource::item_type>;
-    using file_ptr = std::unique_ptr<std::FILE, int (*)(std::FILE *)>;
-
-    large_geojson_featureset(std::string const& filename,
-                             array_type && index_array);
-    virtual ~large_geojson_featureset();
+    geojson_index_featureset(std::string const& filename, mapnik::filter_in_box const& filter);
+    virtual ~geojson_index_featureset();
     mapnik::feature_ptr next();
 
 private:
+#if defined (MAPNIK_MEMORY_MAPPED_FILE)
+    using file_source_type = boost::interprocess::ibufferstream;
+    mapnik::mapped_region_ptr mapped_region_;
+#else
+    using file_ptr = std::unique_ptr<std::FILE, int (*)(std::FILE *)>;
     file_ptr file_;
-
-    const array_type index_array_;
-    array_type::const_iterator index_itr_;
-    array_type::const_iterator index_end_;
+#endif
+    mapnik::value_integer feature_id_ = 1;
     mapnik::context_ptr ctx_;
+    std::vector<value_type> positions_;
+    std::vector<value_type>::iterator itr_;
 };
 
-#endif // LARGE_GEOJSON_FEATURESET_HPP
+#endif // GEOJSON_INDEX_FEATURESE_HPP

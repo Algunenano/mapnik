@@ -32,6 +32,7 @@
 #include <mapnik/util/conversions.hpp>
 #include <mapnik/csv/csv_grammar.hpp>
 #include <mapnik/util/trim.hpp>
+#include <mapnik/datasource.hpp>
 // boost
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -43,10 +44,6 @@
 #include <string>
 #include <cstdio>
 #include <algorithm>
-
-#ifndef _WINDOWS
-#define CSV_MEMORY_MAPPED_FILE
-#endif
 
 namespace csv_utils
 {
@@ -61,7 +58,7 @@ static mapnik::csv_line parse_line(Iterator start, Iterator end, char separator,
     if (num_columns > 0) values.reserve(num_columns);
     if (!boost::spirit::qi::phrase_parse(start, end, (line_g)(separator, quote), skipper, values))
     {
-        throw std::runtime_error("Failed to parse CSV line:\n" + std::string(start, end));
+        throw mapnik::datasource_exception("Failed to parse CSV line:\n" + std::string(start, end));
     }
     return values;
 }
@@ -251,39 +248,51 @@ static inline void locate_geometry_column(std::string const& header, std::size_t
     }
 }
 
+static inline bool valid(geometry_column_locator const& locator, std::size_t max_size)
+{
+    if (locator.type == geometry_column_locator::UNKNOWN) return false;
+    if (locator.index >= max_size) return false;
+    if (locator.type == geometry_column_locator::LON_LAT && locator.index2 >= max_size) return false;
+    return true;
+}
+
 static inline mapnik::geometry::geometry<double> extract_geometry(std::vector<std::string> const& row, geometry_column_locator const& locator)
 {
     mapnik::geometry::geometry<double> geom;
     if (locator.type == geometry_column_locator::WKT)
     {
-        if (mapnik::from_wkt(row[locator.index], geom))
+        auto wkt_value = row.at(locator.index);
+        if (mapnik::from_wkt(wkt_value, geom))
         {
             // correct orientations ..
             mapnik::geometry::correct(geom);
         }
         else
         {
-            throw std::runtime_error("Failed to parse WKT:" + row[locator.index]);
+            throw mapnik::datasource_exception("Failed to parse WKT: '" + wkt_value + "'");
         }
     }
     else if (locator.type == geometry_column_locator::GEOJSON)
     {
 
-        if (!mapnik::json::from_geojson(row[locator.index], geom))
+        auto json_value = row.at(locator.index);
+        if (!mapnik::json::from_geojson(json_value, geom))
         {
-            throw std::runtime_error("Failed to parse GeoJSON:" + row[locator.index]);
+            throw mapnik::datasource_exception("Failed to parse GeoJSON: '" + json_value + "'");
         }
     }
     else if (locator.type == geometry_column_locator::LON_LAT)
     {
         double x, y;
-        if (!mapnik::util::string2double(row[locator.index],x))
+        auto long_value = row.at(locator.index);
+        auto lat_value = row.at(locator.index2);
+        if (!mapnik::util::string2double(long_value,x))
         {
-            throw std::runtime_error("Failed to parse Longitude(Easting):" + row[locator.index]);
+            throw mapnik::datasource_exception("Failed to parse Longitude: '" + long_value + "'");
         }
-        if (!mapnik::util::string2double(row[locator.index2],y))
+        if (!mapnik::util::string2double(lat_value,y))
         {
-            throw std::runtime_error("Failed to parse Latitude(Northing):" + row[locator.index2]);
+            throw mapnik::datasource_exception("Failed to parse Latitude: '" + lat_value + "'");
         }
         geom = mapnik::geometry::point<double>(x,y);
     }
