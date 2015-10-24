@@ -1,9 +1,10 @@
-mapnik (3.0.7+ds-5) UNRELEASED; urgency=medium
+mapnik (3.0.8+ds-1) UNRELEASED; urgency=medium
 
+  * New upstream release.
   * Don't remove mapnik-render anymore, upstream says it's suitable for
     inclusion now.
 
- -- Bas Couwenberg <sebastic@debian.org>  Thu, 22 Oct 2015 09:22:11 +0200
+ -- Bas Couwenberg <sebastic@debian.org>  Sat, 24 Oct 2015 12:45:53 +0200
 
 mapnik (3.0.7+ds-4) unstable; urgency=medium
 
