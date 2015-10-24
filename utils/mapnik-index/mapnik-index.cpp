@@ -133,22 +133,36 @@ int main (int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    std::clog << "max tree depth:" << depth << std::endl;
-    std::clog << "split ratio:" << ratio << std::endl;
+    std::vector<std::string> files_to_process;
 
-    if (files.size() == 0)
+    for (auto const& filename : files)
+    {
+        if (!mapnik::util::exists(filename))
+        {
+            continue;
+        }
+
+        if (mapnik::detail::is_csv(filename) || mapnik::detail::is_geojson(filename))
+        {
+            files_to_process.push_back(filename);
+        }
+    }
+
+    if (files_to_process.size() == 0)
     {
         std::clog << "no files to index" << std::endl;
         return EXIT_FAILURE;
     }
 
+    std::clog << "max tree depth:" << depth << std::endl;
+    std::clog << "split ratio:" << ratio << std::endl;
+
     using box_type = mapnik::box2d<double>;
     using item_type = std::pair<box_type, std::pair<std::size_t, std::size_t>>;
 
-    for (auto const& filename : files)
+    for (auto const& filename : files_to_process)
     {
-        std::clog << "processing " << filename << std::endl;
-        if (!mapnik::util::exists (filename))
+        if (!mapnik::util::exists(filename))
         {
             std::clog << "Error : file " << filename << " does not exist" << std::endl;
             continue;
@@ -158,12 +172,14 @@ int main (int argc, char** argv)
         mapnik::box2d<double> extent;
         if (mapnik::detail::is_csv(filename))
         {
+            std::clog << "processing '" << filename << "' as CSV\n";
             auto result = mapnik::detail::process_csv_file(boxes, filename, manual_headers, separator, quote);
             if (!result.first) continue;
             extent = result.second;
         }
         else if (mapnik::detail::is_geojson(filename))
         {
+            std::clog << "processing '" << filename << "' as GeoJSON\n";
             auto result = mapnik::detail::process_geojson_file(boxes, filename);
             if (!result.first) continue;
             extent = result.second;
@@ -189,7 +205,7 @@ int main (int argc, char** argv)
             {
                 tree.trim();
                 std::clog <<  "number nodes=" << tree.count() << std::endl;
-                //tree.print();
+                std::clog <<  "number element=" << tree.count_items() << std::endl;
                 file.exceptions(std::ios::failbit | std::ios::badbit);
                 tree.write(file);
                 file.flush();

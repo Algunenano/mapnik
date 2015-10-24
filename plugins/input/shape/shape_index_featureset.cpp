@@ -32,7 +32,7 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wunused-local-typedef"
 #include <boost/algorithm/string.hpp>
-#ifdef SHAPE_MEMORY_MAPPED_FILE
+#if defined(MAPNIK_MEMORY_MAPPED_FILE)
 #include <boost/interprocess/streams/bufferstream.hpp>
 #endif
 #pragma GCC diagnostic pop
@@ -63,7 +63,7 @@ shape_index_featureset<filterT>::shape_index_featureset(filterT const& filter,
     auto index = shape_ptr_->index();
     if (index)
     {
-#ifdef SHAPE_MEMORY_MAPPED_FILE
+#if defined(MAPNIK_MEMORY_MAPPED_FILE)
         mapnik::util::spatial_index<int, filterT,boost::interprocess::ibufferstream>::query(filter, index->file(), offsets_);
 #else
         mapnik::util::spatial_index<int, filterT, std::ifstream>::query(filter, index->file(), offsets_);
@@ -85,10 +85,11 @@ feature_ptr shape_index_featureset<filterT>::next()
     while ( itr_ != offsets_.end())
     {
         shape_ptr_->move_to(*itr_++);
+        mapnik::value_integer feature_id = shape_ptr_->id();
         shape_file::record_type record(shape_ptr_->reclength_ * 2);
         shape_ptr_->shp().read_record(record);
         int type = record.read_ndr_integer();
-        feature_ptr feature(feature_factory::create(ctx_,shape_ptr_->id_));
+        feature_ptr feature(feature_factory::create(ctx_, feature_id));
 
         switch (type)
         {
@@ -141,18 +142,14 @@ feature_ptr shape_index_featureset<filterT>::next()
             return feature_ptr();
         }
 
-        // FIXME: https://github.com/mapnik/mapnik/issues/1020
-        feature->set_id(shape_ptr_->id_);
         if (attr_ids_.size())
         {
             shape_ptr_->dbf().move_to(shape_ptr_->id_);
-            std::vector<int>::const_iterator itr = attr_ids_.begin();
-            std::vector<int>::const_iterator end = attr_ids_.end();
             try
             {
-                for (; itr!=end; ++itr)
+                for (auto id : attr_ids_)
                 {
-                    shape_ptr_->dbf().add_attribute(*itr, *tr_, *feature);
+                    shape_ptr_->dbf().add_attribute(id, *tr_, *feature);
                 }
             }
             catch (...)

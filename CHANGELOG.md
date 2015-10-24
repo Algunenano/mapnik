@@ -6,6 +6,23 @@ Developers: Please commit along with changes.
 
 For a complete change history, see the git log.
 
+## 3.0.8
+
+Released: October 23, 2015
+
+(Packaged from 2d15567)
+
+#### Summary
+
+ - Renamed `SHAPE_MEMORY_MAPPED_FILE` define to `MAPNIK_MEMORY_MAPPED_FILE`. Pass `./configure MEMORY_MAPPED_FILE=True|False` to request
+   support for memory mapped files across Mapnik plugins (currently shape, csv, and geojson).
+ - Unified `mapnik-index` utility supporing GeoJSON and CSV formats
+ - Increased unit test coverage for GeoJSON and CSV plugins
+ - shape.input - refactor to support *.shx and improve handling various bogus shapefiles
+ - geojson.input - make JSON parser stricter + support single Feature/Geometry as well as FeatureCollection
+ - maintain 'FT_LOAD_NO_HINTING' + support >= harfbuzz 1.0.5
+ - geojson.input - implement on-disk-index support
+
 ## 3.0.7
 
 Released: October 12, 2015

@@ -24,6 +24,10 @@
 #include <mapnik/geometry.hpp>
 #include <mapnik/geometry_envelope.hpp>
 #include <mapnik/geometry_adapters.hpp>
+#include <mapnik/util/file_io.hpp>
+#include <mapnik/util/utf_conv_win.hpp>
+
+#if defined(MAPNIK_MEMORY_MAPPED_FILE)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Wsign-compare"
@@ -33,6 +37,8 @@
 #include <boost/spirit/include/qi.hpp>
 #pragma GCC diagnostic pop
 #include <mapnik/mapped_memory_cache.hpp>
+#endif
+
 #include <mapnik/json/positions_grammar.hpp>
 #include <mapnik/json/extract_bounding_box_grammar_impl.hpp>
 
@@ -47,12 +53,13 @@ template <typename T>
 std::pair<bool,box2d<double>> process_geojson_file(T & boxes, std::string const& filename)
 {
     mapnik::box2d<double> extent;
+#if defined(MAPNIK_MEMORY_MAPPED_FILE)
     mapnik::mapped_region_ptr mapped_region;
     boost::optional<mapnik::mapped_region_ptr> memory =
         mapnik::mapped_memory_cache::instance().find(filename, true);
     if (!memory)
     {
-        std::clog << "Error : cannot mmap " << filename << std::endl;
+        std::clog << "Error : cannot memory map " << filename << std::endl;
         return std::make_pair(false, extent);
     }
     else
@@ -61,12 +68,27 @@ std::pair<bool,box2d<double>> process_geojson_file(T & boxes, std::string const&
     }
     char const* start = reinterpret_cast<char const*>(mapped_region->get_address());
     char const* end = start + mapped_region->get_size();
+#else
+    mapnik::util::file file(filename);
+    if (!file.open())
+    {
+        std::clog << "Error : cannot open " << filename << std::endl;
+        return std::make_pair(false, extent);
+    }
+    std::string file_buffer;
+    file_buffer.resize(file.size());
+    std::fread(&file_buffer[0], file.size(), 1, file.get());
+    char const* start = file_buffer.c_str();
+    char const* end = start + file_buffer.length();
+#endif
+
     boost::spirit::standard::space_type space;
     try
     {
         if (!boost::spirit::qi::phrase_parse(start, end, (geojson_datasource_static_bbox_grammar)(boost::phoenix::ref(boxes)) , space))
         {
-            std::clog << "mapnik-index (GeoJSON) : could not parse: '" <<  filename <<  "'";
+            std::clog << "mapnik-index (GeoJSON) : could extract bounding boxes from : '" <<  filename <<  "'";
+            std::clog << " expected FeatureCollection" << std::endl;
             return std::make_pair(false, extent);
         }
     }

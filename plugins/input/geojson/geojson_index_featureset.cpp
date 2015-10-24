@@ -21,42 +21,30 @@
  *****************************************************************************/
 
 // mapnik
-#include "csv_index_featureset.hpp"
-#include <mapnik/debug.hpp>
+#include "geojson_index_featureset.hpp"
 #include <mapnik/feature.hpp>
 #include <mapnik/feature_factory.hpp>
+#include <mapnik/json/geometry_grammar.hpp>
+#include <mapnik/json/feature_grammar.hpp>
 #include <mapnik/util/utf_conv_win.hpp>
-#include <mapnik/util/trim.hpp>
 #include <mapnik/util/spatial_index.hpp>
-#include <mapnik/geometry.hpp>
 // stl
 #include <string>
 #include <vector>
-#include <deque>
 #include <fstream>
 
-csv_index_featureset::csv_index_featureset(std::string const& filename,
-                                           mapnik::filter_in_box const& filter,
-                                           detail::geometry_column_locator const& locator,
-                                           char separator,
-                                           char quote,
-                                           std::vector<std::string> const& headers,
-                                           mapnik::context_ptr const& ctx)
-    : separator_(separator),
-      quote_(quote),
-      headers_(headers),
-      ctx_(ctx),
-      locator_(locator),
-      tr_("utf8")
+geojson_index_featureset::geojson_index_featureset(std::string const& filename, mapnik::filter_in_box const& filter)
+    :
 #if defined(MAPNIK_MEMORY_MAPPED_FILE)
-      //
-#elif defined( _WINDOWS)
-    ,file_(_wfopen(mapnik::utf8_to_utf16(filename).c_str(), L"rb"), std::fclose)
+    //
+#elif defined _WINDOWS
+    file_(_wfopen(mapnik::utf8_to_utf16(filename).c_str(), L"rb"), std::fclose),
 #else
-    ,file_(std::fopen(filename.c_str(),"rb"), std::fclose)
+    file_(std::fopen(filename.c_str(),"rb"), std::fclose),
 #endif
-
+    ctx_(std::make_shared<mapnik::context_type>())
 {
+
 #if defined (MAPNIK_MEMORY_MAPPED_FILE)
     boost::optional<mapnik::mapped_region_ptr> memory =
         mapnik::mapped_memory_cache::instance().find(filename, true);
@@ -69,12 +57,11 @@ csv_index_featureset::csv_index_featureset(std::string const& filename,
         throw std::runtime_error("could not create file mapping for " + filename);
     }
 #else
-    if (!file_) throw mapnik::datasource_exception("CSV Plugin: can't open file " + filename);
+    if (!file_) throw std::runtime_error("Can't open " + filename);
 #endif
-
     std::string indexname = filename + ".index";
     std::ifstream index(indexname.c_str(), std::ios::binary);
-    if (!index) throw mapnik::datasource_exception("CSV Plugin: can't open index file " + indexname);
+    if (!index) throw mapnik::datasource_exception("GeoJSON Plugin: can't open index file " + indexname);
     mapnik::util::spatial_index<value_type,
                                 mapnik::filter_in_box,
                                 std::ifstream>::query(filter, index, positions_);
@@ -84,31 +71,10 @@ csv_index_featureset::csv_index_featureset(std::string const& filename,
     itr_ = positions_.begin();
 }
 
-csv_index_featureset::~csv_index_featureset() {}
+geojson_index_featureset::~geojson_index_featureset() {}
 
-mapnik::feature_ptr csv_index_featureset::parse_feature(char const* beg, char const* end)
+mapnik::feature_ptr geojson_index_featureset::next()
 {
-    auto values = csv_utils::parse_line(beg, end, separator_, quote_, headers_.size());
-    auto geom = detail::extract_geometry(values, locator_);
-    if (!geom.is<mapnik::geometry::geometry_empty>())
-    {
-        mapnik::feature_ptr feature(mapnik::feature_factory::create(ctx_, ++feature_id_));
-        feature->set_geometry(std::move(geom));
-        detail::process_properties(*feature, headers_, values, locator_, tr_);
-        return feature;
-    }
-    return mapnik::feature_ptr();
-}
-
-mapnik::feature_ptr csv_index_featureset::next()
-{
-    /*
-    if (row_limit_ && count_ >= row_limit_)
-    {
-        return feature_ptr();
-    }
-    */
-
     while( itr_ != positions_.end())
     {
         auto pos = *itr_++;
@@ -123,8 +89,16 @@ mapnik::feature_ptr csv_index_featureset::next()
         auto const* start = record.data();
         auto const*  end = start + record.size();
 #endif
-        auto feature = parse_feature(start, end);
-        if (feature) return feature;
+        static const mapnik::transcoder tr("utf8");
+        static const mapnik::json::feature_grammar<char const*, mapnik::feature_impl> grammar(tr);
+        using namespace boost::spirit;
+        standard::space_type space;
+        mapnik::feature_ptr feature(mapnik::feature_factory::create(ctx_, feature_id_++));
+        if (!qi::phrase_parse(start, end, (grammar)(boost::phoenix::ref(*feature)), space) || start != end)
+        {
+            throw std::runtime_error("Failed to parse geojson feature");
+        }
+        return feature;
     }
     return mapnik::feature_ptr();
 }
