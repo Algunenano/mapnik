@@ -22,7 +22,6 @@
 
 #include "catch.hpp"
 
-#include <mapnik/map.hpp>
 #include <mapnik/datasource.hpp>
 #include <mapnik/datasource_cache.hpp>
 #include <mapnik/geometry.hpp>
@@ -30,8 +29,16 @@
 #include <mapnik/util/fs.hpp>
 #include <cstdlib>
 
-#include <boost/filesystem/operations.hpp>
 #include <boost/optional/optional_io.hpp>
+
+/*
+
+Compile and run just this test:
+
+clang++ -o test-geojson -g -I./test/ test/unit/run.cpp test/unit/datasource/geojson.cpp `mapnik-config --all-flags`
+./test-geojson -d yes
+
+*/
 
 namespace {
 
@@ -320,7 +327,7 @@ TEST_CASE("geojson") {
             // cleanup in the case of a failed previous run
             if (mapnik::util::exists(filename + ".index"))
             {
-                boost::filesystem::remove(filename + ".index");
+                mapnik::util::remove(filename + ".index");
             }
 
             for (auto create_index : { true, false })
@@ -387,7 +394,7 @@ TEST_CASE("geojson") {
             // cleanup in the case of a failed previous run
             if (mapnik::util::exists(filename + ".index"))
             {
-                boost::filesystem::remove(filename + ".index");
+                mapnik::util::remove(filename + ".index");
             }
 
             for (auto create_index : { true, false })
@@ -423,7 +430,7 @@ TEST_CASE("geojson") {
                 // cleanup
                 if (create_index && mapnik::util::exists(filename + ".index"))
                 {
-                    boost::filesystem::remove(filename + ".index");
+                    mapnik::util::remove(filename + ".index");
                 }
 
             }
@@ -439,7 +446,7 @@ TEST_CASE("geojson") {
             // cleanup in the case of a failed previous run
             if (mapnik::util::exists(filename + ".index"))
             {
-                boost::filesystem::remove(filename + ".index");
+                mapnik::util::remove(filename + ".index");
             }
 
             for (auto create_index : { true, false })
@@ -474,7 +481,7 @@ TEST_CASE("geojson") {
                 // cleanup
                 if (create_index && mapnik::util::exists(filename + ".index"))
                 {
-                    boost::filesystem::remove(filename + ".index");
+                    mapnik::util::remove(filename + ".index");
                 }
             }
         }

@@ -100,7 +100,7 @@ struct equals
 
     bool operator() (value_double lhs, value_bool rhs) const
     {
-        return static_cast<value_double>(lhs) == rhs;
+        return lhs == static_cast<value_double>(rhs);
     }
 
     bool operator() (value_unicode_string const& lhs,
@@ -123,7 +123,6 @@ struct equals
 };
 
 struct not_equals
-
 {
     template <typename T, typename U>
     bool operator() (const T &, const U &) const
@@ -137,12 +136,17 @@ struct not_equals
         return lhs != rhs;
     }
 
-    bool operator() (value_integer lhs, value_double rhs) const
+    bool operator() (value_bool lhs, value_double rhs) const
     {
         return static_cast<value_double>(lhs) != rhs;
     }
 
-    bool operator() (value_bool lhs, value_double rhs) const
+    bool operator() (value_bool lhs, value_integer rhs) const
+    {
+        return static_cast<value_integer>(lhs) != rhs;
+    }
+
+    bool operator() (value_integer lhs, value_double rhs) const
     {
         return static_cast<value_double>(lhs) != rhs;
     }
@@ -150,11 +154,6 @@ struct not_equals
     bool operator() (value_double lhs, value_integer rhs) const
     {
         return  lhs != static_cast<value_double>(rhs);
-    }
-
-    bool operator() (value_bool lhs, value_integer rhs) const
-    {
-        return static_cast<value_integer>(lhs) != rhs;
     }
 
     bool operator() (value_integer lhs, value_bool rhs) const
@@ -185,7 +184,6 @@ struct not_equals
 };
 
 struct greater_than
-
 {
     template <typename T, typename U>
     bool operator()(const T &, const U &) const
@@ -199,14 +197,34 @@ struct greater_than
         return lhs > rhs;
     }
 
+    bool operator() (value_bool lhs, value_double rhs) const
+    {
+        return static_cast<value_double>(lhs) > rhs;
+    }
+
+    bool operator() (value_double lhs, value_bool rhs) const
+    {
+        return lhs > static_cast<value_double>(rhs);
+    }
+
+    bool operator() (value_bool lhs, value_integer rhs) const
+    {
+        return static_cast<value_integer>(lhs) > rhs;
+    }
+
+    bool operator() (value_integer lhs, value_bool rhs) const
+    {
+        return lhs > static_cast<value_integer>(rhs);
+    }
+
     bool operator() (value_integer lhs, value_double rhs) const
     {
-        return  lhs > rhs;
+        return static_cast<value_double>(lhs) > rhs;
     }
 
     bool operator() (value_double lhs, value_integer rhs) const
     {
-        return  lhs > rhs;
+        return static_cast<value_double>(lhs) > rhs;
     }
 
     bool operator() (value_unicode_string const& lhs, value_unicode_string const& rhs) const
@@ -221,7 +239,6 @@ struct greater_than
 };
 
 struct greater_or_equal
-
 {
     template <typename T, typename U>
     bool operator()(const T &, const U &) const
@@ -235,14 +252,34 @@ struct greater_or_equal
         return lhs >= rhs;
     }
 
+    bool operator() (value_bool lhs, value_double rhs) const
+    {
+        return static_cast<value_double>(lhs) >= rhs;
+    }
+
+    bool operator() (value_double lhs, value_bool rhs) const
+    {
+        return lhs >= static_cast<value_double>(rhs);
+    }
+
+    bool operator() (value_bool lhs, value_integer rhs) const
+    {
+        return static_cast<value_integer>(lhs) >= rhs;
+    }
+
+    bool operator() (value_integer lhs, value_bool rhs) const
+    {
+        return lhs >= static_cast<value_integer>(rhs);
+    }
+
     bool operator() (value_integer lhs, value_double rhs) const
     {
-        return  lhs >= rhs;
+        return  static_cast<value_double>(lhs) >= rhs;
     }
 
     bool operator() (value_double lhs, value_integer rhs) const
     {
-        return  lhs >= rhs;
+        return  lhs >= static_cast<value_double>(rhs);
     }
 
     bool operator() (value_unicode_string const& lhs, value_unicode_string const& rhs) const
@@ -257,7 +294,6 @@ struct greater_or_equal
 };
 
 struct less_than
-
 {
     template <typename T, typename U>
     bool operator()(const T &, const U &) const
@@ -271,14 +307,34 @@ struct less_than
         return lhs < rhs;
     }
 
+    bool operator() (value_bool lhs, value_double rhs) const
+    {
+        return static_cast<value_double>(lhs) < rhs;
+    }
+
+    bool operator() (value_double lhs, value_bool rhs) const
+    {
+        return lhs < static_cast<value_double>(rhs);
+    }
+
+    bool operator() (value_bool lhs, value_integer rhs) const
+    {
+        return static_cast<value_integer>(lhs) < rhs;
+    }
+
+    bool operator() (value_integer lhs, value_bool rhs) const
+    {
+        return lhs < static_cast<value_integer>(rhs);
+    }
+
     bool operator() (value_integer lhs, value_double rhs) const
     {
-        return  lhs < rhs;
+        return  static_cast<value_double>(lhs) < rhs;
     }
 
     bool operator() (value_double lhs, value_integer rhs) const
     {
-        return  lhs < rhs;
+        return  lhs < static_cast<value_double>(rhs);
     }
 
     bool operator()(value_unicode_string const& lhs,
@@ -294,7 +350,6 @@ struct less_than
 };
 
 struct less_or_equal
-
 {
     template <typename T, typename U>
     bool operator()(const T &, const U &) const
@@ -308,14 +363,34 @@ struct less_or_equal
         return lhs <= rhs;
     }
 
+    bool operator() (value_bool lhs, value_double rhs) const
+    {
+        return static_cast<value_double>(lhs) <= rhs;
+    }
+
+    bool operator() (value_double lhs, value_bool rhs) const
+    {
+        return lhs <= static_cast<value_double>(rhs);
+    }
+
+    bool operator() (value_bool lhs, value_integer rhs) const
+    {
+        return static_cast<value_integer>(lhs) <= rhs;
+    }
+
+    bool operator() (value_integer lhs, value_bool rhs) const
+    {
+        return lhs <= static_cast<value_integer>(rhs);
+    }
+
     bool operator() (value_integer lhs, value_double rhs) const
     {
-        return  lhs <= rhs;
+        return static_cast<value_double>(lhs) <= rhs;
     }
 
     bool operator() (value_double lhs, value_integer rhs) const
     {
-        return  lhs <= rhs;
+        return lhs <= static_cast<value_double>(rhs);
     }
 
     bool operator()(value_unicode_string const& lhs,
@@ -917,25 +992,21 @@ inline const value operator+(value const& p1,value const& p2)
 
 inline const value operator-(value const& p1,value const& p2)
 {
-
     return value(util::apply_visitor(impl::sub<value>(),p1, p2));
 }
 
 inline const value operator*(value const& p1,value const& p2)
 {
-
     return value(util::apply_visitor(impl::mult<value>(),p1, p2));
 }
 
 inline const value operator/(value const& p1,value const& p2)
 {
-
     return value(util::apply_visitor(impl::div<value>(),p1, p2));
 }
 
 inline const value operator%(value const& p1,value const& p2)
 {
-
     return value(util::apply_visitor(impl::mod<value>(),p1, p2));
 }
 
