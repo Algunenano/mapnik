@@ -1,8 +1,9 @@
-mapnik (3.0.9~rc1+ds-1) UNRELEASED; urgency=medium
+mapnik (3.0.9~rc1+ds-1~exp1) experimental; urgency=medium
 
   * New upstream release candidate.
+    (closes: #803985)
 
- -- Bas Couwenberg <sebastic@debian.org>  Tue, 03 Nov 2015 23:24:44 +0100
+ -- Bas Couwenberg <sebastic@debian.org>  Tue, 03 Nov 2015 23:30:15 +0100
 
 mapnik (3.0.8+ds-1) unstable; urgency=medium
 
