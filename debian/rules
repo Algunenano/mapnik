@@ -12,7 +12,16 @@ endif
 DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 
 # Disable parallel builds for problematic architectures
-ifneq (,$(findstring $(DEB_HOST_ARCH),"arm64 armel"))
+NO_PARALLEL_ARCHS = "arm64 armel"
+
+ifeq ($(shell dpkg-vendor --derives-from Ubuntu && echo yes),yes)
+	# From mapnik (3.0.8+ds-1ubuntu1):
+	# The amd64 buildds are castrated to 4G RAM and 4G swap,
+	# the ppc64el buildds to 12G RAM and 4G swap.
+	NO_PARALLEL_ARCHS += "amd64 ppc64el"
+endif
+
+ifneq (,$(findstring $(DEB_HOST_ARCH),$(NO_PARALLEL_ARCHS)))
 	NJOBS = -j1
 endif
 
