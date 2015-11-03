@@ -29,6 +29,7 @@
 
 #if defined(MAPNIK_MEMORY_MAPPED_FILE)
 #pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-local-typedef"
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Wsign-compare"
 #pragma GCC diagnostic ignored "-Wsign-conversion"
@@ -88,18 +89,20 @@ std::pair<bool,box2d<double>> process_geojson_file(T & boxes, std::string const&
         if (!boost::spirit::qi::phrase_parse(start, end, (geojson_datasource_static_bbox_grammar)(boost::phoenix::ref(boxes)) , space))
         {
             std::clog << "mapnik-index (GeoJSON) : could extract bounding boxes from : '" <<  filename <<  "'";
-            std::clog << " expected FeatureCollection" << std::endl;
             return std::make_pair(false, extent);
         }
     }
     catch (std::exception const& ex)
     {
-        std::clog << "mapnik-index:" << ex.what() << std::endl;
+        std::clog << "mapnik-index (GeoJSON): " << ex.what() << std::endl;
     }
     for (auto const& item : boxes)
     {
-        if (!extent.valid()) extent = item.first;
-        else extent.expand_to_include(item.first);
+        if (item.first.valid())
+        {
+            if (!extent.valid()) extent = item.first;
+            else extent.expand_to_include(item.first);
+        }
     }
     return std::make_pair(true, extent);
 }
