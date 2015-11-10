@@ -25,7 +25,7 @@
 
 #include <mapnik/config.hpp>
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsign-conversion"
+#include <mapnik/warning_ignore.hpp>
 #include <boost/spirit/home/qi.hpp>
 #include <boost/spirit/home/support/info.hpp>
 #pragma GCC diagnostic pop
