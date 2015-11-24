@@ -1,9 +1,9 @@
-mapnik (3.0.9~rc3+ds-1~exp1) UNRELEASED; urgency=medium
+mapnik (3.0.9~rc3+ds-1~exp1) experimental; urgency=medium
 
   * New upstream release candidate.
   * Disable parallel builds on armhf too.
 
- -- Bas Couwenberg <sebastic@debian.org>  Tue, 24 Nov 2015 23:54:59 +0100
+ -- Bas Couwenberg <sebastic@debian.org>  Tue, 24 Nov 2015 23:58:32 +0100
 
 mapnik (3.0.9~rc2+ds-1~exp1) experimental; urgency=medium
 
