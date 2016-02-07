@@ -1,0 +1,14 @@
+Description: Fix 'occured' typo, replace with 'occurred'.
+Author: Bas Couwenberg <sebastic@debian.org>
+
+--- a/src/load_map.cpp
++++ b/src/load_map.cpp
+@@ -751,7 +751,7 @@ void map_parser::parse_layer(Map & map,
+                 }
+                 catch (...)
+                 {
+-                    throw config_error("Unknown exception occured attempting to create datasoure for layer '" + lyr.name() + "'");
++                    throw config_error("Unknown exception occurred attempting to create datasoure for layer '" + lyr.name() + "'");
+                 }
+             }
+         }
