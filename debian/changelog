@@ -2,6 +2,8 @@ mapnik (3.0.9+ds-2) UNRELEASED; urgency=medium
 
   * Update Vcs-Git URL to use HTTPS.
   * Add patches for various typos.
+  * Add lintian override for old-style-config-script-multiarch-path.
+    See: https://lists.debian.org/debian-devel/2016/01/msg00688.html
 
  -- Bas Couwenberg <sebastic@debian.org>  Fri, 05 Feb 2016 21:12:05 +0100
 

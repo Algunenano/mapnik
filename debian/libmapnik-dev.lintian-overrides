@@ -1,0 +1,3 @@
+# False positive, libmapnik-dev is not marked as Multi-Arch
+libmapnik-dev: old-style-config-script-multiarch-path usr/bin/*-config * 
+
