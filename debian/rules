@@ -76,6 +76,9 @@ debian/stamps/install-python:
 override_dh_install:
 	dh_install --list-missing
 
+override_dh_strip:
+	dh_strip --no-automatic-dbgsym
+
 override_dh_prep:
 	dh_prep -Xdebian/tmp
 
