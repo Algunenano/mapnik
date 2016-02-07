@@ -12,7 +12,7 @@ endif
 DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 
 # Disable parallel builds for problematic architectures
-NO_PARALLEL_ARCHS = "arm64 armel armhf"
+NO_PARALLEL_ARCHS = "arm64 armel armhf alpha hurd-i386 kfreebsd-i386 kfreebsd-amd64"
 
 ifeq ($(shell dpkg-vendor --derives-from Ubuntu && echo yes),yes)
 	# From mapnik (3.0.8+ds-1ubuntu1):
