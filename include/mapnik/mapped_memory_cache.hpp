@@ -28,8 +28,8 @@
 #include <mapnik/util/singleton.hpp>
 #include <mapnik/util/noncopyable.hpp>
 
-// boost
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <boost/optional.hpp>
 
@@ -51,6 +51,8 @@ public:
     boost::optional<mapped_region_ptr> find(std::string const& key, bool update_cache = false);
     void clear();
 };
+
+extern template class MAPNIK_DECL singleton<mapped_memory_cache, CreateStatic>;
 
 }
 

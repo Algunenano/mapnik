@@ -56,7 +56,7 @@ struct main_marker_visitor
           verbose_(verbose),
           auto_open_(auto_open) {}
 
-    int operator() (mapnik::marker_svg const& marker)
+    int operator() (mapnik::marker_svg const& marker) const
     {
         using pixfmt = agg::pixfmt_rgba32_pre;
         using renderer_base = agg::renderer_base<pixfmt>;
@@ -67,6 +67,11 @@ struct main_marker_visitor
         double opacity = 1;
         int w = marker.width();
         int h = marker.height();
+        if (w == 0 || h == 0)
+        {
+            // fallback to svg width/height or viewBox
+            std::tie(w, h) = marker.dimensions();
+        }
         if (verbose_)
         {
             std::clog << "found width of '" << w << "' and height of '" << h << "'\n";
@@ -117,14 +122,14 @@ struct main_marker_visitor
 
     // default
     template <typename T>
-    int operator() (T const&)
+    int operator() (T const&) const
     {
         std::clog << "svg2png error: '" << svg_name_ << "' is not a valid vector!\n";
         return -1;
     }
 
   private:
-    std::string const& svg_name_;
+    std::string svg_name_;
     bool verbose_;
     bool auto_open_;
 };

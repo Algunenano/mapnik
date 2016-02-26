@@ -154,7 +154,7 @@ source = Split(
     well_known_srs.cpp
     params.cpp
     image_filter_types.cpp
-    miniz_png.cpp
+    image_filter_grammar.cpp
     color.cpp
     conversions.cpp
     image_copy.cpp
@@ -252,8 +252,10 @@ source = Split(
     config_error.cpp
     color_factory.cpp
     renderer_common.cpp
+    renderer_common/render_group_symbolizer.cpp
+    renderer_common/render_markers_symbolizer.cpp
     renderer_common/render_pattern.cpp
-    renderer_common/process_group_symbolizer.cpp
+    renderer_common/render_thunk_extractor.cpp
     math.cpp
     """
     )

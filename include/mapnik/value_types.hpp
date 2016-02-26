@@ -80,6 +80,26 @@ struct MAPNIK_DECL value_null
         return true;
     }
 
+    bool operator>(value_null) const
+    {
+        return false;
+    }
+
+    bool operator>=(value_null) const
+    {
+        return true;
+    }
+
+    bool operator<(value_null) const
+    {
+        return false;
+    }
+
+    bool operator<=(value_null) const
+    {
+        return true;
+    }
+
     template <typename T>
     value_null operator+ (T const&) const
     {
@@ -206,6 +226,13 @@ struct mapnik_value_type<T, typename std::enable_if<detail::is_value_unicode_str
 {
     using type = mapnik::value_unicode_string const&;
 };
+
+template <typename T>
+using mapnik_value_type_decay = mapnik_value_type<typename std::decay<T>::type>;
+
+template <typename T, typename U>
+using is_same_decay = std::is_same<typename std::decay<T>::type,
+                                   typename std::decay<U>::type>;
 
 } // namespace detail
 

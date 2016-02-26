@@ -2,7 +2,7 @@
  *
  * This file is part of Mapnik (c++ mapping toolkit)
  *
- * Copyright (C) 2015 Artem Pavlenko
+ * Copyright (C) 2016 Artem Pavlenko
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,24 +20,24 @@
  *
  *****************************************************************************/
 
-#ifndef MAPNIK_RENDERER_COMMON_PROCESS_MARKERS_SYMBOLIZER_HPP
-#define MAPNIK_RENDERER_COMMON_PROCESS_MARKERS_SYMBOLIZER_HPP
-
 #include <mapnik/svg/svg_storage.hpp>
 #include <mapnik/svg/svg_path_adapter.hpp>
 #include <mapnik/vertex_converters.hpp>
 #include <mapnik/marker_cache.hpp>
 #include <mapnik/marker_helpers.hpp>
 #include <mapnik/geometry_type.hpp>
+#include <mapnik/renderer_common/render_markers_symbolizer.hpp>
+#include <mapnik/symbolizer.hpp>
 
 namespace mapnik {
 
-template <typename VD, typename RD, typename RendererType, typename ContextType>
+namespace detail {
+
+template <typename Detector, typename RendererType, typename ContextType>
 struct render_marker_symbolizer_visitor
 {
-    using vector_dispatch_type = VD;
-    using raster_dispatch_type = RD;
-    using buffer_type = typename std::tuple_element<0,ContextType>::type;
+    using vector_dispatch_type = vector_markers_dispatch<Detector>;
+    using raster_dispatch_type = raster_markers_dispatch<Detector>;
 
     using vertex_converter_type = vertex_converter<clip_line_tag,
                                                    clip_poly_tag,
@@ -53,7 +53,7 @@ struct render_marker_symbolizer_visitor
                                      proj_transform const& prj_trans,
                                      RendererType const& common,
                                      box2d<double> const& clip_box,
-                                     ContextType const& renderer_context)
+                                     ContextType & renderer_context)
         : filename_(filename),
           sym_(sym),
           feature_(feature),
@@ -62,9 +62,9 @@ struct render_marker_symbolizer_visitor
           clip_box_(clip_box),
           renderer_context_(renderer_context) {}
 
-    void operator() (marker_null const&) {}
+    void operator() (marker_null const&) const {}
 
-    void operator() (marker_svg const& mark)
+    void operator() (marker_svg const& mark) const
     {
         using namespace mapnik::svg;
         bool clip = get<value_bool, keys::clip>(sym_, feature_, common_.vars_);
@@ -91,13 +91,13 @@ struct render_marker_symbolizer_visitor
             vertex_stl_adapter<svg_path_storage> stl_storage(marker_ellipse->source());
             svg_path_adapter svg_path(stl_storage);
             build_ellipse(sym_, feature_, common_.vars_, *marker_ellipse, svg_path);
-            svg_attribute_type attributes;
-            bool result = push_explicit_style( (*stock_vector_marker)->attributes(), attributes, sym_, feature_, common_.vars_);
+            svg_attribute_type s_attributes;
+            bool result = push_explicit_style( (*stock_vector_marker)->attributes(), s_attributes, sym_, feature_, common_.vars_);
             auto image_transform = get_optional<transform_type>(sym_, keys::image_transform);
             if (image_transform) evaluate_transform(image_tr, feature_, common_.vars_, *image_transform);
             vector_dispatch_type rasterizer_dispatch(marker_ellipse,
                                                      svg_path,
-                                                     result ? attributes : (*stock_vector_marker)->attributes(),
+                                                     result ? s_attributes : (*stock_vector_marker)->attributes(),
                                                      image_tr,
                                                      sym_,
                                                      *common_.detector_,
@@ -139,11 +139,11 @@ struct render_marker_symbolizer_visitor
             if (image_transform) evaluate_transform(image_tr, feature_, common_.vars_, *image_transform);
             vertex_stl_adapter<svg_path_storage> stl_storage((*stock_vector_marker)->source());
             svg_path_adapter svg_path(stl_storage);
-            svg_attribute_type attributes;
-            bool result = push_explicit_style( (*stock_vector_marker)->attributes(), attributes, sym_, feature_, common_.vars_);
+            svg_attribute_type s_attributes;
+            bool result = push_explicit_style( (*stock_vector_marker)->attributes(), s_attributes, sym_, feature_, common_.vars_);
             vector_dispatch_type rasterizer_dispatch(*stock_vector_marker,
                                                      svg_path,
-                                                     result ? attributes : (*stock_vector_marker)->attributes(),
+                                                     result ? s_attributes : (*stock_vector_marker)->attributes(),
                                                      image_tr,
                                                      sym_,
                                                      *common_.detector_,
@@ -179,7 +179,7 @@ struct render_marker_symbolizer_visitor
         }
     }
 
-    void operator() (marker_rgba8 const& mark)
+    void operator() (marker_rgba8 const& mark) const
     {
         using namespace mapnik::svg;
         bool clip = get<value_bool, keys::clip>(sym_, feature_, common_.vars_);
@@ -243,33 +243,57 @@ struct render_marker_symbolizer_visitor
     proj_transform const& prj_trans_;
     RendererType const& common_;
     box2d<double> const& clip_box_;
-    ContextType const& renderer_context_;
+    ContextType & renderer_context_;
 };
 
-template <typename VD, typename RD, typename RendererType, typename ContextType>
+} // namespace detail
+
+markers_dispatch_params::markers_dispatch_params(box2d<double> const& size,
+                                                 agg::trans_affine const& tr,
+                                                 symbolizer_base const& sym,
+                                                 feature_impl const& feature,
+                                                 attributes const& vars,
+                                                 double scale,
+                                                 bool snap)
+    : placement_params{
+        size,
+        tr,
+        get<value_double, keys::spacing>(sym, feature, vars),
+        get<value_double, keys::max_error>(sym, feature, vars),
+        get<value_bool, keys::allow_overlap>(sym, feature, vars),
+        get<value_bool, keys::avoid_edges>(sym, feature, vars),
+        get<direction_enum, keys::direction>(sym, feature, vars)}
+    , placement_method(get<marker_placement_enum, keys::markers_placement_type>(sym, feature, vars))
+    , ignore_placement(get<value_bool, keys::ignore_placement>(sym, feature, vars))
+    , snap_to_pixels(snap)
+    , scale_factor(scale)
+    , opacity(get<value_double, keys::opacity>(sym, feature, vars))
+{
+    placement_params.spacing *= scale;
+}
+
 void render_markers_symbolizer(markers_symbolizer const& sym,
                                mapnik::feature_impl & feature,
                                proj_transform const& prj_trans,
-                               RendererType const& common,
+                               renderer_common const& common,
                                box2d<double> const& clip_box,
-                               ContextType const& renderer_context)
+                               markers_renderer_context & renderer_context)
 {
-    using namespace mapnik::svg;
+    using Detector = decltype(*common.detector_);
+    using RendererType = renderer_common;
+    using ContextType = markers_renderer_context;
+    using VisitorType = detail::render_marker_symbolizer_visitor<Detector,
+                                                                 RendererType,
+                                                                 ContextType>;
+
     std::string filename = get<std::string>(sym, keys::file, feature, common.vars_, "shape://ellipse");
     if (!filename.empty())
     {
-        std::shared_ptr<mapnik::marker const> mark = mapnik::marker_cache::instance().find(filename, true);
-        render_marker_symbolizer_visitor<VD,RD,RendererType,ContextType> visitor(filename,
-                                                                                 sym,
-                                                                                 feature,
-                                                                                 prj_trans,
-                                                                                 common,
-                                                                                 clip_box,
-                                                                                 renderer_context);
+        auto mark = mapnik::marker_cache::instance().find(filename, true);
+        VisitorType visitor(filename, sym, feature, prj_trans, common, clip_box,
+                            renderer_context);
         util::apply_visitor(visitor, *mark);
     }
 }
 
 } // namespace mapnik
-
-#endif // MAPNIK_RENDERER_COMMON_PROCESS_MARKERS_SYMBOLIZER_HPP
