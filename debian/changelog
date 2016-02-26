@@ -9,7 +9,9 @@ mapnik (3.0.10+ds-1) UNRELEASED; urgency=medium
   * Override dh_strip to not generate automatic dbgsym packages,
     those debug files have no debug symbols.
   * Disable parallel builds on alpha, hurd-i386 & kfreebsd-* too.
-  * Update copyright years for Artem Pavlenko.
+  * Update copyright file, changes:
+    - Update copyright years for Artem Pavlenko.
+    - Drop license & copyright for src/miniz.c, no longer included
   * Drop 2001_ftemplate-depth.patch, applied upstream.
   * Add --shape-index option to shapeindex manpage.
   * Add (build) dependency on libmapbox-variant-dev.
