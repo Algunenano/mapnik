@@ -9,6 +9,7 @@ mapnik (3.0.10+ds-1) UNRELEASED; urgency=medium
   * Override dh_strip to not generate automatic dbgsym packages,
     those debug files have no debug symbols.
   * Disable parallel builds on alpha, hurd-i386 & kfreebsd-* too.
+  * Update copyright years for Artem Pavlenko.
 
  -- Bas Couwenberg <sebastic@debian.org>  Fri, 26 Feb 2016 19:48:46 +0100
 
