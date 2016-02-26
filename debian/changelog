@@ -10,6 +10,7 @@ mapnik (3.0.10+ds-1) UNRELEASED; urgency=medium
     those debug files have no debug symbols.
   * Disable parallel builds on alpha, hurd-i386 & kfreebsd-* too.
   * Update copyright years for Artem Pavlenko.
+  * Drop 2001_ftemplate-depth.patch, applied upstream.
 
  -- Bas Couwenberg <sebastic@debian.org>  Fri, 26 Feb 2016 19:48:46 +0100
 
