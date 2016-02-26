@@ -1,10 +1,10 @@
-language: cpp
+language: c
 
 sudo: false
 
 git:
   depth: 10
-  submodules: true
+  submodules: false
 
 env:
   global:
@@ -27,65 +27,67 @@ matrix:
   include:
     - os: linux
       compiler: clang
-      env: JOBS=8 MASON_PUBLISH=true
-    - os: linux
-      compiler: gcc
-      env: JOBS=6
+      env: JOBS=8 CXX="ccache clang++-3.5 -Qunused-arguments" CC="clang-3.5" MASON_PUBLISH=true BENCH=True
+      addons:
+        apt:
+          sources: [ 'ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.5' ]
+          packages: [ 'clang-3.5' ]
+    # OOM killer knocking out build on render_markers_symbolizer.cpp
+    #
+    #- os: linux
+    #  compiler: gcc
+    #  env: JOBS=6 CXX="ccache g++-4.9" CC="gcc-4.9"
+    #  addons:
+    #    apt:
+    #      sources: [ 'ubuntu-toolchain-r-test' ]
+    #      packages: [ 'gcc-4.9', 'g++-4.9', 'libstdc++-4.9-dev', 'libstdc++6' ]
     - os: osx
       compiler: clang
-      env: JOBS=8 MASON_PUBLISH=true
+      # https://docs.travis-ci.com/user/languages/objective-c/#Supported-OS-X-iOS-SDK-versions
+      osx_image: xcode7.2 # upgrades clang from 6 -> 7
+      env: JOBS=8 MASON_PUBLISH=true HEAVY_JOBS=3
     - os: osx
       compiler: clang
-      env: JOBS=8 COVERAGE=true
+      osx_image: xcode7.2 # upgrades clang from 6 -> 7
+      env: JOBS=8 COVERAGE=true HEAVY_JOBS=3
 
 before_install:
+ - source scripts/travis-common.sh
+ - export PYTHONUSERBASE=$(pwd)/mason_packages/.link
+ - export PATH=${PYTHONUSERBASE}/bin:${PATH}
  - export COVERAGE=${COVERAGE:-false}
  - export MASON_PUBLISH=${MASON_PUBLISH:-false}
+ - export BENCH=${BENCH:-false}
  - if [[ ${TRAVIS_BRANCH} != 'master' ]]; then export MASON_PUBLISH=false; fi
  - if [[ ${TRAVIS_PULL_REQUEST} != 'false' ]]; then export MASON_PUBLISH=false; fi
+ - git_submodule_update --init --depth=10
 
 install:
- - if [[ $(uname -s) == 'Linux' ]]; then
-     export CXX="ccache clang++-3.5 -Qunused-arguments";
-     export CC="ccache clang-3.5 -Qunused-arguments";
-     export PYTHONPATH=$(pwd)/mason_packages/.link/lib/python2.7/site-packages;
-   else
-     brew rm postgis --force;
-     brew install postgis --force;
-     pg_ctl -w start -l postgres.log --pgdata /usr/local/var/postgres;
-     createuser -s postgres;
-     export PYTHONPATH=$(pwd)/mason_packages/.link/lib/python/site-packages;
-   fi
- - psql -c 'create database template_postgis;' -U postgres;
- - psql -c 'create extension postgis;' -d template_postgis -U postgres;
- - if [[ ${COVERAGE} == true ]]; then
-     PYTHONUSERBASE=$(pwd)/mason_packages/.link pip install --user cpp-coveralls;
-   fi
+ - on 'linux' export PYTHONPATH=${PYTHONUSERBASE}/lib/python2.7/site-packages
+ - on 'osx' export PYTHONPATH=${PYTHONUSERBASE}/lib/python/site-packages
+ - on 'osx' brew rm postgis --force
+ - on 'osx' brew install postgis --force
+ - on 'osx' pg_ctl -w start -l postgres.log --pgdata /usr/local/var/postgres
+ - on 'osx' createuser -s postgres
+ - psql -c 'create database template_postgis;' -U postgres
+ - psql -c 'create extension postgis;' -d template_postgis -U postgres
+ - enabled ${COVERAGE} pip install --user cpp-coveralls
+
+before_script:
+ - source bootstrap.sh
+ - commit_message_parse
 
 script:
- - source bootstrap.sh
- - if [[ ${COVERAGE} == true ]]; then
-     ./configure CUSTOM_LDFLAGS='--coverage' CUSTOM_CXXFLAGS='--coverage' CUSTOM_CFLAGS='--coverage' DEBUG=True;
-   elif [[ ${MASON_PUBLISH} == true ]]; then
-     export MASON_NAME=mapnik;
-     export MASON_VERSION=latest;
-     export MASON_LIB_FILE=lib/libmapnik-wkt.a;
-     source ./.mason/mason.sh;
-     ./configure PREFIX=${MASON_PREFIX} PATH_REPLACE='' MAPNIK_BUNDLED_SHARE_DIRECTORY=True RUNTIME_LINK='static';
-   else
-     ./configure;
-   fi
+ - export SCONSFLAGS='--debug=time'
+ - configure BENCHMARK=${BENCH}
  - make
- - make test || TEST_RESULT=$?
- - if [[ ${COVERAGE} == true ]]; then
-     ./mason_packages/.link/bin/cpp-coveralls --build-root . --gcov-options '\-lp' --exclude mason_packages --exclude .sconf_temp --exclude benchmark --exclude deps --exclude scons --exclude test --exclude demo --exclude docs --exclude fonts --exclude utils > /dev/null; 
-   fi
- - if [[ ${COVERAGE} != true ]]; then
-     make bench;
-   fi
- - if [[ ${TEST_RESULT} != 0 ]]; then exit $TEST_RESULT ; fi;
- - if [[ ${MASON_PUBLISH} == true ]]; then
-     ./mason_latest.sh build;
-     ./mason_latest.sh link;
+ - make test
+ - enabled ${COVERAGE} coverage
+ - enabled ${BENCH} make bench
+
+after_success:
+ - if enabled ${MASON_PUBLISH}; then
+     ./mason_latest.sh build &&
+     ./mason_latest.sh link &&
      ./mason_latest.sh publish;
    fi

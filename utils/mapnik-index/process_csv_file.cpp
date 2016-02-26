@@ -76,16 +76,17 @@ std::pair<bool,box2d<double>> process_csv_file(T & boxes, std::string const& fil
     char newline;
     bool has_newline;
     char detected_quote;
-    std::tie(newline, has_newline, detected_quote) = ::detail::autodect_newline_and_quote(csv_file, file_length);
+    char detected_separator;
+    std::tie(newline, has_newline, detected_separator, detected_quote) = ::detail::autodect_csv_flavour(csv_file, file_length);
     if (quote == 0) quote = detected_quote;
+    if (separator == 0) separator = detected_separator;
     // set back to start
     csv_file.seekg(0, std::ios::beg);
-    // get first line
     std::string csv_line;
     csv_utils::getline_csv(csv_file, csv_line, newline, quote);
-    if (separator == 0) separator = ::detail::detect_separator(csv_line);
     csv_file.seekg(0, std::ios::beg);
     int line_number = 0;
+
     ::detail::geometry_column_locator locator;
     std::vector<std::string> headers;
     std::clog << "Parsing CSV using SEPARATOR=" << separator << " QUOTE=" << quote << std::endl;
@@ -186,15 +187,23 @@ std::pair<bool,box2d<double>> process_csv_file(T & boxes, std::string const& fil
         }
         try
         {
-            auto values = csv_utils::parse_line(csv_line, separator, quote);
+            auto const* start_line = csv_line.data();
+            auto const* end_line = start_line + csv_line.size();
+            auto values = csv_utils::parse_line(start_line, end_line, separator, quote, num_headers);
             unsigned num_fields = values.size();
-            if (num_fields > num_headers || num_fields < num_headers)
+            if (num_fields != num_headers)
             {
-                // skip this row
                 std::ostringstream s;
-                s << "CSV Index: # of columns("
-                  << num_fields << ") > # of headers("
-                  << num_headers << ") parsed for row " << line_number;
+                s << "CSV Plugin: # of columns(" << num_fields << ")";
+                if (num_fields > num_headers)
+                {
+                    s << " > ";
+                }
+                else
+                {
+                    s << " < ";
+                }
+                s << "# of headers(" << num_headers << ") parsed";
                 throw mapnik::datasource_exception(s.str());
             }
 

@@ -179,21 +179,21 @@ void csv_datasource::parse_csv(T & stream)
     char newline;
     bool has_newline;
     char detected_quote;
-    std::tie(newline, has_newline, detected_quote) = detail::autodect_newline_and_quote(stream, file_length);
+    char detected_separator;
+    std::tie(newline, has_newline, detected_separator, detected_quote) = detail::autodect_csv_flavour(stream, file_length);
     if (quote_ == 0) quote_ = detected_quote;
-    // set back to start
-    stream.seekg(0, std::ios::beg);
-    std::string csv_line;
-    csv_utils::getline_csv(stream, csv_line, newline, quote_);
-    if (separator_ == 0)
-    {
-        separator_ = detail::detect_separator(csv_line);
-    }
+    if (separator_ == 0) separator_ = detected_separator;
 
+    // set back to start
     MAPNIK_LOG_DEBUG(csv) << "csv_datasource: separator: '" << separator_
                           << "' quote: '" << quote_ << "'";
-    stream.seekg(0, std::ios::beg);
 
+    // rewind stream
+    stream.seekg(0, std::ios::beg);
+    //
+    std::string csv_line;
+    csv_utils::getline_csv(stream, csv_line, newline, quote_);
+    stream.seekg(0, std::ios::beg);
     int line_number = 0;
     if (!manual_headers_.empty())
     {
@@ -321,14 +321,23 @@ void csv_datasource::parse_csv(T & stream)
 
         try
         {
-            auto values = csv_utils::parse_line(csv_line, separator_, quote_);
+            auto const* line_start = csv_line.data();
+            auto const* line_end = line_start + csv_line.size();
+            auto values = csv_utils::parse_line(line_start, line_end, separator_, quote_, num_headers);
             unsigned num_fields = values.size();
-            if (num_fields > num_headers || num_fields < num_headers)
+            if (num_fields != num_headers)
             {
                 std::ostringstream s;
-                s << "CSV Plugin: # of columns("
-                  << num_fields << ") > # of headers("
-                  << num_headers << ") parsed for row " << line_number;
+                s << "CSV Plugin: # of columns(" << num_fields << ")";
+                if (num_fields > num_headers)
+                {
+                    s << " > ";
+                }
+                else
+                {
+                    s << " < ";
+                }
+                s << "# of headers(" << num_headers << ") parsed";
                 throw mapnik::datasource_exception(s.str());
             }
 
