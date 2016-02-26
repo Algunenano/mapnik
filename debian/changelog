@@ -12,6 +12,7 @@ mapnik (3.0.10+ds-1) UNRELEASED; urgency=medium
   * Update copyright years for Artem Pavlenko.
   * Drop 2001_ftemplate-depth.patch, applied upstream.
   * Add --shape-index option to shapeindex manpage.
+  * Add (build) dependency on libmapbox-variant-dev.
 
  -- Bas Couwenberg <sebastic@debian.org>  Fri, 26 Feb 2016 19:48:46 +0100
 
