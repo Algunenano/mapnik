@@ -4,6 +4,10 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+# Enable hardening build flags, except:
+#  pie: causes python-mapnik build failure
+export DEB_BUILD_MAINT_OPTIONS=hardening=+all,-pie
+
 NJOBS := -j1
 ifneq (,$(filter parallel=%,$(subst $(COMMA), ,$(DEB_BUILD_OPTIONS))))
 NJOBS := -j$(subst parallel=,,$(filter parallel=%,$(subst $(COMMA), ,$(DEB_BUILD_OPTIONS))))
