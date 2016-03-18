@@ -1,4 +1,4 @@
-mapnik (3.0.10+ds-1) UNRELEASED; urgency=medium
+mapnik (3.0.10+ds-1) unstable; urgency=medium
 
   * New upstream release.
   * Update Vcs-Git URL to use HTTPS.
@@ -16,7 +16,7 @@ mapnik (3.0.10+ds-1) UNRELEASED; urgency=medium
   * Enable all hardening buildflags, except pie
     (causes python-mapnik build failures).
 
- -- Bas Couwenberg <sebastic@debian.org>  Fri, 26 Feb 2016 19:48:46 +0100
+ -- Bas Couwenberg <sebastic@debian.org>  Fri, 18 Mar 2016 18:13:42 +0100
 
 mapnik (3.0.9+ds-1) unstable; urgency=medium
 
