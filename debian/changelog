@@ -1,6 +1,7 @@
 mapnik (3.0.10+ds-2) UNRELEASED; urgency=medium
 
   * Remove hurd-i386 & kfreebsd-i386 from supported architectures.
+  * Add patch to refactor markers_placement_finder.
 
  -- Bas Couwenberg <sebastic@debian.org>  Sat, 19 Mar 2016 16:22:07 +0100
 

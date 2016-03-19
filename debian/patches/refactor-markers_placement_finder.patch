@@ -1,0 +1,693 @@
+From 66e7ef58d716aae3193325f3855a527fecaa6348 Mon Sep 17 00:00:00 2001
+From: Mickey Rose <mickey.rose@seznam.cz>
+Origin: https://github.com/mapnik/mapnik/commit/66e7ef58d716aae3193325f3855a527fecaa6348
+Date: Wed, 2 Mar 2016 00:53:45 +0100
+Subject: [PATCH] refactor markers_placement_finder
+
+- refs #3327
+
+Replace member variant of placement-type implementations with plain
+union. The active implementation is chosen at construction time like
+before.
+
+Make placement-type implementation classes virtual to allow invoking
+the active union member through a base class pointer.
+---
+ include/mapnik/markers_placement.hpp               |  98 ++++++-------
+ include/mapnik/markers_placements/basic.hpp        | 153 +++++++++++++++++++++
+ include/mapnik/markers_placements/interior.hpp     |  24 +---
+ include/mapnik/markers_placements/line.hpp         |  30 ++--
+ include/mapnik/markers_placements/point.hpp        | 118 ++--------------
+ .../mapnik/markers_placements/vertext_first.hpp    |  24 +---
+ include/mapnik/markers_placements/vertext_last.hpp |  21 +--
+ src/renderer_common/render_markers_symbolizer.cpp  |   1 +
+ 8 files changed, 235 insertions(+), 234 deletions(-)
+ create mode 100644 include/mapnik/markers_placements/basic.hpp
+
+--- a/include/mapnik/markers_placement.hpp
++++ b/include/mapnik/markers_placement.hpp
+@@ -29,7 +29,6 @@
+ #include <mapnik/markers_placements/vertext_first.hpp>
+ #include <mapnik/markers_placements/vertext_last.hpp>
+ #include <mapnik/symbolizer_enumerations.hpp>
+-#include <mapnik/util/variant.hpp>
+ 
+ namespace mapnik
+ {
+@@ -38,70 +37,71 @@ template <typename Locator, typename Det
+ class markers_placement_finder : util::noncopyable
+ {
+ public:
+-    using markers_placement = util::variant<markers_point_placement<Locator, Detector>,
+-                                            markers_line_placement<Locator, Detector>,
+-                                            markers_interior_placement<Locator, Detector>,
+-                                            markers_vertex_first_placement<Locator, Detector>,
+-                                            markers_vertex_last_placement<Locator, Detector>>;
+-
+-    class get_point_visitor
+-    {
+-    public:
+-        get_point_visitor(double &x, double &y, double &angle, bool ignore_placement)
+-            : x_(x), y_(y), angle_(angle), ignore_placement_(ignore_placement)
+-        {
+-        }
+-
+-        template <typename T>
+-        bool operator()(T &placement) const
+-        {
+-            return placement.get_point(x_, y_, angle_, ignore_placement_);
+-        }
+-
+-    private:
+-        double &x_, &y_, &angle_;
+-        bool ignore_placement_;
+-    };
++    using basic_placement = markers_basic_placement<Locator, Detector>;
+ 
+     markers_placement_finder(marker_placement_e placement_type,
+                              Locator &locator,
+                              Detector &detector,
+                              markers_placement_params const& params)
+-        : placement_(create(placement_type, locator, detector, params))
+-    {
+-    }
+-
+-    // Get next point where the marker should be placed. Returns true if a place is found, false if none is found.
+-    bool get_point(double &x, double &y, double &angle, bool ignore_placement)
+-    {
+-        return util::apply_visitor(get_point_visitor(x, y, angle, ignore_placement), placement_);
+-    }
+-
+-private:
+-    // Factory function for particular placement implementations.
+-    static markers_placement create(marker_placement_e placement_type,
+-                                    Locator &locator,
+-                                    Detector &detector,
+-                                    markers_placement_params const& params)
++        : active_placement_(nullptr)
+     {
+         switch (placement_type)
+         {
++        default:
+         case MARKER_POINT_PLACEMENT:
+-            return markers_point_placement<Locator, Detector>(locator,detector,params);
++            active_placement_ = construct(&point_, locator, detector, params);
++            break;
+         case MARKER_INTERIOR_PLACEMENT:
+-            return markers_interior_placement<Locator, Detector>(locator,detector,params);
++            active_placement_ = construct(&interior_, locator, detector, params);
++            break;
+         case MARKER_LINE_PLACEMENT:
+-            return markers_line_placement<Locator, Detector>(locator,detector,params);
++            active_placement_ = construct(&line_, locator, detector, params);
++            break;
+         case MARKER_VERTEX_FIRST_PLACEMENT:
+-            return markers_vertex_first_placement<Locator, Detector>(locator,detector,params);
++            active_placement_ = construct(&vertex_first_, locator, detector, params);
++            break;
+         case MARKER_VERTEX_LAST_PLACEMENT:
+-            return markers_vertex_last_placement<Locator, Detector>(locator,detector,params);
+-        default: // point
+-            return markers_point_placement<Locator, Detector>(locator,detector,params);
++            active_placement_ = construct(&vertex_last_, locator, detector, params);
++            break;
+         }
++        // previously placement-type constructors (markers_*_placement)
++        // rewound the locator; reasons for rewinding here instead:
++        //  1) so that nobody is tempted to call now-virtual rewind()
++        //      in placement-type class constructors
++        //  2) it servers as a runtime check that the above switch isn't
++        //      missing cases and active_placement_ points to an object
++        active_placement_->rewind();
++    }
++
++    ~markers_placement_finder()
++    {
++        active_placement_->~basic_placement();
++    }
++
++    // Get next point where the marker should be placed. Returns true if a place is found, false if none is found.
++    bool get_point(double &x, double &y, double &angle, bool ignore_placement)
++    {
++        return active_placement_->get_point(x, y, angle, ignore_placement);
+     }
+ 
+-    markers_placement placement_;
++private:
++    basic_placement* active_placement_;
++
++    union
++    {
++        markers_point_placement<Locator, Detector> point_;
++        markers_line_placement<Locator, Detector> line_;
++        markers_interior_placement<Locator, Detector> interior_;
++        markers_vertex_first_placement<Locator, Detector> vertex_first_;
++        markers_vertex_last_placement<Locator, Detector> vertex_last_;
++    };
++
++    template <typename T>
++    static T* construct(T* what, Locator & locator, Detector & detector,
++                        markers_placement_params const& params)
++    {
++        return new(what) T(locator, detector, params);
++    }
+ };
+ 
+ }
+--- /dev/null
++++ b/include/mapnik/markers_placements/basic.hpp
+@@ -0,0 +1,153 @@
++/*****************************************************************************
++ *
++ * This file is part of Mapnik (c++ mapping toolkit)
++ *
++ * Copyright (C) 2016 Artem Pavlenko
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++ *
++ *****************************************************************************/
++
++#ifndef MAPNIK_MARKERS_PLACEMENTS_BASIC_HPP
++#define MAPNIK_MARKERS_PLACEMENTS_BASIC_HPP
++
++// mapnik
++#include <mapnik/box2d.hpp>
++#include <mapnik/symbolizer_enumerations.hpp>
++#include <mapnik/util/math.hpp>
++#include <mapnik/util/noncopyable.hpp>
++
++// agg
++#include "agg_basics.h"
++#include "agg_trans_affine.h"
++
++namespace mapnik {
++
++struct markers_placement_params
++{
++    box2d<double> size;
++    agg::trans_affine tr;
++    double spacing;
++    double max_error;
++    bool allow_overlap;
++    bool avoid_edges;
++    direction_enum direction;
++};
++
++template <typename Locator, typename Detector>
++class markers_basic_placement : util::noncopyable
++{
++public:
++    markers_basic_placement(Locator & locator, Detector & detector,
++                            markers_placement_params const& params)
++        : locator_(locator),
++          detector_(detector),
++          params_(params),
++          done_(false)
++    {
++        // no need to rewind locator here, markers_placement_finder
++        // does that after construction
++    }
++
++    markers_basic_placement(markers_basic_placement && ) = default;
++
++    virtual ~markers_basic_placement()
++    {
++        // empty but necessary
++    }
++
++    // Start again at first marker. Returns the same list of markers only works when they were NOT added to the detector.
++    virtual void rewind()
++    {
++        locator_.rewind(0);
++        done_ = false;
++    }
++
++    // Get next point where the marker should be placed. Returns true if a place is found, false if none is found.
++    virtual bool get_point(double &x, double &y, double &angle, bool ignore_placement) = 0;
++
++protected:
++    Locator & locator_;
++    Detector & detector_;
++    markers_placement_params const& params_;
++    bool done_;
++
++    // Rotates the size_ box and translates the position.
++    box2d<double> perform_transform(double angle, double dx, double dy) const
++    {
++        auto tr = params_.tr * agg::trans_affine_rotation(angle).translate(dx, dy);
++        return box2d<double>(params_.size, tr);
++    }
++
++    // Checks transformed box placement with collision detector.
++    // returns false if the box:
++    //  - a) isn't wholly inside extent and avoid_edges == true
++    //  - b) collides with something and allow_overlap == false
++    // otherwise returns true, and if ignore_placement == true,
++    //  also adds the box to collision detector
++    bool push_to_detector(double x, double y, double angle, bool ignore_placement)
++    {
++        auto box = perform_transform(angle, x, y);
++        if (params_.avoid_edges && !detector_.extent().contains(box))
++        {
++            return false;
++        }
++        if (!params_.allow_overlap && !detector_.has_placement(box))
++        {
++            return false;
++        }
++        if (!ignore_placement)
++        {
++            detector_.insert(box);
++        }
++        return true;
++    }
++
++    bool set_direction(double & angle) const
++    {
++        switch (params_.direction)
++        {
++            case DIRECTION_UP:
++                angle = 0;
++                return true;
++            case DIRECTION_DOWN:
++                angle = M_PI;
++                return true;
++            case DIRECTION_AUTO:
++                if (std::fabs(util::normalize_angle(angle)) > 0.5 * M_PI)
++                    angle += M_PI;
++                return true;
++            case DIRECTION_AUTO_DOWN:
++                if (std::fabs(util::normalize_angle(angle)) < 0.5 * M_PI)
++                    angle += M_PI;
++                return true;
++            case DIRECTION_LEFT:
++                angle += M_PI;
++                return true;
++            case DIRECTION_LEFT_ONLY:
++                angle += M_PI;
++                return std::fabs(util::normalize_angle(angle)) < 0.5 * M_PI;
++            case DIRECTION_RIGHT_ONLY:
++                return std::fabs(util::normalize_angle(angle)) < 0.5 * M_PI;
++            case DIRECTION_RIGHT:
++            default:
++                return true;
++        }
++    }
++};
++
++} // namespace mapnik
++
++#endif // MAPNIK_MARKERS_PLACEMENTS_BASIC_HPP
+--- a/include/mapnik/markers_placements/interior.hpp
++++ b/include/mapnik/markers_placements/interior.hpp
+@@ -33,14 +33,8 @@ template <typename Locator, typename Det
+ class markers_interior_placement : public markers_point_placement<Locator, Detector>
+ {
+ public:
+-    markers_interior_placement(Locator &locator, Detector &detector, markers_placement_params const& params)
+-        : markers_point_placement<Locator, Detector>(locator, detector, params)
+-    {
+-    }
+-
+-    markers_interior_placement(markers_interior_placement && rhs)
+-        : markers_point_placement<Locator, Detector>(std::move(rhs))
+-    {}
++    using point_placement = markers_point_placement<Locator, Detector>;
++    using point_placement::point_placement;
+ 
+     bool get_point(double &x, double &y, double &angle, bool ignore_placement)
+     {
+@@ -51,7 +45,7 @@ public:
+ 
+         if (this->locator_.type() == geometry::geometry_types::Point)
+         {
+-            return markers_point_placement<Locator, Detector>::get_point(x, y, angle, ignore_placement);
++            return point_placement::get_point(x, y, angle, ignore_placement);
+         }
+ 
+         if (this->locator_.type() == geometry::geometry_types::LineString)
+@@ -73,21 +67,11 @@ public:
+ 
+         angle = 0;
+ 
+-        box2d<double> box = this->perform_transform(angle, x, y);
+-        if (this->params_.avoid_edges && !this->detector_.extent().contains(box))
+-        {
+-            return false;
+-        }
+-        if (!this->params_.allow_overlap && !this->detector_.has_placement(box))
++        if (!this->push_to_detector(x, y, angle, ignore_placement))
+         {
+             return false;
+         }
+ 
+-        if (!ignore_placement)
+-        {
+-            this->detector_.insert(box);
+-        }
+-
+         this->done_ = true;
+         return true;
+     }
+--- a/include/mapnik/markers_placements/line.hpp
++++ b/include/mapnik/markers_placements/line.hpp
+@@ -35,29 +35,23 @@ template <typename Locator, typename Det
+ class markers_line_placement : public markers_point_placement<Locator, Detector>
+ {
+ public:
+-    markers_line_placement(Locator &locator, Detector &detector, markers_placement_params const& params)
+-        : markers_point_placement<Locator, Detector>(locator, detector, params),
++    using point_placement = markers_point_placement<Locator, Detector>;
++    using point_placement::point_placement;
++
++    markers_line_placement(Locator & locator, Detector & detector,
++                           markers_placement_params const& params)
++        : point_placement(locator, detector, params),
+             first_point_(true),
+             spacing_(0.0),
+             marker_width_((params.size * params.tr).width()),
+             path_(locator)
+     {
+         spacing_ = params.spacing < 1 ? 100 : params.spacing;
+-        rewind();
+     }
+ 
+-    markers_line_placement(markers_line_placement && rhs)
+-        : markers_point_placement<Locator, Detector>(std::move(rhs)),
+-          first_point_(std::move(rhs.first_point_)),
+-          spacing_(std::move(rhs.spacing_)),
+-          marker_width_(std::move(rhs.marker_width_)),
+-          path_(std::move(rhs.path_))
+-    {}
+-
+     void rewind()
+     {
+-        this->locator_.rewind(0);
+-        this->done_ = false;
++        point_placement::rewind();
+         first_point_ = true;
+     }
+ 
+@@ -70,7 +64,7 @@ public:
+ 
+         if (this->locator_.type() == geometry::geometry_types::Point)
+         {
+-            return markers_point_placement<Locator, Detector>::get_point(x, y, angle, ignore_placement);
++            return point_placement::get_point(x, y, angle, ignore_placement);
+         }
+ 
+         double move = spacing_;
+@@ -102,16 +96,10 @@ public:
+                     {
+                         continue;
+                     }
+-                    box2d<double> box = this->perform_transform(angle, x, y);
+-                    if ((this->params_.avoid_edges && !this->detector_.extent().contains(box))
+-                        || (!this->params_.allow_overlap && !this->detector_.has_placement(box)))
++                    if (!this->push_to_detector(x, y, angle, ignore_placement))
+                     {
+                         continue;
+                     }
+-                    if (!ignore_placement)
+-                    {
+-                        this->detector_.insert(box);
+-                    }
+                     return true;
+                 }
+             }
+--- a/include/mapnik/markers_placements/point.hpp
++++ b/include/mapnik/markers_placements/point.hpp
+@@ -23,148 +23,54 @@
+ #ifndef MAPNIK_MARKERS_PLACEMENTS_POINT_HPP
+ #define MAPNIK_MARKERS_PLACEMENTS_POINT_HPP
+ 
+-#include <mapnik/box2d.hpp>
+ #include <mapnik/geom_util.hpp>
+ #include <mapnik/geometry_types.hpp>
+-#include <mapnik/util/math.hpp>
+-#include <mapnik/label_collision_detector.hpp>
+-#include <mapnik/symbolizer_enumerations.hpp>
+-#include <mapnik/util/noncopyable.hpp>
+-
+-#include "agg_basics.h"
+-#include "agg_trans_affine.h"
+-
+-#include <cmath>
++#include <mapnik/markers_placements/basic.hpp>
+ 
+ namespace mapnik {
+ 
+-struct markers_placement_params
+-{
+-    box2d<double> size;
+-    agg::trans_affine tr;
+-    double spacing;
+-    double max_error;
+-    bool allow_overlap;
+-    bool avoid_edges;
+-    direction_enum direction;
+-};
+-
+ template <typename Locator, typename Detector>
+-class markers_point_placement : util::noncopyable
++class markers_point_placement : public markers_basic_placement<Locator, Detector>
+ {
+ public:
+-    markers_point_placement(Locator &locator, Detector &detector, markers_placement_params const& params)
+-        : locator_(locator),
+-          detector_(detector),
+-          params_(params),
+-          done_(false)
+-    {
+-        rewind();
+-    }
+-
+-    markers_point_placement(markers_point_placement && rhs)
+-        : locator_(rhs.locator_),
+-          detector_(rhs.detector_),
+-          params_(rhs.params_),
+-          done_(rhs.done_)
+-    {}
+-
+-
+-    // Start again at first marker. Returns the same list of markers only works when they were NOT added to the detector.
+-    void rewind()
+-    {
+-        locator_.rewind(0);
+-        done_ = false;
+-    }
++    using basic_placement = markers_basic_placement<Locator, Detector>;
++    using basic_placement::basic_placement;
+ 
+     // Get next point where the marker should be placed. Returns true if a place is found, false if none is found.
+     bool get_point(double &x, double &y, double &angle, bool ignore_placement)
+     {
+-        if (done_)
++        if (this->done_)
+         {
+             return false;
+         }
+ 
+-        if (locator_.type() == geometry::geometry_types::LineString)
++        if (this->locator_.type() == geometry::geometry_types::LineString)
+         {
+-            if (!label::middle_point(locator_, x, y))
++            if (!label::middle_point(this->locator_, x, y))
+             {
+-                done_ = true;
++                this->done_ = true;
+                 return false;
+             }
+         }
+         else
+         {
+-            if (!label::centroid(locator_, x, y))
++            if (!label::centroid(this->locator_, x, y))
+             {
+-                done_ = true;
++                this->done_ = true;
+                 return false;
+             }
+         }
+ 
+         angle = 0;
+-        box2d<double> box = perform_transform(angle, x, y);
+ 
+-        if (params_.avoid_edges && !detector_.extent().contains(box))
++        if (!this->push_to_detector(x, y, angle, ignore_placement))
+         {
+             return false;
+         }
+-        if (!params_.allow_overlap && !detector_.has_placement(box))
+-        {
+-            return false;
+-        }
+-
+-        if (!ignore_placement)
+-        {
+-            detector_.insert(box);
+-        }
+ 
+-        done_ = true;
++        this->done_ = true;
+         return true;
+     }
+-
+-protected:
+-    Locator &locator_;
+-    Detector &detector_;
+-    markers_placement_params const& params_;
+-    bool done_;
+-
+-    // Rotates the size_ box and translates the position.
+-    box2d<double> perform_transform(double angle, double dx, double dy)
+-    {
+-        agg::trans_affine tr = params_.tr * agg::trans_affine_rotation(angle).translate(dx, dy);
+-        return box2d<double>(params_.size, tr);
+-    }
+-
+-    bool set_direction(double & angle)
+-    {
+-        switch (params_.direction)
+-        {
+-            case DIRECTION_UP:
+-                angle = .0;
+-                return true;
+-            case DIRECTION_DOWN:
+-                angle = M_PI;
+-                return true;
+-            case DIRECTION_AUTO:
+-                angle = (std::fabs(util::normalize_angle(angle)) > 0.5 * M_PI) ? (angle + M_PI) : angle;
+-                return true;
+-            case DIRECTION_AUTO_DOWN:
+-                angle = (std::fabs(util::normalize_angle(angle)) < 0.5 * M_PI) ? (angle + M_PI) : angle;
+-                return true;
+-            case DIRECTION_LEFT:
+-                angle += M_PI;
+-                return true;
+-            case DIRECTION_LEFT_ONLY:
+-                angle += M_PI;
+-                return std::fabs(util::normalize_angle(angle)) < 0.5 * M_PI;
+-            case DIRECTION_RIGHT_ONLY:
+-                return std::fabs(util::normalize_angle(angle)) < 0.5 * M_PI;
+-            case DIRECTION_RIGHT:
+-            default:
+-                return true;
+-        }
+-    }
+ };
+ 
+ }
+--- a/include/mapnik/markers_placements/vertext_first.hpp
++++ b/include/mapnik/markers_placements/vertext_first.hpp
+@@ -31,14 +31,8 @@ template <typename Locator, typename Det
+ class markers_vertex_first_placement : public markers_point_placement<Locator, Detector>
+ {
+ public:
+-    markers_vertex_first_placement(Locator &locator, Detector &detector, markers_placement_params const& params)
+-        : markers_point_placement<Locator, Detector>(locator, detector, params)
+-    {
+-    }
+-
+-    markers_vertex_first_placement(markers_vertex_first_placement && rhs)
+-        : markers_point_placement<Locator, Detector>(std::move(rhs))
+-    {}
++    using point_placement = markers_point_placement<Locator, Detector>;
++    using point_placement::point_placement;
+ 
+     bool get_point(double &x, double &y, double &angle, bool ignore_placement)
+     {
+@@ -49,7 +43,7 @@ public:
+ 
+         if (this->locator_.type() == mapnik::geometry::geometry_types::Point)
+         {
+-            return markers_point_placement<Locator, Detector>::get_point(x, y, angle, ignore_placement);
++            return point_placement::get_point(x, y, angle, ignore_placement);
+         }
+ 
+         double x0, y0;
+@@ -75,21 +69,11 @@ public:
+             }
+         }
+ 
+-        box2d<double> box = this->perform_transform(angle, x, y);
+-        if (this->params_.avoid_edges && !this->detector_.extent().contains(box))
+-        {
+-            return false;
+-        }
+-        if (!this->params_.allow_overlap && !this->detector_.has_placement(box))
++        if (!this->push_to_detector(x, y, angle, ignore_placement))
+         {
+             return false;
+         }
+ 
+-        if (!ignore_placement)
+-        {
+-            this->detector_.insert(box);
+-        }
+-
+         this->done_ = true;
+         return true;
+     }
+--- a/include/mapnik/markers_placements/vertext_last.hpp
++++ b/include/mapnik/markers_placements/vertext_last.hpp
+@@ -31,13 +31,8 @@ template <typename Locator, typename Det
+ class markers_vertex_last_placement : public markers_point_placement<Locator, Detector>
+ {
+ public:
+-    markers_vertex_last_placement(Locator &locator, Detector &detector, markers_placement_params const& params)
+-        : markers_point_placement<Locator, Detector>(locator, detector, params)
+-    {}
+-
+-    markers_vertex_last_placement(markers_vertex_last_placement && rhs)
+-        : markers_point_placement<Locator, Detector>(std::move(rhs))
+-    {}
++    using point_placement = markers_point_placement<Locator, Detector>;
++    using point_placement::point_placement;
+ 
+     bool get_point(double &x, double &y, double &angle, bool ignore_placement)
+     {
+@@ -80,20 +75,10 @@ public:
+             }
+         }
+ 
+-        box2d<double> box = this->perform_transform(angle, x, y);
+-        if (this->params_.avoid_edges && !this->detector_.extent().contains(box))
++        if (!this->push_to_detector(x, y, angle, ignore_placement))
+         {
+             return false;
+         }
+-        if (!this->params_.allow_overlap && !this->detector_.has_placement(box))
+-        {
+-            return false;
+-        }
+-
+-        if (!ignore_placement)
+-        {
+-            this->detector_.insert(box);
+-        }
+ 
+         this->done_ = true;
+         return true;
+--- a/src/renderer_common/render_markers_symbolizer.cpp
++++ b/src/renderer_common/render_markers_symbolizer.cpp
+@@ -20,6 +20,7 @@
+  *
+  *****************************************************************************/
+ 
++#include <mapnik/label_collision_detector.hpp>
+ #include <mapnik/svg/svg_storage.hpp>
+ #include <mapnik/svg/svg_path_adapter.hpp>
+ #include <mapnik/vertex_converters.hpp>
