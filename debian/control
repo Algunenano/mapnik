@@ -38,7 +38,7 @@ Vcs-Git: https://anonscm.debian.org/git/pkg-grass/mapnik.git
 Homepage: http://www.mapnik.org/
 
 Package: libmapnik3.0
-Architecture: any-amd64 any-i386 arm64 armel armhf powerpc ppc64el s390x sparc alpha hppa m68k powerpcspe ppc64 sh4 sparc64 x32
+Architecture: any-amd64 i386 arm64 armel armhf powerpc ppc64el s390x sparc alpha hppa m68k powerpcspe ppc64 sh4 sparc64 x32
 Depends: ${shlibs:Depends},
          ${misc:Depends},
          ttf-dejavu
@@ -56,7 +56,7 @@ Description: C++ toolkit for developing GIS applications (libraries)
  This package contains the shared library and input plugins.
 
 Package: libmapnik-dev
-Architecture: any-amd64 any-i386 arm64 armel armhf powerpc ppc64el s390x sparc alpha hppa m68k powerpcspe ppc64 sh4 sparc64 x32
+Architecture: any-amd64 i386 arm64 armel armhf powerpc ppc64el s390x sparc alpha hppa m68k powerpcspe ppc64 sh4 sparc64 x32
 Section: libdevel
 Depends: ${misc:Depends},
          libmapnik3.0 (= ${binary:Version}),
@@ -100,7 +100,7 @@ Description: C++ toolkit for developing GIS applications (devel)
  build utilities.
 
 Package: mapnik-utils
-Architecture: any-amd64 any-i386 arm64 armel armhf powerpc ppc64el s390x sparc alpha hppa m68k powerpcspe ppc64 sh4 sparc64 x32
+Architecture: any-amd64 i386 arm64 armel armhf powerpc ppc64el s390x sparc alpha hppa m68k powerpcspe ppc64 sh4 sparc64 x32
 Section: utils
 Depends: ${shlibs:Depends},
          ${misc:Depends}
