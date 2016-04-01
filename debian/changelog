@@ -1,3 +1,9 @@
+mapnik (3.0.11+ds-1) UNRELEASED; urgency=medium
+
+  * New upstream release.
+
+ -- Bas Couwenberg <sebastic@debian.org>  Sat, 02 Apr 2016 01:38:25 +0200
+
 mapnik (3.0.10+ds-2) unstable; urgency=medium
 
   * Remove hurd-i386 & kfreebsd-i386 from supported architectures.
