@@ -24,6 +24,7 @@
 #include "ds_test_util.hpp"
 
 #include <mapnik/map.hpp>
+#include <mapnik/unicode.hpp>
 #include <mapnik/datasource.hpp>
 #include <mapnik/datasource_cache.hpp>
 #include <mapnik/geometry.hpp>
@@ -79,31 +80,11 @@ mapnik::datasource_ptr get_csv_ds(std::string const& file_name, bool strict = tr
     return ds;
 }
 
-int create_disk_index(std::string const& filename, bool silent = true)
-{
-    std::string cmd;
-    if (std::getenv("DYLD_LIBRARY_PATH") != nullptr)
-    {
-        cmd += std::string("DYLD_LIBRARY_PATH=") + std::getenv("DYLD_LIBRARY_PATH") + " ";
-    }
-    cmd += "mapnik-index " + filename;
-    if (silent)
-    {
-#ifndef _WINDOWS
-        cmd += " 2>/dev/null";
-#else
-        cmd += " 2> nul";
-#endif
-    }
-    return std::system(cmd.c_str());
-}
-
 } // anonymous namespace
-
-static const std::string csv_plugin("./plugins/input/csv.input");
 
 TEST_CASE("csv") {
 
+    std::string csv_plugin("./plugins/input/csv.input");
     if (mapnik::util::exists(csv_plugin))
     {
         // make the tests silent since we intentionally test error conditions that are noisy
@@ -161,7 +142,7 @@ TEST_CASE("csv") {
                             int ret_posix = (ret >> 8) & 0x000000ff;
                             INFO(ret);
                             INFO(ret_posix);
-                            require_fail = (path == "test/data/csv/warns/feature_id_counting.csv") ? false : true;
+                            require_fail = (boost::iends_with(path,"feature_id_counting.csv")) ? false : true;
                             if (!require_fail)
                             {
                                 REQUIRE(mapnik::util::exists(path + ".index"));
@@ -208,7 +189,7 @@ TEST_CASE("csv") {
                             int ret_posix = (ret >> 8) & 0x000000ff;
                             INFO(ret);
                             INFO(ret_posix);
-                            if (path != "test/data/csv/more_headers_than_column_values.csv") // mapnik-index won't create *.index for 0 features
+                            if (!boost::iends_with(path,"more_headers_than_column_values.csv")) // mapnik-index won't create *.index for 0 features
                             {
                                 CHECK(mapnik::util::exists(path + ".index"));
                             }
@@ -896,7 +877,15 @@ TEST_CASE("csv") {
                 auto feature = all_features(ds)->next();
                 REQUIRE(bool(feature));
                 REQUIRE(feature->has_key("Name"));
-                CHECK(feature->get("Name") == ustring(name.c_str()));
+                std::string utf8;
+                mapnik::transcoder tr("utf-8");
+                ustring expected_string = tr.transcode(name.c_str());
+                mapnik::value val(expected_string);
+                mapnik::to_utf8(expected_string,utf8);
+                INFO(feature->get("Name"));
+                INFO(utf8);
+                INFO(val);
+                CHECK(feature->get("Name") == val);
             }
         } // END SECTION
 

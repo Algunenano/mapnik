@@ -62,6 +62,10 @@ system = 'boost_system%s' % env['BOOST_APPEND']
 lib_env['LIBS'] = [filesystem,
                    regex]
 
+if env['COVERAGE']:
+    lib_env.Append(LINKFLAGS='--coverage')
+    lib_env.Append(CXXFLAGS='--coverage')
+
 if env['HAS_CAIRO']:
     lib_env.Append(LIBS=env['CAIRO_ALL_LIBS'])
 
@@ -201,6 +205,7 @@ source = Split(
     rule.cpp
     save_map.cpp
     wkb.cpp
+    twkb.cpp
     projection.cpp
     proj_transform.cpp
     scale_denominator.cpp
@@ -221,6 +226,7 @@ source = Split(
     warp.cpp
     css_color_grammar.cpp
     vertex_cache.cpp
+    vertex_adapters.cpp
     text/font_library.cpp
     text/text_layout.cpp
     text/text_line.cpp
@@ -257,6 +263,7 @@ source = Split(
     renderer_common/render_pattern.cpp
     renderer_common/render_thunk_extractor.cpp
     math.cpp
+    value.cpp
     """
     )
 
