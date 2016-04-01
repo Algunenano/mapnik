@@ -22,14 +22,16 @@ ECHO msvs_toolset^: %msvs_toolset%
 SET BUILD_TYPE=%configuration%
 SET BUILDPLATFORM=%platform%
 SET TOOLS_VERSION=%msvs_toolset%.0
+SET ICU_VERSION=56.1
+ECHO ICU_VERSION^: %ICU_VERSION%
 IF DEFINED APPVEYOR (ECHO on AppVeyor) ELSE (ECHO NOT on AppVeyor)
 ECHO ========
 
 SET PATH=C:\Python27;%PATH%
 SET PATH=C:\Program Files\7-Zip;%PATH%
 
-::update submodule variant
-git submodule update --init deps/mapbox/variant
+::update submodules (variant + test data)
+git submodule update --init
 IF %ERRORLEVEL% NEQ 0 GOTO ERROR
 
 

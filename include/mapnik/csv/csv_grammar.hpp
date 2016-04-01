@@ -20,20 +20,15 @@
  *
  *****************************************************************************/
 
-#ifndef MAPNIK_CVS_GRAMMAR_HPP
-#define MAPNIK_CVS_GRAMMAR_HPP
+#ifndef MAPNIK_CSV_GRAMMAR_HPP
+#define MAPNIK_CSV_GRAMMAR_HPP
 
-//#define BOOST_SPIRIT_DEBUG
-
+#include <mapnik/csv/csv_types.hpp>
 #include <boost/spirit/include/qi.hpp>
-#include <boost/spirit/include/phoenix.hpp>
 
 namespace mapnik {
 
 namespace qi = boost::spirit::qi;
-using csv_value  = std::string;
-using csv_line = std::vector<csv_value>;
-using csv_data = std::vector<csv_line>;
 
 struct csv_white_space_skipper : qi::primitive_parser<csv_white_space_skipper>
 {
@@ -70,36 +65,7 @@ struct csv_white_space_skipper : qi::primitive_parser<csv_white_space_skipper>
 template <typename Iterator, typename Skipper = csv_white_space_skipper>
 struct csv_line_grammar : qi::grammar<Iterator, csv_line(char, char), Skipper>
 {
-    csv_line_grammar()
-        : csv_line_grammar::base_type(line)
-    {
-        qi::_r1_type _r1;
-        qi::_r2_type _r2;
-        qi::lit_type lit;
-        qi::char_type char_;
-        unesc_char.add
-            ("\\a", '\a')
-            ("\\b", '\b')
-            ("\\f", '\f')
-            ("\\n", '\n')
-            ("\\r", '\r')
-            ("\\t", '\t')
-            ("\\v", '\v')
-            ("\\\\",'\\')
-            ("\\\'", '\'')
-            ("\\\"", '\"')
-            ("\"\"", '\"') // double quote
-            ;
-        line = -lit("\n\r") >> column(_r1, _r2) % lit(_r1)
-            ;
-        column = quoted(_r2) | *(char_ - lit(_r1))
-            ;
-        quoted = lit(_r1) > text(_r1) > lit(_r1) // support unmatched quotes or not (??)
-            ;
-        text = *(unesc_char | (char_ - lit(_r1)))
-            ;
-        BOOST_SPIRIT_DEBUG_NODES((line)(column)(quoted));
-    }
+    csv_line_grammar();
 private:
     qi::rule<Iterator, csv_line(char, char),  Skipper> line;
     qi::rule<Iterator, csv_value(char, char)> column; // no-skip
@@ -110,4 +76,4 @@ private:
 
 }
 
-#endif // MAPNIK_CVS_GRAMMAR_HPP
+#endif // MAPNIK_CSV_GRAMMAR_HPP
