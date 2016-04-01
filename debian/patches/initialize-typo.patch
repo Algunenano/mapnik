@@ -14,7 +14,7 @@ Author: Bas Couwenberg <sebastic@debian.org>
      {
 --- a/src/marker_cache.cpp
 +++ b/src/marker_cache.cpp
-@@ -265,7 +265,7 @@ std::shared_ptr<mapnik::marker const> ma
+@@ -267,7 +267,7 @@ std::shared_ptr<mapnik::marker const> ma
                  }
                  else
                  {

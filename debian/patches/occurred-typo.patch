@@ -3,7 +3,7 @@ Author: Bas Couwenberg <sebastic@debian.org>
 
 --- a/src/load_map.cpp
 +++ b/src/load_map.cpp
-@@ -751,7 +751,7 @@ void map_parser::parse_layer(Map & map,
+@@ -755,7 +755,7 @@ void map_parser::parse_layer(Map & map,
                  }
                  catch (...)
                  {
