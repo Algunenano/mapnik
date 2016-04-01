@@ -1,10 +1,10 @@
-mapnik (3.0.11+ds-1) UNRELEASED; urgency=medium
+mapnik (3.0.11+ds-1) unstable; urgency=medium
 
   * New upstream release.
   * Drop refactor-markers_placement_finder.patch, applied upstream.
   * Refresh remaining patches.
 
- -- Bas Couwenberg <sebastic@debian.org>  Sat, 02 Apr 2016 01:38:25 +0200
+ -- Bas Couwenberg <sebastic@debian.org>  Sat, 02 Apr 2016 01:44:11 +0200
 
 mapnik (3.0.10+ds-2) unstable; urgency=medium
 
