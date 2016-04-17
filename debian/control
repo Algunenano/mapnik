@@ -32,7 +32,7 @@ Build-Depends: scons,
                libsqlite3-dev,
                libcurl4-gnutls-dev,
                libwebp-dev
-Standards-Version: 3.9.7
+Standards-Version: 3.9.8
 Vcs-Browser: https://anonscm.debian.org/cgit/pkg-grass/mapnik.git
 Vcs-Git: https://anonscm.debian.org/git/pkg-grass/mapnik.git
 Homepage: http://www.mapnik.org/
