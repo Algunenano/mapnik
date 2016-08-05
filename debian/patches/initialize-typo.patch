@@ -1,5 +1,6 @@
 Description: Fix 'intialize' typo, replace with 'initialize'.
 Author: Bas Couwenberg <sebastic@debian.org>
+Forwarded: https://github.com/mapnik/mapnik/pull/3480
 
 --- a/src/map.cpp
 +++ b/src/map.cpp

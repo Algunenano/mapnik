@@ -1,5 +1,6 @@
 Description: Fix 'occured' typo, replace with 'occurred'.
 Author: Bas Couwenberg <sebastic@debian.org>
+Forwarded: https://github.com/mapnik/mapnik/pull/3480
 
 --- a/src/load_map.cpp
 +++ b/src/load_map.cpp
