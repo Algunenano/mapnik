@@ -704,11 +704,7 @@ def FindBoost(context, prefixes, thread_flag):
     BOOST_INCLUDE_DIR = None
     BOOST_APPEND = None
     env['BOOST_APPEND'] = str()
-
-    if env['THREADING'] == 'multi':
-        search_lib = 'libboost_thread'
-    else:
-        search_lib = 'libboost_filesystem'
+    search_lib = 'libboost_filesystem'
 
     # note: must call normpath to strip trailing slash otherwise dirname
     # does not remove 'lib' and 'include'
@@ -1359,7 +1355,7 @@ if not preconfigured:
 
     # test for C++11 support, which is required
     if not env['HOST'] and not conf.supports_cxx11():
-        color_print(1,"C++ compiler does not support C++11 standard (-std=c++11), which is required. Please upgrade your compiler to at least g++ 4.7 (ideally 4.8)")
+        color_print(1,"C++ compiler does not support C++11 standard (-std=c++11), which is required. Please upgrade your compiler")
         Exit(1)
 
     if not env['HOST']:
@@ -1411,15 +1407,6 @@ if not preconfigured:
             ['program_options', 'boost/program_options.hpp', False]
         ]
 
-        if env['THREADING'] == 'multi':
-            BOOST_LIBSHEADERS.append(['thread', 'boost/thread/mutex.hpp', True])
-            # on solaris the configure checks for boost_thread
-            # require the -pthreads flag to be able to check for
-            # threading support, so we add as a global library instead
-            # of attaching to cxxflags after configure
-            if env['PLATFORM'] == 'SunOS':
-                env.Append(CXXFLAGS = '-pthreads')
-
         # if requested, sort LIBPATH and CPPPATH before running CheckLibWithHeader tests
         if env['PRIORITIZE_LINKING']:
             conf.prioritize_paths(silent=True)
@@ -1451,12 +1438,13 @@ if not preconfigured:
         # just turn it off like this, but seems the only available work-
         # around. See https://svn.boost.org/trac/boost/ticket/6779 for more
         # details.
-        boost_version = [int(x) for x in env.get('BOOST_LIB_VERSION_FROM_HEADER').split('_')]
-        if not conf.CheckBoostScopedEnum():
-            if boost_version < [1, 51]:
-                env.Append(CXXFLAGS = '-DBOOST_NO_SCOPED_ENUMS')
-            elif boost_version < [1, 57]:
-                env.Append(CXXFLAGS = '-DBOOST_NO_CXX11_SCOPED_ENUMS')
+        if not env['HOST']:
+            boost_version = [int(x) for x in env.get('BOOST_LIB_VERSION_FROM_HEADER').split('_')]
+            if not conf.CheckBoostScopedEnum():
+                if boost_version < [1, 51]:
+                    env.Append(CXXFLAGS = '-DBOOST_NO_SCOPED_ENUMS')
+                elif boost_version < [1, 57]:
+                    env.Append(CXXFLAGS = '-DBOOST_NO_CXX11_SCOPED_ENUMS')
 
     if not env['HOST'] and env['ICU_LIB_NAME'] not in env['MISSING_DEPS']:
         # http://lists.boost.org/Archives/boost/2009/03/150076.php
@@ -1609,6 +1597,7 @@ if not preconfigured:
     # prepend to make sure we link locally
     env.Prepend(CPPPATH = '#deps/agg/include')
     env.Prepend(LIBPATH = '#deps/agg')
+    env.Prepend(CPPPATH = '#deps/mapbox/variant/include')
     # prepend deps dir for auxillary headers
     env.Prepend(CPPPATH = '#deps')
 

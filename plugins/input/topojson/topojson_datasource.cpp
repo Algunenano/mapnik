@@ -66,18 +66,9 @@ struct attr_value_converter
     {
         return mapnik::Boolean;
     }
-
-    mapnik::eAttributeType operator() (std::string const& /*val*/) const
-    {
-        return mapnik::String;
-    }
-
-    mapnik::eAttributeType operator() (mapnik::value_unicode_string const& /*val*/) const
-    {
-        return mapnik::String;
-    }
-
-    mapnik::eAttributeType operator() (mapnik::value_null const& /*val*/) const
+    // string, object, array
+    template <typename T>
+    mapnik::eAttributeType operator() (T const& /*val*/) const
     {
         return mapnik::String;
     }
@@ -109,6 +100,11 @@ struct geometry_type_visitor
     {
         return static_cast<int>(mapnik::datasource_geometry_t::Polygon);
     }
+    template <typename T>
+    int operator() (T const& ) const
+    {
+        return 0;
+    }
 };
 
 struct collect_attributes_visitor
@@ -117,6 +113,9 @@ struct collect_attributes_visitor
     collect_attributes_visitor(mapnik::layer_descriptor & desc):
       desc_(desc) {}
 
+    // no-op
+    void operator() (mapnik::topojson::empty) {}
+    //
     template <typename GeomType>
     void operator() (GeomType const& g)
     {
@@ -285,7 +284,7 @@ mapnik::featureset_ptr topojson_datasource::features(mapnik::query const& q) con
         }
     }
     // otherwise return an empty featureset pointer
-    return mapnik::featureset_ptr();
+    return mapnik::make_empty_featureset();
 }
 
 mapnik::featureset_ptr topojson_datasource::features_at_point(mapnik::coord2d const& pt, double tol) const
