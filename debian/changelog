@@ -1,4 +1,4 @@
-mapnik (3.0.12~rc1+ds-1) UNRELEASED; urgency=medium
+mapnik (3.0.12~rc1+ds-1~exp1) experimental; urgency=medium
 
   * New upstream release candidate.
     - Fixes FTBFS with Boost 1.61.
@@ -8,7 +8,7 @@ mapnik (3.0.12~rc1+ds-1) UNRELEASED; urgency=medium
     - Add Upstream-Name to copyright file.
     - Reorder Files sections
 
- -- Bas Couwenberg <sebastic@debian.org>  Fri, 05 Aug 2016 14:39:55 +0200
+ -- Bas Couwenberg <sebastic@debian.org>  Fri, 05 Aug 2016 14:56:24 +0200
 
 mapnik (3.0.11+ds-1) unstable; urgency=medium
 
