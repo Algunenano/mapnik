@@ -4,6 +4,9 @@ mapnik (3.0.12~rc1+ds-1) UNRELEASED; urgency=medium
     - Fixes FTBFS with Boost 1.61.
   * Bump Standards-Version to 3.9.8, no changes.
   * Require at least mapbox-variant 1.1.1.
+  * Update copyright file, changes:
+    - Add Upstream-Name to copyright file.
+    - Reorder Files sections
 
  -- Bas Couwenberg <sebastic@debian.org>  Fri, 05 Aug 2016 14:39:55 +0200
 
