@@ -1,6 +1,7 @@
 mapnik (3.0.12~rc2+ds-1) UNRELEASED; urgency=medium
 
   * New upstream release candidate.
+  * Drop patches, applied upstream.
 
  -- Bas Couwenberg <sebastic@debian.org>  Wed, 10 Aug 2016 12:34:28 +0200
 
