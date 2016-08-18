@@ -1,9 +1,9 @@
-mapnik (3.0.12~rc4+ds-1) UNRELEASED; urgency=medium
+mapnik (3.0.12~rc4+ds-1~exp1) experimental; urgency=medium
 
   * New upstream release candidate.
   * Drop Debian OpenStreetMap Team from Uploaders.
 
- -- Bas Couwenberg <sebastic@debian.org>  Thu, 18 Aug 2016 19:52:00 +0200
+ -- Bas Couwenberg <sebastic@debian.org>  Thu, 18 Aug 2016 19:53:39 +0200
 
 mapnik (3.0.12~rc3+ds-1~exp1) experimental; urgency=medium
 
