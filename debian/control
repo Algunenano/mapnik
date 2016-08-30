@@ -29,7 +29,7 @@ Build-Depends: scons,
                libpq-dev,
                libgdal-dev,
                libsqlite3-dev,
-               libcurl4-gnutls-dev,
+               libcurl4-gnutls-dev | libcurl-ssl-dev,
                libwebp-dev
 Standards-Version: 3.9.8
 Vcs-Browser: https://anonscm.debian.org/cgit/pkg-grass/mapnik.git
@@ -80,7 +80,7 @@ Depends: ${misc:Depends},
          libpq-dev,
          libgdal-dev,
          libsqlite3-dev,
-         libcurl4-gnutls-dev,
+         libcurl4-gnutls-dev | libcurl-ssl-dev,
          libwebp-dev
 Recommends: mapnik-doc
 Breaks: libmapnik2-dev (<< 2.2.0+ds1-1~)
