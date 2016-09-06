@@ -1,3 +1,9 @@
+mapnik (3.0.12~rc7+ds-1) UNRELEASED; urgency=medium
+
+  * New upstream release candidate.
+
+ -- Bas Couwenberg <sebastic@debian.org>  Tue, 06 Sep 2016 11:09:26 +0200
+
 mapnik (3.0.12~rc6+ds-1~exp2) experimental; urgency=medium
 
   * Add libcurl-ssl-dev as alternative to libcurl4-gnutls-dev dependencies.
