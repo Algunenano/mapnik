@@ -20,9 +20,27 @@
  *
  *****************************************************************************/
 
-#include <mapnik/feature.hpp>
-#include <mapnik/json/topojson_grammar_impl.hpp>
-#include <string>
+#include "catch.hpp"
+#include "ds_test_util.hpp"
 
-using iterator_type = char const*;
-template struct mapnik::topojson::topojson_grammar<iterator_type> ;
+#include <mapnik/unicode.hpp>
+#include <mapnik/datasource.hpp>
+#include <mapnik/memory_datasource.hpp>
+#include <mapnik/datasource_cache.hpp>
+
+
+TEST_CASE("memory datasource") {
+
+    SECTION("empty featureset")
+    {
+        mapnik::parameters params;
+        mapnik::datasource_ptr ds = std::make_shared<mapnik::memory_datasource>(params);
+        CHECK(ds != nullptr);
+        auto fs = all_features(ds);
+        REQUIRE(!mapnik::is_valid(fs));
+        while (auto f = fs->next())
+        {
+            CHECK(false); // shouldn't get here
+        }
+    }
+}
