@@ -1,10 +1,10 @@
-mapnik (3.0.12~rc7+ds-1) UNRELEASED; urgency=medium
+mapnik (3.0.12~rc7+ds-1~exp1) experimental; urgency=medium
 
   * New upstream release candidate.
   * Update copyright file, changes:
     - Add license & copyright for travis-command-wrapper.py
 
- -- Bas Couwenberg <sebastic@debian.org>  Tue, 06 Sep 2016 11:09:26 +0200
+ -- Bas Couwenberg <sebastic@debian.org>  Tue, 06 Sep 2016 11:16:42 +0200
 
 mapnik (3.0.12~rc6+ds-1~exp2) experimental; urgency=medium
 
