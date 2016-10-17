@@ -1,6 +1,7 @@
 Description: Fix 'depedencies' typo, replace with 'dependencies'.
 Author: Bas Couwenberg <sebastic@debian.org>
 Forwarded: https://github.com/mapnik/mapnik/pull/3535
+Applied-Upstream: https://github.com/mapnik/mapnik/commit/e3041f07c71ac46f5b57fa646537a29233a3c488
 
 --- a/CHANGELOG.md
 +++ b/CHANGELOG.md
