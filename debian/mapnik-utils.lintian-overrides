@@ -1,3 +1,0 @@
-# PIE breaks the Python bindings 
-mapnik-utils: hardening-no-pie *
-

@@ -1,6 +1,7 @@
 mapnik (3.0.12+ds-2) UNRELEASED; urgency=medium
 
   * Add patch to fix 'dependencies' typo.
+  * Drop unused override for hardening-no-pie.
 
  -- Bas Couwenberg <sebastic@debian.org>  Fri, 14 Oct 2016 21:53:45 +0200
 
