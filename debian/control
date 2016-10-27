@@ -38,9 +38,9 @@ Homepage: http://www.mapnik.org/
 
 Package: libmapnik3.0
 Architecture: any-amd64 i386 arm64 armel armhf powerpc ppc64el s390x alpha hppa m68k powerpcspe ppc64 sh4 sparc64 x32
-Depends: ${shlibs:Depends},
-         ${misc:Depends},
-         ttf-dejavu
+Depends: fonts-dejavu,
+         ${shlibs:Depends},
+         ${misc:Depends}
 Suggests: postgis
 Description: C++ toolkit for developing GIS applications (libraries)
  Mapnik is an OpenSource C++ toolkit for developing GIS
