@@ -86,3 +86,6 @@ override_dh_strip:
 override_dh_prep:
 	dh_prep -Xdebian/tmp
 
+override_dh_makeshlibs:
+	dh_makeshlibs -V
+
