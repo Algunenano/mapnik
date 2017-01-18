@@ -11,7 +11,7 @@ todo
 - shrink icu data
 '
 
-MASON_VERSION="new-pkgs"
+MASON_VERSION="3e2944322"
 
 function setup_mason() {
     if [[ ! -d ./.mason ]]; then
@@ -95,6 +95,7 @@ function make_config() {
     echo "
 CXX = '$CXX'
 CC = '$CC'
+CUSTOM_CXXFLAGS = '-D_GLIBCXX_USE_CXX11_ABI=0'
 RUNTIME_LINK = 'static'
 INPUT_PLUGINS = 'all'
 PATH = '${MASON_LINKED_REL}/bin'

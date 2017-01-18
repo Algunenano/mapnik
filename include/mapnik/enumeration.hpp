@@ -28,7 +28,6 @@
 #include <mapnik/debug.hpp>
 
 // stl
-#include <bitset>
 #include <iostream>
 #include <cstdlib>
 #include <algorithm>
@@ -189,7 +188,12 @@ public:
         }
         for (unsigned i = 0; i < THE_MAX; ++i)
         {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunknown-pragmas" // clang+gcc
+#pragma GCC diagnostic ignored "-Wpragmas" // gcc
+#pragma GCC diagnostic ignored "-Wundefined-var-template"
             if (str_copy == our_strings_[i])
+#pragma GCC diagnostic pop
             {
                 value_ = static_cast<ENUM>(i);
                 if (deprecated)
@@ -199,14 +203,24 @@ public:
                 return;
             }
         }
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunknown-pragmas" // clang+gcc
+#pragma GCC diagnostic ignored "-Wpragmas" // gcc
+#pragma GCC diagnostic ignored "-Wundefined-var-template"
         throw illegal_enum_value(std::string("Illegal enumeration value '") +
                                  str + "' for enum " + our_name_);
+#pragma GCC diagnostic pop
     }
 
     /** Returns the current value as a string identifier. */
     std::string as_string() const
     {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunknown-pragmas" // clang+gcc
+#pragma GCC diagnostic ignored "-Wpragmas" // gcc
+#pragma GCC diagnostic ignored "-Wundefined-var-template"
         return our_strings_[value_];
+#pragma GCC diagnostic pop
     }
 
     /** Static helper function to iterate over valid identifiers. */

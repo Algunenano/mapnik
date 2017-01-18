@@ -6,6 +6,28 @@ Developers: Please commit along with changes.
 
 For a complete change history, see the git log.
 
+## 3.0.13
+
+Released: January xx, 2017
+
+(Packaged from xxxxxxx)
+
+#### Summary
+
+- Unbundle `unifont` font from distribution
+- GeoJSON: imporoved parsing grammar avoiding temp synthesised attribute (#3507)
+- GeoJSON: expose `num_features_to_query` datasource parameter + unit test (#3515)
+- Fixed intersecting extents in different projections (PR #3525 )
+- Fixed `blur` implementation by taking into account `scale_factor`
+- postgis.input - use 2D box for pgraster bounding box (PR #3551)
+- Fixed GroupSymbolizer PairLayout with 3+ items (#3526)
+- Simplified `hash` implementation (204d30e58d3553278ab6bcda2d4122b0f13f6392)
+- Simplified `mapnik::valu`e conversion rules (#3570)
+- Changed `render_thunk_list` to `std::list<render_thunk>` (PR #3585)
+- Upgraded to variant `v1.1.5`
+- CSV.input - fixed `blank` line test (8a3a380b3b5c64681f2478b4f0d06f6a907f5eed)
+
+
 ## 3.0.12
 
 Released: September 8, 2016
@@ -459,7 +481,7 @@ Released June 3rd, 2013
 
 Summary: The 2.2.0 release is primarily a performance and stability release. The code line represents development in the master branch since the release of 2.1.0 in Aug 2012 and therefore includes nearly a year of bug-fixes and optimizations. Nearly 500 new tests have been added bring the total coverage to 925. Shapefile and PostGIS datasources have benefited from numerous stability fixes, 64 bit integer support has been added to support OSM data in the grid renderer and in attribute filtering, and many fixes have landed for higher quality output when using a custom `scale_factor` during rendering. Critical code paths have been optimized include raster rendering, xml map loading, string to number conversion, vector reprojection when using `epsg:4326` and `epsg:3857`, `hextree` encoding, halo rendering, and rendering when using a custom `gamma`. Mapnik 2.2 also compiles faster than previous releases in the 2.x series and drops several unneeded and hard to install dependencies making builds on OS X and Windows easier than any previous release.
 
-- Removed 3 depedencies without loosing any functionality: `ltdl`, `cairomm` and `libsigc++` (#1804,#806,#1681)
+- Removed 3 dependencies without loosing any functionality: `ltdl`, `cairomm` and `libsigc++` (#1804,#806,#1681)
 
 - Added 64 bit integer support in expressions, feature ids, and the grid_renderer (#1661,#1662,#1662)
 
