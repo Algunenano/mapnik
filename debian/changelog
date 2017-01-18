@@ -1,8 +1,9 @@
-mapnik (3.0.12+ds-3) UNRELEASED; urgency=medium
+mapnik (3.0.13~rc1+ds-1) UNRELEASED; urgency=medium
 
+  * New upstream release candidate.
   * Re-instate lintian override for hardening-no-pie.
 
- -- Bas Couwenberg <sebastic@debian.org>  Wed, 23 Nov 2016 20:18:44 +0100
+ -- Bas Couwenberg <sebastic@debian.org>  Thu, 19 Jan 2017 00:10:27 +0100
 
 mapnik (3.0.12+ds-2) unstable; urgency=medium
 
