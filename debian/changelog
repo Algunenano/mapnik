@@ -2,6 +2,7 @@ mapnik (3.0.13~rc1+ds-1) UNRELEASED; urgency=medium
 
   * New upstream release candidate.
   * Re-instate lintian override for hardening-no-pie.
+  * Drop dependencies-typo.patch, applied upstream.
 
  -- Bas Couwenberg <sebastic@debian.org>  Thu, 19 Jan 2017 00:10:27 +0100
 
