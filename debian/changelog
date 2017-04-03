@@ -1,3 +1,10 @@
+mapnik (3.0.13+ds-1~exp2) UNRELEASED; urgency=medium
+
+  * Merge changes from mapnik (3.0.12+ds-3).
+    (closes: #859424)
+
+ -- Bas Couwenberg <sebastic@debian.org>  Mon, 03 Apr 2017 15:32:34 +0200
+
 mapnik (3.0.13+ds-1~exp1) experimental; urgency=medium
 
   * New upstream release.
