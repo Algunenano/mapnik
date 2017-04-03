@@ -1,6 +1,8 @@
 mapnik (3.0.12+ds-3) UNRELEASED; urgency=medium
 
   * Update branch in gbp.conf & Vcs-Git URL.
+  * Enable PIE hardening buildflags.
+    (closes: #859424)
 
  -- Bas Couwenberg <sebastic@debian.org>  Mon, 03 Apr 2017 14:45:50 +0200
 
