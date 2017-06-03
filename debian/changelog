@@ -1,3 +1,9 @@
+mapnik (3.0.14~rc1+ds-1) UNRELEASED; urgency=medium
+
+  * New upstream release candidate.
+
+ -- Bas Couwenberg <sebastic@debian.org>  Sat, 03 Jun 2017 10:22:15 +0200
+
 mapnik (3.0.13+ds-1~exp2) experimental; urgency=medium
 
   * Merge changes from mapnik (3.0.12+ds-3).
