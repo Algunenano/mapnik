@@ -6,6 +6,13 @@ Developers: Please commit along with changes.
 
 For a complete change history, see the git log.
 
+## 3.0.x
+
+#### Summary
+
+- Fixed problems with high levels of overzooming in the GDAL and raster plugin where data would be slightly offset
+- High levels of overzooming on raster data no longer results in the return of a transparent image.
+
 ## 3.0.13
 
 Released: February 8, 2017
@@ -15,14 +22,14 @@ Released: February 8, 2017
 #### Summary
 
 - Unbundle `unifont` font from distribution
-- GeoJSON: imporoved parsing grammar avoiding temp synthesised attribute (#3507)
+- GeoJSON: improved parsing grammar avoiding temp synthesised attribute (#3507)
 - GeoJSON: expose `num_features_to_query` datasource parameter + unit test (#3515)
 - Fixed intersecting extents in different projections (PR #3525 )
 - Fixed `blur` implementation by taking into account `scale_factor`
 - postgis.input - use 2D box for pgraster bounding box (PR #3551)
 - Fixed GroupSymbolizer PairLayout with 3+ items (#3526)
 - Simplified `hash` implementation (204d30e58d3553278ab6bcda2d4122b0f13f6392)
-- Simplified `mapnik::valu`e conversion rules (#3570)
+- Simplified `mapnik::value` conversion rules (#3570)
 - Changed `render_thunk_list` to `std::list<render_thunk>` (PR #3585)
 - Upgraded to variant `v1.1.5`
 - CSV.input - fixed `blank` line test (8a3a380b3b5c64681f2478b4f0d06f6a907f5eed)

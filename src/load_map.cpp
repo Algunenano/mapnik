@@ -84,7 +84,7 @@ using boost::optional;
 
 constexpr unsigned name2int(const char *str, int off = 0)
 {
-    return !str[off] ? 5381 : (name2int(str, off+1)*33) ^ static_cast<unsigned>(str[off]);
+    return !str[off] ? 5381 : (name2int(str, off + 1) * 33) ^ static_cast<unsigned>(str[off]);
 }
 
 class map_parser : util::noncopyable
@@ -133,7 +133,7 @@ private:
     void find_unused_nodes_recursive(xml_node const& node, std::string & error_text);
     std::string ensure_relative_to_xml(boost::optional<std::string> const& opt_path);
     void ensure_exists(std::string const& file_path);
-    void check_styles(Map const & map) const throw (config_error);
+    void check_styles(Map const & map);
     boost::optional<color> get_opt_color_attr(boost::property_tree::ptree const& node,
                                               std::string const& name);
 
@@ -1155,10 +1155,14 @@ void map_parser::parse_shield_symbolizer(rule & rule, xml_node const& node)
         if (placement_type)
         {
             placements = placements::registry::instance().from_xml(*placement_type, node, fontsets_, true);
-        } else {
-            placements = std::make_shared<text_placements_dummy>();
+            if (!placements)
+                return;
         }
-        placements->defaults.from_xml(node, fontsets_, true);
+        else
+        {
+            placements = std::make_shared<text_placements_dummy>();
+            placements->defaults.from_xml(node, fontsets_, true);
+        }
         if (strict_ &&
             !placements->defaults.format_defaults.fontset)
         {
@@ -1691,7 +1695,7 @@ void map_parser::find_unused_nodes_recursive(xml_node const& node, std::string &
     }
 }
 
-void map_parser::check_styles(Map const & map) const throw (config_error)
+void map_parser::check_styles(Map const & map)
 {
     for (auto const & layer : map.layers())
     {
