@@ -1,9 +1,9 @@
-mapnik (3.0.14~rc1+ds-1) UNRELEASED; urgency=medium
+mapnik (3.0.14~rc1+ds-1~exp1) experimental; urgency=medium
 
   * New upstream release candidate.
   * Update copyright years for Artem Pavlenko.
 
- -- Bas Couwenberg <sebastic@debian.org>  Sat, 03 Jun 2017 10:22:15 +0200
+ -- Bas Couwenberg <sebastic@debian.org>  Sat, 03 Jun 2017 10:25:05 +0200
 
 mapnik (3.0.13+ds-1~exp2) experimental; urgency=medium
 
