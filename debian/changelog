@@ -1,6 +1,7 @@
 mapnik (3.0.14~rc1+ds-1) UNRELEASED; urgency=medium
 
   * New upstream release candidate.
+  * Update copyright years for Artem Pavlenko.
 
  -- Bas Couwenberg <sebastic@debian.org>  Sat, 03 Jun 2017 10:22:15 +0200
 
