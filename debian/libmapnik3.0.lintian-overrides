@@ -1,0 +1,7 @@
+# Build uses -D_FORTIFY_SOURCE=2, but hardening-check reports:
+#  Fortify Source functions: no, only unprotected functions found!
+libmapnik3.0: hardening-no-fortify-functions usr/lib/mapnik/*/input/*.input
+
+# Symbols are problematic for C++ libraries
+libmapnik3.0: no-symbols-control-file *
+
