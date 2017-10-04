@@ -31,7 +31,7 @@ Build-Depends: debhelper (>= 9~),
                pkg-config,
                scons,
                zlib1g-dev
-Standards-Version: 4.1.0
+Standards-Version: 4.1.1
 Vcs-Browser: https://anonscm.debian.org/cgit/pkg-grass/mapnik.git
 Vcs-Git: https://anonscm.debian.org/git/pkg-grass/mapnik.git
 Homepage: http://www.mapnik.org/
