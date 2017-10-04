@@ -1,6 +1,7 @@
 mapnik (3.0.15+ds-2) UNRELEASED; urgency=medium
 
   * Bump Standards-Version to 4.1.1, no changes.
+  * Add patch to support scons 3.0.0.
 
  -- Bas Couwenberg <sebastic@debian.org>  Fri, 22 Sep 2017 23:14:45 +0200
 
