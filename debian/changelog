@@ -1,3 +1,10 @@
+mapnik (3.0.15+ds-3) UNRELEASED; urgency=medium
+
+  * Add patch Matthias Klose by to fix build with ICU 59.1.
+    (closes: #879835)
+
+ -- Bas Couwenberg <sebastic@debian.org>  Thu, 26 Oct 2017 18:47:10 +0200
+
 mapnik (3.0.15+ds-2) unstable; urgency=medium
 
   * Bump Standards-Version to 4.1.1, no changes.
