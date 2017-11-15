@@ -2,6 +2,7 @@ mapnik (3.0.16~rc1+ds-1) UNRELEASED; urgency=medium
 
   * New upstream release candidate.
   * Drop icu-59.patch, fixed upstream.
+  * Strip trailing whitespace from changelog.
 
  -- Bas Couwenberg <sebastic@debian.org>  Wed, 15 Nov 2017 21:08:52 +0100
 
@@ -253,13 +254,13 @@ mapnik (3.0.7+ds-4) unstable; urgency=medium
 
 mapnik (3.0.7+ds-3) unstable; urgency=medium
 
-  * Fix disabling of parallel builds on arm64 & armel. 
+  * Fix disabling of parallel builds on arm64 & armel.
 
  -- Bas Couwenberg <sebastic@debian.org>  Wed, 14 Oct 2015 17:27:24 +0200
 
 mapnik (3.0.7+ds-2) unstable; urgency=medium
 
-  * Disable parallel builds on arm64 & armel. 
+  * Disable parallel builds on arm64 & armel.
 
  -- Bas Couwenberg <sebastic@debian.org>  Wed, 14 Oct 2015 16:50:20 +0200
 
