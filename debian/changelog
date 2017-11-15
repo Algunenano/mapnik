@@ -1,3 +1,9 @@
+mapnik (3.0.16~rc1+ds-1) UNRELEASED; urgency=medium
+
+  * New upstream release candidate.
+
+ -- Bas Couwenberg <sebastic@debian.org>  Wed, 15 Nov 2017 21:08:52 +0100
+
 mapnik (3.0.15+ds-3) unstable; urgency=medium
 
   * Add patch Matthias Klose by to fix build with ICU 59.1.
