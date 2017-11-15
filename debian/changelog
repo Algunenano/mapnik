@@ -1,6 +1,7 @@
 mapnik (3.0.16~rc1+ds-1) UNRELEASED; urgency=medium
 
   * New upstream release candidate.
+  * Drop icu-59.patch, fixed upstream.
 
  -- Bas Couwenberg <sebastic@debian.org>  Wed, 15 Nov 2017 21:08:52 +0100
 

@@ -4,7 +4,7 @@ Forwarded: https://github.com/mapnik/mapnik/pull/3774
 
 --- a/SConstruct
 +++ b/SConstruct
-@@ -142,15 +142,15 @@ def color_print(color,text,newline=True)
+@@ -145,15 +145,15 @@ def color_print(color,text,newline=True)
      # 4 - blue
      text = "\033[9%sm%s\033[0m" % (color,text)
      if not newline:
@@ -24,7 +24,7 @@ Forwarded: https://github.com/mapnik/mapnik/pull/3774
  
  def call(cmd, silent=False):
      stdin, stderr = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE).communicate()
-@@ -503,7 +503,7 @@ elif HELP_REQUESTED:
+@@ -509,7 +509,7 @@ elif HELP_REQUESTED:
  # https://github.com/mapnik/mapnik/issues/2112
  if not os.path.exists(SCONS_LOCAL_LOG) and not os.path.exists(SCONS_CONFIGURE_CACHE) \
    and ('-c' in command_line_args or '--clean' in command_line_args):
@@ -33,7 +33,7 @@ Forwarded: https://github.com/mapnik/mapnik/pull/3774
      Exit(0)
  
  # initially populate environment with defaults and any possible custom arguments
-@@ -528,7 +528,7 @@ if not force_configure:
+@@ -534,7 +534,7 @@ if not force_configure:
  # rebuilds, e.g. for folks following trunk
  for opt in pickle_store:
      if not opt in env:
@@ -42,7 +42,7 @@ Forwarded: https://github.com/mapnik/mapnik/pull/3774
          preconfigured = False
  
  # if custom arguments are supplied make sure to accept them
-@@ -616,7 +616,7 @@ def parse_config(context, config, checks
+@@ -622,7 +622,7 @@ def parse_config(context, config, checks
              parsed = True
          except OSError, e:
              ret = False
@@ -51,7 +51,7 @@ Forwarded: https://github.com/mapnik/mapnik/pull/3774
      if not parsed:
          if config in ('GDAL_CONFIG'):
              # optional deps...
-@@ -652,7 +652,7 @@ def get_pkg_lib(context, config, lib):
+@@ -658,7 +658,7 @@ def get_pkg_lib(context, config, lib):
                  libname = 'gdal'
          except Exception, e:
              ret = False
@@ -60,7 +60,7 @@ Forwarded: https://github.com/mapnik/mapnik/pull/3774
              return None
      context.Result( libname )
      return libname
-@@ -1115,7 +1115,7 @@ if not preconfigured:
+@@ -1235,7 +1235,7 @@ if not preconfigured:
                      opts.files.append(conf)
                      color_print(4,"SCons CONFIG found: '%s', variables will be inherited..." % conf)
                      optfile = file(conf)
@@ -69,7 +69,7 @@ Forwarded: https://github.com/mapnik/mapnik/pull/3774
                      optfile.close()
  
                  elif not conf == SCONS_LOCAL_CONFIG:
-@@ -1636,7 +1636,7 @@ if not preconfigured:
+@@ -1785,7 +1785,7 @@ if not preconfigured:
                  env['HAS_CAIRO'] = False
                  env['SKIPPED_DEPS'].append('cairo')
              else:
@@ -78,7 +78,7 @@ Forwarded: https://github.com/mapnik/mapnik/pull/3774
                  cmd = 'pkg-config --libs --cflags cairo'
                  if env['RUNTIME_LINK'] == 'static':
                      cmd += ' --static'
-@@ -1653,7 +1653,7 @@ if not preconfigured:
+@@ -1802,7 +1802,7 @@ if not preconfigured:
                          if not inc in env['CPPPATH']:
                              env["CAIRO_CPPPATHS"].append(inc)
                      env['HAS_CAIRO'] = True
