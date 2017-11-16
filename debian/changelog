@@ -1,8 +1,8 @@
-mapnik (3.0.16+ds-1) UNRELEASED; urgency=medium
+mapnik (3.0.16+ds-1~exp1) experimental; urgency=medium
 
   * New upstream release.
 
- -- Bas Couwenberg <sebastic@debian.org>  Thu, 16 Nov 2017 18:44:08 +0100
+ -- Bas Couwenberg <sebastic@debian.org>  Thu, 16 Nov 2017 18:44:31 +0100
 
 mapnik (3.0.16~rc1+ds-1~exp1) experimental; urgency=medium
 
