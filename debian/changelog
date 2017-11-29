@@ -1,9 +1,9 @@
-mapnik (3.0.17+ds-1) UNRELEASED; urgency=medium
+mapnik (3.0.17+ds-1~exp1) experimental; urgency=medium
 
   * New upstream release.
   * Drop scons-3.0.patch, fixed upstream.
 
- -- Bas Couwenberg <sebastic@debian.org>  Wed, 29 Nov 2017 20:52:05 +0100
+ -- Bas Couwenberg <sebastic@debian.org>  Wed, 29 Nov 2017 20:54:24 +0100
 
 mapnik (3.0.16+ds-1~exp1) experimental; urgency=medium
 
