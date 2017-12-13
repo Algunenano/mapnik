@@ -1,9 +1,9 @@
-mapnik (3.0.18~rc1+ds-1) UNRELEASED; urgency=medium
+mapnik (3.0.18~rc1+ds-1~exp1) experimental; urgency=medium
 
   * New upstream release candidate.
   * Bump Standards-Version to 4.1.2, no changes.
 
- -- Bas Couwenberg <sebastic@debian.org>  Wed, 13 Dec 2017 18:39:53 +0100
+ -- Bas Couwenberg <sebastic@debian.org>  Wed, 13 Dec 2017 18:40:54 +0100
 
 mapnik (3.0.17+ds-1) unstable; urgency=medium
 
