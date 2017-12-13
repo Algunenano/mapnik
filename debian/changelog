@@ -1,6 +1,7 @@
 mapnik (3.0.18~rc1+ds-1) UNRELEASED; urgency=medium
 
   * New upstream release candidate.
+  * Bump Standards-Version to 4.1.2, no changes.
 
  -- Bas Couwenberg <sebastic@debian.org>  Wed, 13 Dec 2017 18:39:53 +0100
 
