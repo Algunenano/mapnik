@@ -129,6 +129,7 @@ struct render_marker_symbolizer_visitor
 
         boost::optional<svg_path_ptr> const& stock_vector_marker = mark.get_data();
         svg_path_ptr marker_ptr = *stock_vector_marker;
+        bool is_ellipse = false;
 
         std::shared_ptr<svg_attribute_type> r_attributes;
 
@@ -173,6 +174,20 @@ struct render_marker_symbolizer_visitor
         if (filename_ == "shape://ellipse"
            && (has_key(sym_,keys::width) || has_key(sym_,keys::height)))
         {
+            marker_ptr = std::make_shared<svg_storage_type>();
+            is_ellipse = true;
+        }
+        else
+        {
+            box2d<double> const& bbox = mark.bounding_box();
+            setup_transform_scaling(image_tr, bbox.width(), bbox.height(), feature_, common_.vars_, sym_);
+        }
+
+        vertex_stl_adapter<svg_path_storage> stl_storage(marker_ptr->source());
+        std::unique_ptr<svg_path_adapter> svg_path(new svg_path_adapter(stl_storage));
+
+        if (is_ellipse)
+        {
             // Ellipses are built procedurally. We do caching of the built ellipses, this is useful for rendering stages
             std::tuple<double, double, double> marker_key(
                 get<double>(sym_, keys::width, feature_, common_.vars_, -std::numeric_limits<double>::infinity()),
@@ -183,11 +198,7 @@ struct render_marker_symbolizer_visitor
             auto marker_it = cached_ellipses_.find(marker_key);
             if (marker_it == cached_ellipses_.end())
             {
-                marker_ptr = std::make_shared<svg_storage_type>();
-
-                vertex_stl_adapter<svg_path_storage> stl_storage(marker_ptr->source());
-                svg_path_adapter svg_path(stl_storage);
-                build_ellipse(sym_, feature_, common_.vars_, *marker_ptr, svg_path);
+                build_ellipse(sym_, feature_, common_.vars_, *marker_ptr, *svg_path);
 
                 if (cached_ellipses_.size() > ellipses_cache_size)
                 {
@@ -195,17 +206,13 @@ struct render_marker_symbolizer_visitor
                 }
                 marker_it = cached_ellipses_.emplace(marker_key, marker_ptr).first;
             }
-
-            marker_ptr = marker_it->second;
+            else
+            {
+                marker_ptr = marker_it->second;
+                vertex_stl_adapter<svg_path_storage> stl_storage_cache(marker_ptr->source());
+                svg_path.reset(new svg_path_adapter(stl_storage_cache));
+            }
         }
-        else
-        {
-            box2d<double> const& bbox = mark.bounding_box();
-            setup_transform_scaling(image_tr, bbox.width(), bbox.height(), feature_, common_.vars_, sym_);
-        }
-
-        vertex_stl_adapter<svg_path_storage> stl_storage(marker_ptr->source());
-        svg_path_adapter svg_path(stl_storage);
 
         if (auto image_transform = get_optional<transform_type>(sym_, keys::image_transform))
         {
@@ -213,7 +220,7 @@ struct render_marker_symbolizer_visitor
         }
 
         vector_dispatch_type rasterizer_dispatch(marker_ptr,
-                                                 svg_path,
+                                                 *svg_path,
                                                  *r_attributes,
                                                  image_tr,
                                                  sym_,
