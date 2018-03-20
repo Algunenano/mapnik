@@ -59,15 +59,19 @@ struct agg_markers_renderer_context : markers_renderer_context
     using attribute_source_type = typename SvgRenderer::attribute_source_type;
     using pixfmt_type = typename renderer_base::pixfmt_type;
 
+    metrics metrics_;
+
     agg_markers_renderer_context(symbolizer_base const& sym,
                                  feature_impl const& feature,
                                  attributes const& vars,
                                  BufferType & buf,
-                                 RasterizerType & ras)
+                                 RasterizerType & ras,
+                                 metrics & m)
       : buf_(buf),
         pixf_(buf_),
         renb_(pixf_),
         ras_(ras),
+        metrics_(m),
         comp_op_(get<composite_mode_e, keys::comp_op>(sym, feature, vars))
     {
         pixf_.comp_op(static_cast<agg::comp_op_e>(comp_op_));
@@ -116,14 +120,24 @@ struct agg_markers_renderer_context : markers_renderer_context
                 std::shared_ptr<image_rgba8> fill_img;
                 std::shared_ptr<image_rgba8> stroke_img;
 
-                auto it = cached_images_.find(key);
+                std::map<
+                        std::tuple<svg_path_ptr, int, svg::path_attributes>,
+                        std::pair<std::shared_ptr<image_rgba8>, std::shared_ptr<image_rgba8>>
+                    >::iterator it;
+                {
+                    METRIC_UNUSED auto t = metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Cache_search");
+                    it = cached_images_.find(key);
+                }
                 if (it != cached_images_.end())
                 {
+                    metrics_.measure_add("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Cache_hit");
                     fill_img = it->second.first;
                     stroke_img = it->second.second;
                 }
                 else
                 {
+                    metrics_.measure_add("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Cache_miss");
+                    METRIC_UNUSED auto t = metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Cache_image_gen");
                     // Calculate canvas size
                     int width  = static_cast<int>(std::ceil(src->bounding_box().width()  + 2.0 * margin)) + 2;
                     int height = static_cast<int>(std::ceil(src->bounding_box().height() + 2.0 * margin)) + 2;
@@ -190,6 +204,7 @@ struct agg_markers_renderer_context : markers_renderer_context
                     ras_.clip_box(0, 0, pixf_.width(), pixf_.height());
                 }
 
+                METRIC_UNUSED auto t = metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Cache_render");
                 // Set up blitting transformation. We will add a small offset due to sampling
                 agg::trans_affine marker_tr_copy(marker_tr);
                 marker_tr_copy.translate(x0 - dx, y0 - dy);
@@ -207,6 +222,7 @@ struct agg_markers_renderer_context : markers_renderer_context
             }
         }
 
+        metrics_.measure_add("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Cache_ignored");
         // Fallback to non-cached rendering path
         SvgRenderer svg_renderer(path, attrs);
         render_vector_marker(svg_renderer, ras_, renb_, src->bounding_box(), marker_tr, params.opacity, params.snap_to_pixels);
@@ -294,7 +310,7 @@ void agg_renderer<T0,T1>::process(markers_symbolizer const& sym,
     using context_type = detail::agg_markers_renderer_context<svg_renderer_type,
                                                               buf_type,
                                                               rasterizer>;
-    context_type renderer_context(sym, feature, common_.vars_, render_buffer, *ras_ptr);
+    context_type renderer_context(sym, feature, common_.vars_, render_buffer, *ras_ptr, agg_renderer::metrics_);
 
     render_markers_symbolizer(
         sym, feature, prj_trans, common_, clip_box, renderer_context);
