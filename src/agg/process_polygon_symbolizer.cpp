@@ -51,6 +51,7 @@ void agg_renderer<T0,T1>::process(polygon_symbolizer const& sym,
                               mapnik::feature_impl & feature,
                               proj_transform const& prj_trans)
 {
+    METRIC_UNUSED auto t = agg_renderer::metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_polygon_symbolizer");
     using vertex_converter_type = vertex_converter<clip_poly_tag,transform_tag,affine_transform_tag,simplify_tag,smooth_tag>;
 
     ras_ptr->reset();

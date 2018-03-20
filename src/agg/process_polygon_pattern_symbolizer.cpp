@@ -208,6 +208,7 @@ void agg_renderer<T0,T1>::process(polygon_pattern_symbolizer const& sym,
                                   mapnik::feature_impl & feature,
                                   proj_transform const& prj_trans)
 {
+    METRIC_UNUSED auto t = agg_renderer::metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_polygon_pattern_symbolizer");
     std::string filename = get<std::string, keys::file>(sym, feature, common_.vars_);
     if (filename.empty()) return;
     std::shared_ptr<mapnik::marker const> marker = marker_cache::instance().find(filename, true);
