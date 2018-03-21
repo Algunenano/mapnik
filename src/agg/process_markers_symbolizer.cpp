@@ -134,8 +134,7 @@ struct agg_markers_renderer_context : markers_renderer_context
                 }
                 else
                 {
-                    metrics_.measure_add("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Cache_miss");
-                    METRIC_UNUSED auto t = metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Cache_image_gen");
+                    METRIC_UNUSED auto t = metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Cache_gen");
                     // Calculate canvas size
                     int width  = static_cast<int>(std::ceil(src->bounding_box().width()  + 2.0 * margin)) + 2;
                     int height = static_cast<int>(std::ceil(src->bounding_box().height() + 2.0 * margin)) + 2;
@@ -220,7 +219,7 @@ struct agg_markers_renderer_context : markers_renderer_context
             }
         }
 
-        metrics_.measure_add("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Cache_ignored");
+        METRIC_UNUSED auto t = metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Cache_ignored_render");
         // Fallback to non-cached rendering path
         SvgRenderer svg_renderer(path, attrs);
         render_vector_marker(svg_renderer, ras_, renb_, src->bounding_box(), marker_tr, params.opacity, params.snap_to_pixels);
