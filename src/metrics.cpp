@@ -26,7 +26,7 @@
 
 #include <mapnik/make_unique.hpp>
 
-#include <boost/next_prior.hpp>
+#include <algorithm>
 #include <sstream>
 #include <utility>
 
@@ -40,9 +40,10 @@ const std::string measurement_str[TOTAL_ENUM_SIZE] =
     "Calls"
 };
 
-measurement::measurement(int64_t value, measurement_t type)
+measurement::measurement(std::string const& name, int64_t value, measurement_t type)
     : value_(value),
-      type_(type)
+      type_(type),
+      name_(std::move(name))
 {
 }
 
@@ -64,14 +65,10 @@ metrics::metrics(bool enabled)
 {
 }
 
-metrics::metrics(metrics const &m, std::string prefix)
-    : enabled_(m.enabled_),
-      prefix_(m.prefix_ + prefix),
-      storage_(m.storage_)
-#ifdef MAPNIK_THREADSAFE
-     ,lock_(m.lock_)
-#endif
+/* Copy constructor */
+metrics::metrics(metrics const &m)
 {
+    *this = m;
 }
 
 /* Move constructor */
@@ -84,9 +81,10 @@ metrics::metrics(metrics const &&m)
 metrics& metrics::operator=(metrics const& m)
 {
     enabled_ = m.enabled_;
-    prefix_ = m.prefix_;
     storage_ = m.storage_;
+#ifdef MAPNIK_THREADSAFE
     lock_ = m.lock_;
+#endif
     return *this;
 }
 
@@ -106,77 +104,34 @@ void metrics::measure_add_impl(std::string const& name, int64_t value, measureme
 #ifdef MAPNIK_THREADSAFE
     std::lock_guard<std::mutex> lock(*this->lock_);
 #endif
-    auto child = storage_->get_child_optional(prefix_ + name);
-    if (!child)
+    auto it = std::find_if(storage_->begin(), storage_->end(), [&](const measurement& m)
     {
-        storage_->put(prefix_ + name, measurement(value, type));
+        return (name.compare(m.name_) == 0);
+    });
+
+    if (it == storage_->end())
+    {
+        storage_->emplace_back(name, value, type);
     }
     else
     {
-        auto &measure = child->data();
-        measure.value_ += value;
-        if (measure.type_ == measurement_t::UNASSIGNED)
-        {
-            measure.type_ = type;
-        }
-        else
-        {
-            measure.calls_++;
-        }
+        it->value_ += value;
+        it->calls_++;
     }
 }
 
 
-boost::optional<measurement &> metrics::find(std::string const& name, bool ignore_prefix)
+boost::optional<measurement &> metrics::find(std::string const& name)
 {
 #ifdef MAPNIK_THREADSAFE
     std::lock_guard<std::mutex> lock(*this->lock_);
 #endif
-    auto m = storage_->get_child_optional(ignore_prefix ? name : prefix_ + name);
-    return (m ? m->data() : boost::optional<measurement &>());
-}
-
-/**
- * Recursively generate a JSON string from a metrics tree.
- * It doesn't use boost::property_tree::json_parser because we can have
- * nodes with data and children
- * @param buf
- * @param t
- */
-void to_string_helper(std::ostringstream &buf, metrics::metrics_tree t)
-{
-    measurement &m = t.data();
-    if (t.empty() && m.type_ == measurement_t::VALUE)
+    auto it = std::find_if(storage_->begin(), storage_->end(), [&](const measurement& m)
     {
-        buf << m.value_;
-        return;
-    }
+        return (name.compare(m.name_) == 0);
+    });
 
-    buf << "{";
-    if (m.type_ != measurement_t::UNASSIGNED)
-    {
-        buf << R"(")" << measurement_str[m.type_] << R"(":)" << m.value_;
-        if (m.type_ == measurement_t::TIME_MICROSECONDS)
-        {
-            buf << R"(,")" << measurement_str[measurement_t::CALLS];
-            buf << R"(":)" << m.calls_;
-        }
-        if (!t.empty())
-        {
-            buf << ",";
-        }
-    }
-
-    for (auto it = t.begin(); it != t.end(); it++)
-    {
-        buf << R"(")" << it->first << R"(":)";
-        to_string_helper(buf, it->second);
-        if (boost::next(it) != t.end())
-        {
-            buf << ",";
-        }
-    }
-    buf << "}";
+    return (it != storage_->end() ? *it : boost::optional<measurement &>());
 }
 
 std::string metrics::to_string()
@@ -186,7 +141,34 @@ std::string metrics::to_string()
 #endif
     std::ostringstream buf;
 
-    to_string_helper(buf, *storage_);
+    buf << "{";
+    for (auto it = storage_->begin(); it != storage_->end(); it++)
+    {
+        buf << R"(")" << it->name_ << R"(":)";
+        switch (it->type_)
+        {
+            case (measurement_t::VALUE):
+                buf << it->value_;
+                break;
+            case (measurement_t::TIME_MICROSECONDS):
+                buf << "{";
+                buf << R"(")" << measurement_str[measurement_t::TIME_MICROSECONDS];
+                buf << R"(":)" << it->value_;
+                buf << R"(,")" << measurement_str[measurement_t::CALLS];
+                buf << R"(":)" << it->calls_;
+                buf << "}";
+                break;
+            default:
+                break;
+        }
+
+        if (std::next(it) != storage_->end())
+        {
+            buf << ",";
+        }
+    }
+
+    buf << "}";
     return buf.str();
 }
 

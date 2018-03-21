@@ -26,10 +26,11 @@
 #include <mapnik/config.hpp>
 
 #include <boost/optional/optional.hpp>
-#include <boost/property_tree/ptree.hpp>
+
 #include <chrono>
 #include <memory>
 #include <string>
+#include <vector>
 
 #ifdef MAPNIK_THREADSAFE
 #include <mutex>
@@ -46,7 +47,7 @@ enum measurement_t : int_fast8_t
     TOTAL_ENUM_SIZE
 };
 
-#if defined(__has_cpp_attribute) 
+#if defined(__has_cpp_attribute)
     #if __has_cpp_attribute(maybe_unused)
         #define METRIC_UNUSED [[maybe_unused]]
     #elif __has_cpp_attribute(gnu::unused)
@@ -73,7 +74,7 @@ public:
     inline void measure_add(std::string const&, int64_t,
                              measurement_t type = measurement_t::UNASSIGNED) {}
 
-    METRIC_UNUSED inline int find(std::string const&, bool) { return 0; }
+    METRIC_UNUSED inline int find(std::string const&) { return 0; }
     METRIC_UNUSED inline std::string to_string()  { return ""; }
 };
 
@@ -82,11 +83,14 @@ public:
 struct MAPNIK_DECL measurement
 {
     measurement() = default;
-    explicit measurement(int64_t value, measurement_t type = measurement_t::UNASSIGNED);
+    explicit measurement(std::string const& name,
+                         int64_t value,
+                         measurement_t type = measurement_t::UNASSIGNED);
 
     int64_t value_ = 0;
     int_fast32_t calls_ = 1;
     measurement_t type_ = measurement_t::UNASSIGNED;
+    std::string const name_;
 };
 
 class metrics;
@@ -119,17 +123,11 @@ class MAPNIK_DECL metrics
 {
     friend autochrono;
 public:
-    using metrics_tree = boost::property_tree::basic_ptree<std::string,
-                                                           struct measurement>;
+    using metrics_array = std::vector<struct measurement>;
+
     /* Whether metrics are enabled or not. If disabled any calls to
      * measure_XXX (add/dec/time) will be ignored */
     bool enabled_ = false;
-
-    /* Prefix to use when storing metrics under this object. Make sure to finish
-     * it with a '.' to change the hierarchy level of the metrics. For example,
-     * if set to "Render." a new metric "Layer" will be stored as "Render.Layer"
-     */
-    std::string prefix_ = "";
 
     /**
      * Default constructor with an empty tree
@@ -137,13 +135,8 @@ public:
     metrics() = delete;
     metrics(bool enabled);
 
-    /**
-     * Builds with the same shared tree as the passed object
-     * enabled_ is also copied but independent
-     * The prefix is added to the passed one. So if the previous has "Render.",
-     * and the new one is "Layer.", "Render.Layer." will be used
-     */
-    metrics(metrics const &m, std::string prefix = "");
+    /* Copy constructor */
+    metrics(metrics const &m);
 
     /* Move constructor */
     metrics(metrics const &&m);
@@ -164,8 +157,7 @@ public:
      */
     inline std::unique_ptr<autochrono> measure_time(std::string const& name)
     {
-        if (!enabled_) return nullptr;
-        return measure_time_impl(name);
+        return (enabled_ ? measure_time_impl(name) : nullptr);
     }
 
     /**
@@ -187,8 +179,7 @@ public:
      * @param ignore_prefix - Whether to ignore stored prefix in the search
      * @return optional value with the measurement
      */
-    boost::optional<measurement &> find(std::string const& name,
-                                        bool ignore_prefix = false);
+    boost::optional<measurement &> find(std::string const& name);
 
     /**
      * Generates a string with the metrics (for the full tree)
@@ -200,7 +191,7 @@ private:
     std::unique_ptr<autochrono> measure_time_impl(std::string const& name);
     void measure_add_impl(std::string const& name, int64_t value, measurement_t type);
 
-    std::shared_ptr<metrics_tree> storage_{new metrics_tree};
+    std::shared_ptr<metrics_array> storage_{new metrics_array};
 #ifdef MAPNIK_THREADSAFE
     std::shared_ptr<std::mutex> lock_ {new std::mutex};
 #endif /* ifdef MAPNIK_THREADSAFE */
