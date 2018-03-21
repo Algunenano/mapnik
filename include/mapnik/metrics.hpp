@@ -71,8 +71,8 @@ public:
     inline ~metrics() {}
 
     METRIC_UNUSED inline int measure_time(std::string const&) { return 0; }
-    inline void measure_add(std::string const&, int64_t,
-                             measurement_t type = measurement_t::UNASSIGNED) {}
+    inline void measure_add(std::string const&, int64_t = 0,
+                            measurement_t = measurement_t::UNASSIGNED) {}
 
     METRIC_UNUSED inline int find(std::string const&) { return 0; }
     METRIC_UNUSED inline std::string to_string()  { return ""; }
@@ -157,7 +157,8 @@ public:
      */
     inline std::unique_ptr<autochrono> measure_time(std::string const& name)
     {
-        return (enabled_ ? measure_time_impl(name) : nullptr);
+        if (!enabled_) return nullptr;
+        return measure_time_impl(name);
     }
 
     /**
