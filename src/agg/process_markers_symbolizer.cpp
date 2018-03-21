@@ -59,19 +59,17 @@ struct agg_markers_renderer_context : markers_renderer_context
     using attribute_source_type = typename SvgRenderer::attribute_source_type;
     using pixfmt_type = typename renderer_base::pixfmt_type;
 
-    metrics metrics_;
-
     agg_markers_renderer_context(symbolizer_base const& sym,
                                  feature_impl const& feature,
                                  attributes const& vars,
                                  BufferType & buf,
                                  RasterizerType & ras,
                                  metrics & m)
-      : buf_(buf),
+      : markers_renderer_context(m),
+        buf_(buf),
         pixf_(buf_),
         renb_(pixf_),
         ras_(ras),
-        metrics_(m),
         comp_op_(get<composite_mode_e, keys::comp_op>(sym, feature, vars))
     {
         pixf_.comp_op(static_cast<agg::comp_op_e>(comp_op_));
