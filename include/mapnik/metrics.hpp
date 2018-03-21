@@ -71,10 +71,10 @@ public:
     inline ~metrics() {}
 
     METRIC_UNUSED inline int measure_time(std::string const&) { return 0; }
-    inline void measure_add(std::string const&, int64_t = 0,
+    inline void measure_add(char*, int64_t = 0,
                             measurement_t = measurement_t::UNASSIGNED) {}
 
-    METRIC_UNUSED inline int find(std::string const&) { return 0; }
+    METRIC_UNUSED inline int find(const char* const) { return 0; }
     METRIC_UNUSED inline std::string to_string()  { return ""; }
 };
 
@@ -83,14 +83,14 @@ public:
 struct MAPNIK_DECL measurement
 {
     measurement() = default;
-    explicit measurement(std::string const& name,
+    explicit measurement(const char* const name,
                          int64_t value,
                          measurement_t type = measurement_t::UNASSIGNED);
 
     int64_t value_ = 0;
     int_fast32_t calls_ = 1;
     measurement_t type_ = measurement_t::UNASSIGNED;
-    std::string const name_;
+    const char* const name_;
 };
 
 class metrics;
@@ -101,7 +101,7 @@ class MAPNIK_DECL autochrono
     using time_units = std::chrono::microseconds;
 
 public:
-    autochrono(metrics* m, std::string name);
+    autochrono(metrics* m, const char* const name);
     ~autochrono();
 
     autochrono() = delete;
@@ -113,7 +113,7 @@ public:
 
 private:
     metrics* metrics_;
-    std::string const name_;
+    const char* const name_;
     steady_clock clock_;
     steady_clock::time_point start_;
 };
@@ -155,7 +155,7 @@ public:
      * @param metric_name - Name to use to store the metric
      * @return Smart pointer to hold the reference to the timer
      */
-    inline std::unique_ptr<autochrono> measure_time(std::string const& name)
+    inline std::unique_ptr<autochrono> measure_time(const char* const name)
     {
         if (!enabled_) return nullptr;
         return measure_time_impl(name);
@@ -167,7 +167,7 @@ public:
      * @param value - Value to increment. Default = 1
      * @param type - Type of the stored metric. Default: VALUE
      */
-    inline void measure_add(std::string const& name, int64_t value = 1,
+    inline void measure_add(const char* const name, int64_t value = 1,
                             measurement_t type = measurement_t::VALUE)
     {
         if (!enabled_) return;
@@ -180,7 +180,7 @@ public:
      * @param ignore_prefix - Whether to ignore stored prefix in the search
      * @return optional value with the measurement
      */
-    boost::optional<measurement &> find(std::string const& name);
+    boost::optional<measurement &> find(const char* const name);
 
     /**
      * Generates a string with the metrics (for the full tree)
@@ -189,8 +189,8 @@ public:
     std::string to_string();
 
 private:
-    std::unique_ptr<autochrono> measure_time_impl(std::string const& name);
-    void measure_add_impl(std::string const& name, int64_t value, measurement_t type);
+    std::unique_ptr<autochrono> measure_time_impl(const char* const name);
+    void measure_add_impl(const char* const name, int64_t value, measurement_t type);
 
     std::shared_ptr<metrics_array> storage_{new metrics_array};
 #ifdef MAPNIK_THREADSAFE

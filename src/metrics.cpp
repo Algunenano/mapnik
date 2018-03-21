@@ -40,16 +40,16 @@ const std::string measurement_str[TOTAL_ENUM_SIZE] =
     "Calls"
 };
 
-measurement::measurement(std::string const& name, int64_t value, measurement_t type)
+measurement::measurement(const char* const name, int64_t value, measurement_t type)
     : value_(value),
       type_(type),
-      name_(std::move(name))
+      name_(name)
 {
 }
 
-autochrono::autochrono(metrics* m, std::string name)
+autochrono::autochrono(metrics* m, const char* const name)
     : metrics_(m),
-      name_(std::move(name))
+      name_(name)
 {
     start_ = clock_.now();
 }
@@ -94,19 +94,19 @@ metrics& metrics::operator=(metrics&& m)
     return *this = m;
 }
 
-std::unique_ptr<autochrono> metrics::measure_time_impl(const std::string& name)
+std::unique_ptr<autochrono> metrics::measure_time_impl(const char* const name)
 {
     return std::make_unique<autochrono>(this, name);
 }
 
-void metrics::measure_add_impl(std::string const& name, int64_t value, measurement_t type)
+void metrics::measure_add_impl(const char* const name, int64_t value, measurement_t type)
 {
 #ifdef MAPNIK_THREADSAFE
     std::lock_guard<std::mutex> lock(*this->lock_);
 #endif
     auto it = std::find_if(storage_->begin(), storage_->end(), [&](const measurement& m)
     {
-        return (name.compare(m.name_) == 0);
+        return (m.name_ == name);
     });
 
     if (it == storage_->end())
@@ -121,14 +121,14 @@ void metrics::measure_add_impl(std::string const& name, int64_t value, measureme
 }
 
 
-boost::optional<measurement &> metrics::find(std::string const& name)
+boost::optional<measurement &> metrics::find(const char* const name)
 {
 #ifdef MAPNIK_THREADSAFE
     std::lock_guard<std::mutex> lock(*this->lock_);
 #endif
     auto it = std::find_if(storage_->begin(), storage_->end(), [&](const measurement& m)
     {
-        return (name.compare(m.name_) == 0);
+        return (m.name_ == name);
     });
 
     return (it != storage_->end() ? *it : boost::optional<measurement &>());
