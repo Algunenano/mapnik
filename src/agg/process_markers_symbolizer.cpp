@@ -275,7 +275,6 @@ void agg_renderer<T0,T1>::process(markers_symbolizer const& sym,
                               feature_impl & feature,
                               proj_transform const& prj_trans)
 {
-    METRIC_UNUSED auto t = agg_renderer::metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer");
     using namespace mapnik::svg;
     using color_type = agg::rgba8;
     using order_type = agg::order_rgba;
@@ -290,7 +289,11 @@ void agg_renderer<T0,T1>::process(markers_symbolizer const& sym,
                                                renderer_type,
                                                pixfmt_comp_type>;
 
+    METRIC_UNUSED auto t = agg_renderer::metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Step1");
+
     ras_ptr->reset();
+
+    METRIC_UNUSED auto t2 = agg_renderer::metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Step2");
 
     double gamma = get<value_double, keys::gamma>(sym, feature, common_.vars_);
     gamma_method_enum gamma_method = get<gamma_method_enum, keys::gamma_method>(sym, feature, common_.vars_);
@@ -301,13 +304,19 @@ void agg_renderer<T0,T1>::process(markers_symbolizer const& sym,
         gamma_ = gamma;
     }
 
+    METRIC_UNUSED auto t3 = agg_renderer::metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Step3");
+
     buf_type render_buffer(current_buffer_->bytes(), current_buffer_->width(), current_buffer_->height(), current_buffer_->row_size());
     box2d<double> clip_box = clipping_extent(common_);
+
+    METRIC_UNUSED auto t4 = agg_renderer::metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Step4");
 
     using context_type = detail::agg_markers_renderer_context<svg_renderer_type,
                                                               buf_type,
                                                               rasterizer>;
     context_type renderer_context(sym, feature, common_.vars_, render_buffer, *ras_ptr, agg_renderer::metrics_);
+
+    METRIC_UNUSED auto t5 = agg_renderer::metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Step5");
 
     render_markers_symbolizer(
         sym, feature, prj_trans, common_, clip_box, renderer_context);
