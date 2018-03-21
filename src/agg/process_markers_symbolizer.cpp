@@ -123,18 +123,18 @@ struct agg_markers_renderer_context : markers_renderer_context
                         std::pair<std::shared_ptr<image_rgba8>, std::shared_ptr<image_rgba8>>
                     >::iterator it;
                 {
-                    METRIC_UNUSED auto t = metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Cache_search");
+                    METRIC_UNUSED auto t = metrics_.measure_time("Agg_PMS_CacheSearch");
                     it = cached_images_.find(key);
                 }
                 if (it != cached_images_.end())
                 {
-                    metrics_.measure_add("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Cache_hit");
+                    metrics_.measure_add("Agg_PMS_CacheHit");
                     fill_img = it->second.first;
                     stroke_img = it->second.second;
                 }
                 else
                 {
-                    METRIC_UNUSED auto t = metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Cache_gen");
+                    METRIC_UNUSED auto t = metrics_.measure_time("Agg_PMS_CacheGen");
                     // Calculate canvas size
                     int width  = static_cast<int>(std::ceil(src->bounding_box().width()  + 2.0 * margin)) + 2;
                     int height = static_cast<int>(std::ceil(src->bounding_box().height() + 2.0 * margin)) + 2;
@@ -201,7 +201,7 @@ struct agg_markers_renderer_context : markers_renderer_context
                     ras_.clip_box(0, 0, pixf_.width(), pixf_.height());
                 }
 
-                METRIC_UNUSED auto t = metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Cache_render");
+                METRIC_UNUSED auto t = metrics_.measure_time("Agg_PMS_CacheRender");
                 // Set up blitting transformation. We will add a small offset due to sampling
                 agg::trans_affine marker_tr_copy(marker_tr);
                 marker_tr_copy.translate(x0 - dx, y0 - dy);
@@ -219,7 +219,7 @@ struct agg_markers_renderer_context : markers_renderer_context
             }
         }
 
-        METRIC_UNUSED auto t = metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Cache_ignored_render");
+        METRIC_UNUSED auto t = metrics_.measure_time("Agg_PMS_IgnoredRender");
         // Fallback to non-cached rendering path
         SvgRenderer svg_renderer(path, attrs);
         render_vector_marker(svg_renderer, ras_, renb_, src->bounding_box(), marker_tr, params.opacity, params.snap_to_pixels);
@@ -289,11 +289,11 @@ void agg_renderer<T0,T1>::process(markers_symbolizer const& sym,
                                                renderer_type,
                                                pixfmt_comp_type>;
 
-    METRIC_UNUSED auto t = agg_renderer::metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Step1");
+    METRIC_UNUSED auto t = agg_renderer::metrics_.measure_time("PMS_S1");
 
     ras_ptr->reset();
 
-    METRIC_UNUSED auto t2 = agg_renderer::metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Step2");
+    METRIC_UNUSED auto t2 = agg_renderer::metrics_.measure_time("PMS_S2");
 
     double gamma = get<value_double, keys::gamma>(sym, feature, common_.vars_);
     gamma_method_enum gamma_method = get<gamma_method_enum, keys::gamma_method>(sym, feature, common_.vars_);
@@ -304,19 +304,19 @@ void agg_renderer<T0,T1>::process(markers_symbolizer const& sym,
         gamma_ = gamma;
     }
 
-    METRIC_UNUSED auto t3 = agg_renderer::metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Step3");
+    METRIC_UNUSED auto t3 = agg_renderer::metrics_.measure_time("PMS_S3");
 
     buf_type render_buffer(current_buffer_->bytes(), current_buffer_->width(), current_buffer_->height(), current_buffer_->row_size());
     box2d<double> clip_box = clipping_extent(common_);
 
-    METRIC_UNUSED auto t4 = agg_renderer::metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Step4");
+    METRIC_UNUSED auto t4 = agg_renderer::metrics_.measure_time("PMS_S4");
 
     using context_type = detail::agg_markers_renderer_context<svg_renderer_type,
                                                               buf_type,
                                                               rasterizer>;
     context_type renderer_context(sym, feature, common_.vars_, render_buffer, *ras_ptr, agg_renderer::metrics_);
 
-    METRIC_UNUSED auto t5 = agg_renderer::metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Step5");
+    METRIC_UNUSED auto t5 = agg_renderer::metrics_.measure_time("PMS_S5");
 
     render_markers_symbolizer(
         sym, feature, prj_trans, common_, clip_box, renderer_context);
