@@ -82,9 +82,6 @@ metrics& metrics::operator=(metrics const& m)
 {
     enabled_ = m.enabled_;
     storage_ = m.storage_;
-#ifdef MAPNIK_THREADSAFE
-    lock_ = m.lock_;
-#endif
     return *this;
 }
 
@@ -101,9 +98,6 @@ std::unique_ptr<autochrono> metrics::measure_time_impl(const char* const name)
 
 void metrics::measure_add_impl(const char* const name, int64_t value, measurement_t type)
 {
-#ifdef MAPNIK_THREADSAFE
-    std::lock_guard<std::mutex> lock(*this->lock_);
-#endif
     auto it = std::find_if(storage_->begin(), storage_->end(), [&](const measurement& m)
     {
         return (m.name_ == name);
@@ -123,9 +117,6 @@ void metrics::measure_add_impl(const char* const name, int64_t value, measuremen
 
 boost::optional<measurement &> metrics::find(const char* const name)
 {
-#ifdef MAPNIK_THREADSAFE
-    std::lock_guard<std::mutex> lock(*this->lock_);
-#endif
     auto it = std::find_if(storage_->begin(), storage_->end(), [&](const measurement& m)
     {
         return (m.name_ == name);
@@ -136,9 +127,6 @@ boost::optional<measurement &> metrics::find(const char* const name)
 
 std::string metrics::to_string()
 {
-#ifdef MAPNIK_THREADSAFE
-    std::lock_guard<std::mutex> lock(*this->lock_);
-#endif
     std::ostringstream buf;
 
     buf << "{";

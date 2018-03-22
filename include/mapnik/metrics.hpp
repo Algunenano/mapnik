@@ -32,10 +32,6 @@
 #include <string>
 #include <vector>
 
-#ifdef MAPNIK_THREADSAFE
-#include <mutex>
-#endif
-
 namespace mapnik {
 
 enum measurement_t : int_fast8_t
@@ -193,9 +189,6 @@ private:
     void measure_add_impl(const char* const name, int64_t value, measurement_t type);
 
     std::shared_ptr<metrics_array> storage_{new metrics_array};
-#ifdef MAPNIK_THREADSAFE
-    std::shared_ptr<std::mutex> lock_ {new std::mutex};
-#endif /* ifdef MAPNIK_THREADSAFE */
 };
 
 #endif /* ifndef MAPNIK_METRICS */
