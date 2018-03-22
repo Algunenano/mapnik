@@ -112,27 +112,25 @@ struct agg_markers_renderer_context : markers_renderer_context
 
                 std::tuple<svg_path_ptr, int, svg::path_attributes> key(src, sample_idx, attrs[0]);
 
-#ifdef MAPNIK_THREADSAFE
-                std::lock_guard<std::mutex> lock(mutex_);
-#endif
-                std::shared_ptr<image_rgba8> fill_img;
-                std::shared_ptr<image_rgba8> stroke_img;
-
-                std::map<
-                        std::tuple<svg_path_ptr, int, svg::path_attributes>,
-                        std::pair<std::shared_ptr<image_rgba8>, std::shared_ptr<image_rgba8>>
-                    >::iterator it;
+                std::shared_ptr<image_rgba8> fill_img = nullptr;
+                std::shared_ptr<image_rgba8> stroke_img = nullptr;
+                bool cache_hit = false;
+                // Limit the scope of the metrics mutex and the search metric
                 {
                     METRIC_UNUSED auto t = metrics_.measure_time("Agg_PMS_CacheSearch");
-                    it = cached_images_.find(key);
+#ifdef MAPNIK_THREADSAFE
+                    std::lock_guard<std::mutex> lock(mutex_);
+#endif
+                    auto it = cached_images_.find(key);
+                    if (it != cached_images_.end())
+                    {
+                        cache_hit = true;
+                        fill_img = it->second.first;
+                        stroke_img = it->second.second;
+                    }
                 }
-                if (it != cached_images_.end())
-                {
-                    metrics_.measure_add("Agg_PMS_CacheHit");
-                    fill_img = it->second.first;
-                    stroke_img = it->second.second;
-                }
-                else
+
+                if (!cache_hit)
                 {
                     METRIC_UNUSED auto t = metrics_.measure_time("Agg_PMS_CacheGen");
                     // Calculate canvas size
@@ -191,17 +189,23 @@ struct agg_markers_renderer_context : markers_renderer_context
                         }
                     }
 
-                    if (cached_images_.size() > cache_size)
+                    // Update cache with the new images
                     {
-                        cached_images_.erase(cached_images_.begin());
+#ifdef MAPNIK_THREADSAFE
+                        std::lock_guard<std::mutex> lock(mutex_);
+#endif
+                        if (cached_images_.size() > cache_size)
+                        {
+                            cached_images_.erase(cached_images_.begin());
+                        }
+                        cached_images_.emplace(key, std::make_pair(fill_img, stroke_img));
                     }
-                    cached_images_.emplace(key, std::make_pair(fill_img, stroke_img));
 
                     // Restore clip box
                     ras_.clip_box(0, 0, pixf_.width(), pixf_.height());
                 }
 
-                METRIC_UNUSED auto t = metrics_.measure_time("Agg_PMS_CacheRender");
+                METRIC_UNUSED auto t = metrics_.measure_time("Agg_PMS_Cached_Render");
                 // Set up blitting transformation. We will add a small offset due to sampling
                 agg::trans_affine marker_tr_copy(marker_tr);
                 marker_tr_copy.translate(x0 - dx, y0 - dy);
@@ -219,7 +223,7 @@ struct agg_markers_renderer_context : markers_renderer_context
             }
         }
 
-        METRIC_UNUSED auto t = metrics_.measure_time("Agg_PMS_IgnoredRender");
+        METRIC_UNUSED auto t = metrics_.measure_time("Agg_PMS_Ignored_Render");
         // Fallback to non-cached rendering path
         SvgRenderer svg_renderer(path, attrs);
         render_vector_marker(svg_renderer, ras_, renb_, src->bounding_box(), marker_tr, params.opacity, params.snap_to_pixels);
