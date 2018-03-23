@@ -142,6 +142,45 @@ struct path_attributes
 
     bool operator <(const path_attributes &b) const
     {
+        auto self_t = std::tie(opacity,
+                               fill_opacity,
+                               stroke_opacity,
+                               miter_limit,
+                               stroke_width,
+                               index,
+                               line_join,
+                               line_cap,
+                               fill_flag,
+                               fill_none,
+                               stroke_flag,
+                               stroke_none,
+                               even_odd_flag,
+                               visibility_flag,
+                               display_flag,
+                               dash,
+                               dash_offset);
+
+        auto b_t = std::tie(b.opacity,
+                            b.fill_opacity,
+                            b.stroke_opacity,
+                            b.miter_limit,
+                            b.stroke_width,
+                            b.index,
+                            b.line_join,
+                            b.line_cap,
+                            b.fill_flag,
+                            b.fill_none,
+                            b.stroke_flag,
+                            b.stroke_none,
+                            b.even_odd_flag,
+                            b.visibility_flag,
+                            b.display_flag,
+                            b.dash,
+                            b.dash_offset);
+
+        if (self_t < b_t) return true;
+        if (b_t < self_t) return false;
+
         if (fill_color < b.fill_color) return true;
         if (b.fill_color < fill_color) return false;
 
@@ -154,45 +193,7 @@ struct path_attributes
         if (stroke_gradient < b.stroke_gradient) return true;
         if (b.stroke_gradient < stroke_gradient) return false;
 
-        if (!transform.is_equal(b.transform)) return transform < b.transform;
-
-
-        return
-            std::tie(opacity,
-                     fill_opacity,
-                     stroke_opacity,
-                     miter_limit,
-                     stroke_width,
-                     index,
-                     line_join,
-                     line_cap,
-                     fill_flag,
-                     fill_none,
-                     stroke_flag,
-                     stroke_none,
-                     even_odd_flag,
-                     visibility_flag,
-                     display_flag,
-                     dash,
-                     dash_offset)
-            <
-            std::tie(b.opacity,
-                     b.fill_opacity,
-                     b.stroke_opacity,
-                     b.miter_limit,
-                     b.stroke_width,
-                     b.index,
-                     b.line_join,
-                     b.line_cap,
-                     b.fill_flag,
-                     b.fill_none,
-                     b.stroke_flag,
-                     b.stroke_none,
-                     b.even_odd_flag,
-                     b.visibility_flag,
-                     b.display_flag,
-                     b.dash,
-                     b.dash_offset);
+        return transform < b.transform;
     }
 };
 
