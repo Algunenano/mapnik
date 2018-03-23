@@ -81,7 +81,7 @@ struct agg_markers_renderer_context : markers_renderer_context
                                markers_dispatch_params const& params,
                                agg::trans_affine const& marker_tr)
     {
-        METRIC_UNUSED auto t0 = metrics_.measure_time("Agg_PMS_render_marker0");
+        METRIC_UNUSED auto t0 = metrics_.measure_time("Agg_PMS_render_marker0"); /* TODO: Remove this */
         // We try to reuse existing marker images.
         // We currently do it only for single attribute set.
         if (attrs->size() == 1)
@@ -93,7 +93,6 @@ struct agg_markers_renderer_context : markers_renderer_context
                              marker_tr.shx == 0.0 && marker_tr.shy == 0.0;
             if (cacheable)
             {
-                METRIC_UNUSED auto t00 = metrics_.measure_time("Agg_PMS_render_cacheable");
                 // Calculate canvas offsets
                 double margin = 0.0;
                 if ((*attrs)[0].stroke_flag || (*attrs)[0].stroke_gradient.get_gradient_type() != NO_GRADIENT)
@@ -111,15 +110,13 @@ struct agg_markers_renderer_context : markers_renderer_context
                 double sample_y = std::floor(dy * sampling_rate);
 
                 int sample_idx = static_cast<int>(sample_y) * sampling_rate + static_cast<int>(sample_x);
-                METRIC_UNUSED auto t1 = metrics_.measure_time("Agg_PMS_render_sampling");
                 std::tuple<svg_path_ptr, int, svg_attribute_ptr> key(src, sample_idx, attrs);
 
                 std::shared_ptr<image_rgba8> fill_img = nullptr;
                 std::shared_ptr<image_rgba8> stroke_img = nullptr;
                 bool cache_hit = false;
-                // Limit the scope of the metrics mutex and the search metric
+                // Limit the scope of the metrics mutex
                 {
-                    METRIC_UNUSED auto t = metrics_.measure_time("Agg_PMS_ImageCache_Search");
 #ifdef MAPNIK_THREADSAFE
                     std::lock_guard<std::mutex> lock(mutex_);
 #endif
@@ -132,11 +129,15 @@ struct agg_markers_renderer_context : markers_renderer_context
                     }
                 }
 
-                METRIC_UNUSED auto t2 = metrics_.measure_time("Agg_PMS_render_afterSearch");
+                METRIC_UNUSED auto t2 = metrics_.measure_time("Agg_PMS_render_afterSearch"); /* TODO: Remove this */
 
-                if (!cache_hit)
+                if (cache_hit)
                 {
-                    METRIC_UNUSED auto t = metrics_.measure_time("Agg_PMS_ImageCache_Gen");
+                    metrics_.measure_add("Agg_PMS_ImageCache_Hit");
+                }
+                else
+                {
+                    metrics_.measure_add("Agg_PMS_ImageCache_Miss");
                     // Calculate canvas size
                     int width  = static_cast<int>(std::ceil(src->bounding_box().width()  + 2.0 * margin)) + 2;
                     int height = static_cast<int>(std::ceil(src->bounding_box().height() + 2.0 * margin)) + 2;
@@ -227,7 +228,7 @@ struct agg_markers_renderer_context : markers_renderer_context
             }
         }
 
-        METRIC_UNUSED auto t = metrics_.measure_time("Agg_PMS_ImageCache_IgnoredRender");
+        metrics_.measure_add("Agg_PMS_ImageCache_Ignored");
         // Fallback to non-cached rendering path
         SvgRenderer svg_renderer(path, *attrs);
         render_vector_marker(svg_renderer, ras_, renb_, src->bounding_box(), marker_tr, params.opacity, params.snap_to_pixels);

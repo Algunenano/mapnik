@@ -121,7 +121,7 @@ struct render_marker_symbolizer_visitor
     void operator() (marker_svg const& mark) const
     {
         using namespace mapnik::svg;
-        METRIC_UNUSED auto t = renderer_context_.metrics_.measure_time("Agg_RMS_visit");
+        METRIC_UNUSED auto t = renderer_context_.metrics_.measure_time("Agg_RMS_visit"); /* TODO: Remove this */
 
         // https://github.com/mapnik/mapnik/issues/1316
         bool snap_to_pixels = !mapnik::marker_cache::instance().is_uri(filename_);
@@ -139,9 +139,8 @@ struct render_marker_symbolizer_visitor
         // and compare the actual value of properties in case of hit.
         markers_symbolizer const* attr_key = &sym_;
 
-        // Limit the scope of the metrics mutex and the search metric
+        // Limit the scope of the metrics mutex
         {
-            METRIC_UNUSED auto t2 = renderer_context_.metrics_.measure_time("Agg_RMS_AttrCache_Search");
 #ifdef MAPNIK_THREADSAFE
             std::lock_guard<std::mutex> lock(mutex_);
 #endif
@@ -153,11 +152,10 @@ struct render_marker_symbolizer_visitor
             }
         }
 
-        METRIC_UNUSED auto t11 = renderer_context_.metrics_.measure_time("Agg_RMS_AttrCache_Post_Search");
+        METRIC_UNUSED auto t11 = renderer_context_.metrics_.measure_time("Agg_RMS_AttrCache_Post_Search"); /* TODO: Remove this */
 
         if (!r_attributes)
         {
-            METRIC_UNUSED auto t2 = renderer_context_.metrics_.measure_time("Agg_RMS_AttrCache_Gen");
             svg_attribute_type s_attributes;
             r_attributes = std::make_shared<svg_attribute_type>(get_marker_attributes(*stock_vector_marker, s_attributes));
 
@@ -193,7 +191,6 @@ struct render_marker_symbolizer_visitor
             // Ellipses are built procedurally. We do caching of the built ellipses, this is useful for rendering stages
             std::tuple<double, double, double> marker_key;
             {
-                METRIC_UNUSED auto t2 = renderer_context_.metrics_.measure_time("Agg_RMS_AttrCache_Ellipse_Key");
                 marker_key = std::tuple<double, double, double>(
                     get<double>(sym_, keys::width, feature_, common_.vars_, -std::numeric_limits<double>::infinity()),
                     get<double>(sym_, keys::height, feature_, common_.vars_, -std::numeric_limits<double>::infinity()),
@@ -202,7 +199,6 @@ struct render_marker_symbolizer_visitor
             }
 
             {
-                METRIC_UNUSED auto t2 = renderer_context_.metrics_.measure_time("Agg_RMS_AttrCache_Ellipse_Search");
                 marker_ptr = nullptr;
 #ifdef MAPNIK_THREADSAFE
                 std::lock_guard<std::mutex> lock(mutex_);
@@ -216,7 +212,6 @@ struct render_marker_symbolizer_visitor
 
             if (!marker_ptr)
             {
-                METRIC_UNUSED auto t2 = renderer_context_.metrics_.measure_time("Agg_RMS_AttrCache_Ellipse_Gen");
                 marker_ptr = std::make_shared<svg_storage_type>();
                 vertex_stl_adapter<svg_path_storage> stl_storage(marker_ptr->source());
                 svg_path_adapter svg_path(stl_storage);
@@ -239,7 +234,6 @@ struct render_marker_symbolizer_visitor
 
         if (auto image_transform = get_optional<transform_type>(sym_, keys::image_transform))
         {
-            METRIC_UNUSED auto t2 = renderer_context_.metrics_.measure_time("Agg_RMS_image_transform");
             evaluate_transform(image_tr, feature_, common_.vars_, *image_transform, common_.scale_factor_);
         }
 
@@ -254,7 +248,6 @@ struct render_marker_symbolizer_visitor
                                                  common_.vars_,
                                                  snap_to_pixels,
                                                  renderer_context_);
-        METRIC_UNUSED auto t2 = renderer_context_.metrics_.measure_time("Agg_RMS_dispatch");
         render_marker(mark, rasterizer_dispatch);
     }
 
