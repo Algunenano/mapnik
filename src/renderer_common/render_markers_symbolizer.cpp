@@ -335,16 +335,22 @@ void render_markers_symbolizer(markers_symbolizer const& sym,
                                                                  RendererType,
                                                                  ContextType>;
 
-    std::string filename = get<std::string>(sym, keys::file, feature, common.vars_, "shape://ellipse");
+
+    std::string filename;
+    {
+        METRIC_UNUSED auto t = renderer_context.metrics_.measure_time("Agg_PMS_MarkerCache_StringGen");
+        filename = get<std::string>(sym, keys::file, feature, common.vars_, "shape://ellipse");
+    }
+
     if (!filename.empty())
     {
         std::shared_ptr<mapnik::marker const> mark;
         {
-            METRIC_UNUSED auto t = renderer_context.metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Render_markers_symbolizer.Find");
+            METRIC_UNUSED auto t = renderer_context.metrics_.measure_time("Agg_PMS_MarkerCache_Search");
             mark = mapnik::marker_cache::instance().find(filename, true);
         }
         {
-            METRIC_UNUSED auto t = renderer_context.metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_markers_symbolizer.Render_markers_symbolizer.Apply");
+            METRIC_UNUSED auto t = renderer_context.metrics_.measure_time("Agg_PMS_MarkerCache_Apply");
             VisitorType visitor(filename, sym, feature, prj_trans, common, clip_box,
                             renderer_context);
             util::apply_visitor(visitor, *mark);
