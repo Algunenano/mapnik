@@ -77,11 +77,13 @@ struct vector_markers_dispatch : util::noncopyable
     template <typename T>
     void add_path(T & path)
     {
+        METRIC_UNUSED auto t = renderer_context_.metrics_.measure_time("marker_helpers_add_path");
         markers_placement_finder<T, Detector> placement_finder(
             params_.placement_method, path, detector_, params_.placement_params);
         double x, y, angle = .0;
         while (placement_finder.get_point(x, y, angle, params_.ignore_placement))
         {
+            METRIC_UNUSED auto t2 = renderer_context_.metrics_.measure_time("marker_helpers_add_path_found");
             agg::trans_affine matrix = params_.placement_params.tr;
             matrix.rotate(angle);
             matrix.translate(x, y);
@@ -97,7 +99,9 @@ protected:
     }
 
     markers_dispatch_params params_;
+public:
     markers_renderer_context & renderer_context_;
+protected:
     svg_path_ptr const& src_;
     svg_path_adapter & path_;
     svg_attribute_type const& attrs_;
@@ -139,7 +143,9 @@ struct raster_markers_dispatch : util::noncopyable
 
 protected:
     markers_dispatch_params params_;
+public:
     markers_renderer_context & renderer_context_;
+protected:
     image_rgba8 const& src_;
     Detector & detector_;
 };

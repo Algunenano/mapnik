@@ -177,21 +177,25 @@ void apply_markers_single(vertex_converter_type & converter, Processor & proc,
 {
     if (type == geometry::geometry_types::Point)
     {
+        METRIC_UNUSED auto t = proc.renderer_context_.metrics_.measure_time("apply_markers_single_point");
         geometry::point_vertex_adapter<double> va(geom.get<geometry::point<double>>());
         converter.apply(va, proc);
     }
     else if (type == geometry::geometry_types::LineString)
     {
+        METRIC_UNUSED auto t = proc.renderer_context_.metrics_.measure_time("apply_markers_single_line");
         geometry::line_string_vertex_adapter<double> va(geom.get<geometry::line_string<double>>());
         converter.apply(va, proc);
     }
     else if (type == geometry::geometry_types::Polygon)
     {
+        METRIC_UNUSED auto t = proc.renderer_context_.metrics_.measure_time("apply_markers_single_polygon");
         geometry::polygon_vertex_adapter<double> va(geom.get<geometry::polygon<double>>());
         converter.apply(va, proc);
     }
     else if (type == geometry::geometry_types::MultiPoint)
     {
+        METRIC_UNUSED auto t = proc.renderer_context_.metrics_.measure_time("apply_markers_single_multipoint");
         for (auto const& pt : geom.get<geometry::multi_point<double>>())
         {
             geometry::point_vertex_adapter<double> va(pt);
@@ -200,6 +204,7 @@ void apply_markers_single(vertex_converter_type & converter, Processor & proc,
     }
     else if (type == geometry::geometry_types::MultiLineString)
     {
+        METRIC_UNUSED auto t = proc.renderer_context_.metrics_.measure_time("apply_markers_single_multilinestring");
         for (auto const& line : geom.get<geometry::multi_line_string<double>>())
         {
             geometry::line_string_vertex_adapter<double> va(line);
@@ -208,6 +213,7 @@ void apply_markers_single(vertex_converter_type & converter, Processor & proc,
     }
     else if (type == geometry::geometry_types::MultiPolygon)
     {
+        METRIC_UNUSED auto t = proc.renderer_context_.metrics_.measure_time("apply_markers_single_multipolygon");
         for (auto const& poly : geom.get<geometry::multi_polygon<double>>())
         {
             geometry::polygon_vertex_adapter<double> va(poly);
@@ -220,6 +226,8 @@ template <typename Processor>
 void apply_markers_multi(feature_impl const& feature, attributes const& vars,
                          vertex_converter_type & converter, Processor & proc, symbolizer_base const& sym)
 {
+    METRIC_UNUSED auto t = proc.renderer_context_.metrics_.measure_time("apply_markers_multi");
+
     auto const& geom = feature.get_geometry();
     geometry::geometry_types type = geometry::geometry_type(geom);
 
@@ -229,11 +237,12 @@ void apply_markers_multi(feature_impl const& feature, attributes const& vars,
         ||
         type == geometry::geometry_types::Polygon)
     {
+        METRIC_UNUSED auto t = proc.renderer_context_.metrics_.measure_time("apply_markers_multi_single");
         apply_markers_single(converter, proc, geom, type);
     }
     else
     {
-
+        METRIC_UNUSED auto t = proc.renderer_context_.metrics_.measure_time("apply_markers_multi_other");
         marker_multi_policy_enum multi_policy = get<marker_multi_policy_enum, keys::markers_multipolicy>(sym, feature, vars);
         marker_placement_enum placement = get<marker_placement_enum, keys::markers_placement_type>(sym, feature, vars);
 
