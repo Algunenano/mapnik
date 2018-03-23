@@ -140,7 +140,7 @@ void grid_renderer<T>::process(markers_symbolizer const& sym,
                                mapnik::feature_impl & feature,
                                proj_transform const& prj_trans)
 {
-    METRIC_UNUSED auto t = this->metrics_.measure_time("Mapnik.Render.Style.Grid_renderer.Process_markers_symbolizer");
+    METRIC_UNUSED auto t = this->metrics_.measure_time("Grid_PMS");
     using buf_type = grid_rendering_buffer;
     using pixfmt_type = typename grid_renderer_base_type::pixfmt_type;
     using renderer_type = agg::renderer_scanline_bin_solid<grid_renderer_base_type>;

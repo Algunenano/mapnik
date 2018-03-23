@@ -51,7 +51,7 @@ void agg_renderer<T0,T1>::process(point_symbolizer const& sym,
                               mapnik::feature_impl & feature,
                               proj_transform const& prj_trans)
 {
-    METRIC_UNUSED auto t = agg_renderer::metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_point_symbolizer");
+    METRIC_UNUSED auto t = agg_renderer::metrics_.measure_time("Agg_PPS");
     composite_mode_e comp_op = get<composite_mode_e>(sym, keys::comp_op, feature, common_.vars_, src_over);
 
     render_point_symbolizer(

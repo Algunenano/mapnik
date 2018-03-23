@@ -154,8 +154,13 @@ struct render_marker_symbolizer_visitor
 
         METRIC_UNUSED auto t11 = renderer_context_.metrics_.measure_time("Agg_RMS_AttrCache_Post_Search"); /* TODO: Remove this */
 
-        if (!r_attributes)
+        if (r_attributes)
         {
+            renderer_context_.metrics_.measure_add("Agg_PMS_AttrCache_Hit");
+        }
+        else
+        {
+            renderer_context_.metrics_.measure_add("Agg_PMS_AttrCache_Miss");
             svg_attribute_type s_attributes;
             r_attributes = std::make_shared<svg_attribute_type>(get_marker_attributes(*stock_vector_marker, s_attributes));
 

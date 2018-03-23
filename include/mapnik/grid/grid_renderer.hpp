@@ -115,7 +115,6 @@ public:
                         mapnik::feature_impl & /*feature*/,
                         proj_transform const& /*prj_trans*/)
     {
-        METRIC_UNUSED auto t = this->metrics_.measure_time("Mapnik.Render.Style.Grid_renderer.Process");
         // grid renderer doesn't support processing of multiple symbolizers.
         return false;
     }

@@ -57,7 +57,7 @@ void agg_renderer<T0,T1>::process(building_symbolizer const& sym,
                                   mapnik::feature_impl & feature,
                                   proj_transform const& prj_trans)
 {
-    METRIC_UNUSED auto t = agg_renderer::metrics_.measure_time("Mapnik.Render.Style.Agg_renderer.Process_building_symbolizer");
+    METRIC_UNUSED auto t = agg_renderer::metrics_.measure_time("Agg_PBS");
     using transform_path_type = transform_path_adapter<view_transform, vertex_adapter>;
     using ren_base = agg::renderer_base<agg::pixfmt_rgba32_pre>;
     using renderer = agg::renderer_scanline_aa_solid<ren_base>;
