@@ -237,7 +237,7 @@ void apply_markers_multi(feature_impl const& feature, attributes const& vars,
         ||
         type == geometry::geometry_types::Polygon)
     {
-        METRIC_UNUSED auto t = proc.renderer_context_.metrics_.measure_time("apply_markers_multi_single");
+        METRIC_UNUSED auto t2 = proc.renderer_context_.metrics_.measure_time("apply_markers_multi_single");
         apply_markers_single(converter, proc, geom, type);
     }
     else

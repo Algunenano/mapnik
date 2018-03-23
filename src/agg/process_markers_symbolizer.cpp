@@ -81,6 +81,7 @@ struct agg_markers_renderer_context : markers_renderer_context
                                markers_dispatch_params const& params,
                                agg::trans_affine const& marker_tr)
     {
+        METRIC_UNUSED auto t0 = metrics_.measure_time("Agg_PMS_render_marker0");
         // We try to reuse existing marker images.
         // We currently do it only for single attribute set.
         if (attrs.size() == 1)
@@ -92,6 +93,7 @@ struct agg_markers_renderer_context : markers_renderer_context
                              marker_tr.shx == 0.0 && marker_tr.shy == 0.0;
             if (cacheable)
             {
+                METRIC_UNUSED auto t0 = metrics_.measure_time("Agg_PMS_render_cacheable");
                 // Calculate canvas offsets
                 double margin = 0.0;
                 if (attrs[0].stroke_flag || attrs[0].stroke_gradient.get_gradient_type() != NO_GRADIENT)
@@ -109,7 +111,7 @@ struct agg_markers_renderer_context : markers_renderer_context
                 double sample_y = std::floor(dy * sampling_rate);
 
                 int sample_idx = static_cast<int>(sample_y) * sampling_rate + static_cast<int>(sample_x);
-
+                METRIC_UNUSED auto t1 = metrics_.measure_time("Agg_PMS_render_sampling");
                 std::tuple<svg_path_ptr, int, svg::path_attributes> key(src, sample_idx, attrs[0]);
 
                 std::shared_ptr<image_rgba8> fill_img = nullptr;
@@ -129,6 +131,8 @@ struct agg_markers_renderer_context : markers_renderer_context
                         stroke_img = it->second.second;
                     }
                 }
+
+                METRIC_UNUSED auto t2 = metrics_.measure_time("Agg_PMS_render_afterSearch");
 
                 if (!cache_hit)
                 {
@@ -234,6 +238,7 @@ struct agg_markers_renderer_context : markers_renderer_context
                                markers_dispatch_params const& params,
                                agg::trans_affine const& marker_tr)
     {
+        METRIC_UNUSED auto t0 = metrics_.measure_time("Agg_PMS_render_marker1");
         // In the long term this should be a visitor pattern based on the
         // type of render src provided that converts the destination pixel
         // type required.
