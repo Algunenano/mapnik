@@ -66,13 +66,11 @@ struct render_marker_symbolizer_visitor
     template <typename Marker, typename Dispatch>
     void render_marker(Marker const& mark, Dispatch & rasterizer_dispatch) const
     {
-        METRIC_UNUSED auto t2 = renderer_context_.metrics_.measure_time("Agg_RMS_Render_marker_dispatch");
         auto const& vars = common_.vars_;
 
         agg::trans_affine geom_tr;
         if (auto geometry_transform = get_optional<transform_type>(sym_, keys::geometry_transform))
         {
-            METRIC_UNUSED auto t2 = renderer_context_.metrics_.measure_time("Agg_RMS_Render_marker_dispatch_evaluate");
             evaluate_transform(geom_tr, feature_, vars, *geometry_transform, common_.scale_factor_);
         }
 
@@ -92,7 +90,6 @@ struct render_marker_symbolizer_visitor
 
         if (clip)
         {
-            METRIC_UNUSED auto t2 = renderer_context_.metrics_.measure_time("Agg_RMS_Render_marker_dispatch_clip");
             geometry::geometry_types type = geometry::geometry_type(feature_.get_geometry());
             switch (type)
             {
@@ -110,14 +107,11 @@ struct render_marker_symbolizer_visitor
             }
         }
 
-        {
-            METRIC_UNUSED auto t2 = renderer_context_.metrics_.measure_time("Agg_RMS_Render_marker_dispatch_transformations");
         converter.template set<transform_tag>(); //always transform
         if (std::fabs(offset) > 0.0) converter.template set<offset_transform_tag>(); // parallel offset
         converter.template set<affine_transform_tag>(); // optional affine transform
         if (simplify_tolerance > 0.0) converter.template set<simplify_tag>(); // optional simplify converter
         if (smooth > 0.0) converter.template set<smooth_tag>(); // optional smooth converter
-        }
 
         apply_markers_multi(feature_, vars, converter, rasterizer_dispatch, sym_);
     }
@@ -137,7 +131,7 @@ struct render_marker_symbolizer_visitor
         boost::optional<svg_path_ptr> const& stock_vector_marker = mark.get_data();
         svg_path_ptr marker_ptr = *stock_vector_marker;
 
-        std::shared_ptr<svg_attribute_type> r_attributes = nullptr;
+        svg_attribute_ptr r_attributes = nullptr;
 
         // Look up the feature/symbolizer attributes from the cache.
         // We are using raw symbolizer pointer as a cache key. As this
@@ -158,6 +152,8 @@ struct render_marker_symbolizer_visitor
                 r_attributes = attr_it->second.first;
             }
         }
+
+        METRIC_UNUSED auto t11 = renderer_context_.metrics_.measure_time("Agg_RMS_AttrCache_Post_Search");
 
         if (!r_attributes)
         {
@@ -249,7 +245,7 @@ struct render_marker_symbolizer_visitor
 
         vector_dispatch_type rasterizer_dispatch(marker_ptr,
                                                  svg_path,
-                                                 *r_attributes,
+                                                 r_attributes,
                                                  image_tr,
                                                  sym_,
                                                  *common_.detector_,
@@ -302,7 +298,7 @@ struct render_marker_symbolizer_visitor
 
     static std::map<
                markers_symbolizer const*,
-               std::pair<std::shared_ptr<svg_attribute_type>, markers_symbolizer::cont_type>
+               std::pair<svg_attribute_ptr, markers_symbolizer::cont_type>
            > cached_attributes_;
     static std::map<
                std::tuple<double, double, double>,
@@ -321,7 +317,7 @@ std::mutex render_marker_symbolizer_visitor<Detector, RendererType, ContextType>
 template <typename Detector, typename RendererType, typename ContextType>
 std::map<
     markers_symbolizer const*,
-    std::pair<std::shared_ptr<svg_attribute_type>, markers_symbolizer::cont_type>
+    std::pair<svg_attribute_ptr, markers_symbolizer::cont_type>
 > render_marker_symbolizer_visitor<Detector, RendererType, ContextType>::cached_attributes_;
 
 template <typename Detector, typename RendererType, typename ContextType>

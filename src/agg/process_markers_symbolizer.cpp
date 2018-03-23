@@ -77,14 +77,14 @@ struct agg_markers_renderer_context : markers_renderer_context
 
     virtual void render_marker(svg_path_ptr const& src,
                                svg_path_adapter & path,
-                               svg_attribute_type const& attrs,
+                               svg_attribute_ptr attrs,
                                markers_dispatch_params const& params,
                                agg::trans_affine const& marker_tr)
     {
         METRIC_UNUSED auto t0 = metrics_.measure_time("Agg_PMS_render_marker0");
         // We try to reuse existing marker images.
         // We currently do it only for single attribute set.
-        if (attrs.size() == 1)
+        if (attrs->size() == 1)
         {
             // Markers are generally drawn using 2 shapes. To be safe, check
             // that at most one of the shapes has transparency.
@@ -93,12 +93,12 @@ struct agg_markers_renderer_context : markers_renderer_context
                              marker_tr.shx == 0.0 && marker_tr.shy == 0.0;
             if (cacheable)
             {
-                METRIC_UNUSED auto t0 = metrics_.measure_time("Agg_PMS_render_cacheable");
+                METRIC_UNUSED auto t00 = metrics_.measure_time("Agg_PMS_render_cacheable");
                 // Calculate canvas offsets
                 double margin = 0.0;
-                if (attrs[0].stroke_flag || attrs[0].stroke_gradient.get_gradient_type() != NO_GRADIENT)
+                if ((*attrs)[0].stroke_flag || (*attrs)[0].stroke_gradient.get_gradient_type() != NO_GRADIENT)
                 {
-                    margin = std::abs(attrs[0].stroke_width);
+                    margin = std::abs((*attrs)[0].stroke_width);
                 }
                 double x0 = std::floor(src->bounding_box().minx() - margin);
                 double y0 = std::floor(src->bounding_box().miny() - margin);
@@ -112,7 +112,7 @@ struct agg_markers_renderer_context : markers_renderer_context
 
                 int sample_idx = static_cast<int>(sample_y) * sampling_rate + static_cast<int>(sample_x);
                 METRIC_UNUSED auto t1 = metrics_.measure_time("Agg_PMS_render_sampling");
-                std::tuple<svg_path_ptr, int, const svg::path_attributes*> key(src, sample_idx, &attrs[0]);
+                std::tuple<svg_path_ptr, int, svg_attribute_ptr> key(src, sample_idx, attrs);
 
                 std::shared_ptr<image_rgba8> fill_img = nullptr;
                 std::shared_ptr<image_rgba8> stroke_img = nullptr;
@@ -150,7 +150,7 @@ struct agg_markers_renderer_context : markers_renderer_context
                     marker_tr_copy.ty = dy - y0;
 
                     // Create fill image
-                    if (attrs[0].fill_flag || attrs[0].fill_gradient.get_gradient_type() != NO_GRADIENT)
+                    if ((*attrs)[0].fill_flag || (*attrs)[0].fill_gradient.get_gradient_type() != NO_GRADIENT)
                     {
                         fill_img = std::make_shared<image_rgba8>(width, height, true);
 
@@ -158,7 +158,7 @@ struct agg_markers_renderer_context : markers_renderer_context
                         pixfmt_type pixf(buf);
                         renderer_base renb(pixf);
 
-                        auto attrs_copy = attrs;
+                        svg_attribute_type attrs_copy = *attrs;
                         attrs_copy[0].stroke_flag = false;
                         attrs_copy[0].stroke_gradient.set_gradient_type(NO_GRADIENT);
 
@@ -172,7 +172,7 @@ struct agg_markers_renderer_context : markers_renderer_context
                     }
 
                     // Create stroke image
-                    if (attrs[0].stroke_flag || attrs[0].stroke_gradient.get_gradient_type() != NO_GRADIENT)
+                    if ((*attrs)[0].stroke_flag || (*attrs)[0].stroke_gradient.get_gradient_type() != NO_GRADIENT)
                     {
                         stroke_img = std::make_shared<image_rgba8>(width, height, true);
 
@@ -180,7 +180,7 @@ struct agg_markers_renderer_context : markers_renderer_context
                         pixfmt_type pixf(buf);
                         renderer_base renb(pixf);
 
-                        auto attrs_copy = attrs;
+                        svg_attribute_type attrs_copy = *attrs;
                         attrs_copy[0].fill_flag = false;
                         attrs_copy[0].fill_gradient.set_gradient_type(NO_GRADIENT);
 
@@ -229,7 +229,7 @@ struct agg_markers_renderer_context : markers_renderer_context
 
         METRIC_UNUSED auto t = metrics_.measure_time("Agg_PMS_ImageCache_IgnoredRender");
         // Fallback to non-cached rendering path
-        SvgRenderer svg_renderer(path, attrs);
+        SvgRenderer svg_renderer(path, *attrs);
         render_vector_marker(svg_renderer, ras_, renb_, src->bounding_box(), marker_tr, params.opacity, params.snap_to_pixels);
     }
 
@@ -258,7 +258,7 @@ private:
 #endif
 
     static std::map<
-		std::tuple<svg_path_ptr, int, const svg::path_attributes*>,
+		std::tuple<svg_path_ptr, int, svg_attribute_ptr>,
 		std::pair<std::shared_ptr<image_rgba8>, std::shared_ptr<image_rgba8>>
 	    > cached_images_;
 
@@ -273,7 +273,7 @@ std::mutex agg_markers_renderer_context<SvgRenderer, BufferType, RasterizerType>
 
 template <typename SvgRenderer, typename BufferType, typename RasterizerType>
 std::map<
-    std::tuple<svg_path_ptr, int, const svg::path_attributes*>,
+    std::tuple<svg_path_ptr, int, svg_attribute_ptr>,
     std::pair<std::shared_ptr<image_rgba8>, std::shared_ptr<image_rgba8>>
 > agg_markers_renderer_context<SvgRenderer, BufferType, RasterizerType>::cached_images_ = {};
 
