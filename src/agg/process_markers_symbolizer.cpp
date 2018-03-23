@@ -112,7 +112,7 @@ struct agg_markers_renderer_context : markers_renderer_context
 
                 int sample_idx = static_cast<int>(sample_y) * sampling_rate + static_cast<int>(sample_x);
                 METRIC_UNUSED auto t1 = metrics_.measure_time("Agg_PMS_render_sampling");
-                std::tuple<svg_path_ptr, int, svg::path_attributes> key(src, sample_idx, attrs[0]);
+                std::tuple<svg_path_ptr, int, const svg::path_attributes*> key(src, sample_idx, &attrs[0]);
 
                 std::shared_ptr<image_rgba8> fill_img = nullptr;
                 std::shared_ptr<image_rgba8> stroke_img = nullptr;
@@ -258,7 +258,7 @@ private:
 #endif
 
     static std::map<
-		std::tuple<svg_path_ptr, int, svg::path_attributes>,
+		std::tuple<svg_path_ptr, int, const svg::path_attributes*>,
 		std::pair<std::shared_ptr<image_rgba8>, std::shared_ptr<image_rgba8>>
 	    > cached_images_;
 
@@ -273,7 +273,7 @@ std::mutex agg_markers_renderer_context<SvgRenderer, BufferType, RasterizerType>
 
 template <typename SvgRenderer, typename BufferType, typename RasterizerType>
 std::map<
-    std::tuple<svg_path_ptr, int, svg::path_attributes>,
+    std::tuple<svg_path_ptr, int, const svg::path_attributes*>,
     std::pair<std::shared_ptr<image_rgba8>, std::shared_ptr<image_rgba8>>
 > agg_markers_renderer_context<SvgRenderer, BufferType, RasterizerType>::cached_images_ = {};
 
