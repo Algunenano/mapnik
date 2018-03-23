@@ -167,10 +167,10 @@ bool gradient::operator <(const gradient &b) const
             return stops_[i].second.rgba() < b.stops_[i].second.rgba();
     }
 
-    if (!transform_.is_equal(b.transform_)) return transform_ < b.transform_;
-
-    return std::tie(x1_, y1_, x2_, y2_, r_, units_, gradient_type_)  <
-           std::tie(b.x1_, b.y1_, b.x2_, b.y2_, b.r_, b.units_,  b.gradient_type_);
+    return std::tie(x1_, y1_, x2_, y2_, r_, units_, gradient_type_,
+                    transform_.sx, transform_.shy, transform_.shx, transform_.sy, transform_.tx, transform_.ty)  <
+           std::tie(b.x1_, b.y1_, b.x2_, b.y2_, b.r_, b.units_,  b.gradient_type_,
+                    b.transform_.sx, b.transform_.shy, b.transform_.shx, b.transform_.sy, b.transform_.tx, b.transform_.ty);
 }
 
 }

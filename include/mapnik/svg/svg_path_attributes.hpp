@@ -142,6 +142,18 @@ struct path_attributes
 
     bool operator <(const path_attributes &b) const
     {
+        if (fill_gradient < b.fill_gradient) return true;
+        if (b.fill_gradient < fill_gradient) return false;
+
+        if (stroke_gradient < b.stroke_gradient) return true;
+        if (b.stroke_gradient < stroke_gradient) return false;
+
+        agg::int32u self_fill_color = (fill_color.r << 24) + (fill_color.g << 16) + (fill_color.b << 8) + fill_color.a;
+        agg::int32u b_fill_color = ((b.fill_color.r << 24) + (b.fill_color.g << 16) + (b.fill_color.b << 8) + b.fill_color.a);
+
+        agg::int32u self_stroke_color= (stroke_color.r << 24) + (stroke_color.g << 16) + (stroke_color.b << 8) + stroke_color.a;
+        agg::int32u b_stroke_color = ((b.stroke_color.r << 24) + (b.stroke_color.g << 16) + (b.stroke_color.b << 8) + b.stroke_color.a);
+
         auto self_t = std::tie(opacity,
                                fill_opacity,
                                stroke_opacity,
@@ -158,7 +170,15 @@ struct path_attributes
                                visibility_flag,
                                display_flag,
                                dash,
-                               dash_offset);
+                               dash_offset,
+                               self_fill_color,
+                               self_stroke_color);
+//                               transform.sx,
+//                               transform.shy,
+//                               transform.shx,
+//                               transform.sy,
+//                               transform.tx,
+//                               transform.ty);
 
         auto b_t = std::tie(b.opacity,
                             b.fill_opacity,
@@ -176,24 +196,17 @@ struct path_attributes
                             b.visibility_flag,
                             b.display_flag,
                             b.dash,
-                            b.dash_offset);
+                            b.dash_offset,
+                            b_fill_color,
+                            b_stroke_color);
+//                            b.transform.sx,
+//                            b.transform.shy,
+//                            b.transform.shx,
+//                            b.transform.sy,
+//                            b.transform.tx,
+//                            b.transform.ty);
 
-        if (self_t < b_t) return true;
-        if (b_t < self_t) return false;
-
-        if (fill_color < b.fill_color) return true;
-        if (b.fill_color < fill_color) return false;
-
-        if (stroke_color < b.stroke_color) return true;
-        if (b.stroke_color < stroke_color) return false;
-
-        if (fill_gradient < b.fill_gradient) return true;
-        if (b.fill_gradient < fill_gradient) return false;
-
-        if (stroke_gradient < b.stroke_gradient) return true;
-        if (b.stroke_gradient < stroke_gradient) return false;
-
-        return transform < b.transform;
+        return (self_t < b_t);
     }
 };
 
