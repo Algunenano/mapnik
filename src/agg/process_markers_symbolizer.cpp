@@ -81,7 +81,6 @@ struct agg_markers_renderer_context : markers_renderer_context
                                markers_dispatch_params const& params,
                                agg::trans_affine const& marker_tr)
     {
-        METRIC_UNUSED auto t0 = metrics_.measure_time("Agg_PMS_render_marker0"); /* TODO: Remove this */
         // We try to reuse existing marker images.
         // We currently do it only for single attribute set.
         if (attrs->size() == 1)
@@ -115,7 +114,7 @@ struct agg_markers_renderer_context : markers_renderer_context
                 std::shared_ptr<image_rgba8> fill_img = nullptr;
                 std::shared_ptr<image_rgba8> stroke_img = nullptr;
                 bool cache_hit = false;
-                // Limit the scope of the metrics mutex
+                // Limit the scope of the cache mutex
                 {
 #ifdef MAPNIK_THREADSAFE
                     std::lock_guard<std::mutex> lock(mutex_);
@@ -128,8 +127,6 @@ struct agg_markers_renderer_context : markers_renderer_context
                         stroke_img = it->second.second;
                     }
                 }
-
-                METRIC_UNUSED auto t2 = metrics_.measure_time("Agg_PMS_render_afterSearch"); /* TODO: Remove this */
 
                 if (!cache_hit)
                 {
@@ -206,7 +203,6 @@ struct agg_markers_renderer_context : markers_renderer_context
                     ras_.clip_box(0, 0, pixf_.width(), pixf_.height());
                 }
 
-                METRIC_UNUSED auto t = metrics_.measure_time("Agg_PMS_ImageCache_Render");
                 // Set up blitting transformation. We will add a small offset due to sampling
                 agg::trans_affine marker_tr_copy(marker_tr);
                 marker_tr_copy.translate(x0 - dx, y0 - dy);
@@ -235,7 +231,6 @@ struct agg_markers_renderer_context : markers_renderer_context
                                markers_dispatch_params const& params,
                                agg::trans_affine const& marker_tr)
     {
-        METRIC_UNUSED auto t0 = metrics_.measure_time("Agg_PMS_render_marker1");
         // In the long term this should be a visitor pattern based on the
         // type of render src provided that converts the destination pixel
         // type required.
@@ -281,7 +276,7 @@ void agg_renderer<T0,T1>::process(markers_symbolizer const& sym,
                               feature_impl & feature,
                               proj_transform const& prj_trans)
 {
-    METRIC_UNUSED auto t = agg_renderer::metrics_.measure_time("Agg_PMS");
+    METRIC_UNUSED auto t = agg_renderer::metrics_.measure_time("Agg_PMarkerS");
     using namespace mapnik::svg;
     using color_type = agg::rgba8;
     using order_type = agg::order_rgba;
@@ -308,13 +303,11 @@ void agg_renderer<T0,T1>::process(markers_symbolizer const& sym,
 
     buf_type render_buffer(current_buffer_->bytes(), current_buffer_->width(), current_buffer_->height(), current_buffer_->row_size());
     box2d<double> clip_box = clipping_extent(common_);
-    METRIC_UNUSED auto t6 = agg_renderer::metrics_.measure_time("Agg_PMS_6");
 
     using context_type = detail::agg_markers_renderer_context<svg_renderer_type,
                                                               buf_type,
                                                               rasterizer>;
     context_type renderer_context(sym, feature, common_.vars_, render_buffer, *ras_ptr, agg_renderer::metrics_);
-    METRIC_UNUSED auto t7 = agg_renderer::metrics_.measure_time("Agg_PMS_7");
     render_markers_symbolizer(
         sym, feature, prj_trans, common_, clip_box, renderer_context);
 }

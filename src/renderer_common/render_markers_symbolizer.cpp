@@ -121,7 +121,6 @@ struct render_marker_symbolizer_visitor
     void operator() (marker_svg const& mark) const
     {
         using namespace mapnik::svg;
-        METRIC_UNUSED auto t = renderer_context_.metrics_.measure_time("Agg_RMS_visit_svg"); /* TODO: Remove this */
 
         // https://github.com/mapnik/mapnik/issues/1316
         bool snap_to_pixels = !mapnik::marker_cache::instance().is_uri(filename_);
@@ -151,8 +150,6 @@ struct render_marker_symbolizer_visitor
                 r_attributes = attr_it->second.first;
             }
         }
-
-        METRIC_UNUSED auto t11 = renderer_context_.metrics_.measure_time("Agg_RMS_AttrCache_Post_Search"); /* TODO: Remove this */
 
         if (!r_attributes)
         {
@@ -254,7 +251,6 @@ struct render_marker_symbolizer_visitor
 
     void operator() (marker_rgba8 const& mark) const
     {
-        METRIC_UNUSED auto t = renderer_context_.metrics_.measure_time("Agg_RMS_visit_rgba8"); /* TODO: Remove this */
         agg::trans_affine image_tr = agg::trans_affine_scaling(common_.scale_factor_);
 
         setup_transform_scaling(image_tr, mark.width(), mark.height(), feature_, common_.vars_, sym_);
@@ -360,7 +356,6 @@ void render_markers_symbolizer(markers_symbolizer const& sym,
     using VisitorType = detail::render_marker_symbolizer_visitor<Detector,
                                                                  RendererType,
                                                                  ContextType>;
-    METRIC_UNUSED auto t = renderer_context.metrics_.measure_time("Agg_RMS_"); /* TODO: Remove this */
 
     std::string filename = get<std::string>(sym, keys::file, feature, common.vars_, "shape://ellipse");
     if (!filename.empty())
