@@ -131,11 +131,7 @@ struct agg_markers_renderer_context : markers_renderer_context
 
                 METRIC_UNUSED auto t2 = metrics_.measure_time("Agg_PMS_render_afterSearch"); /* TODO: Remove this */
 
-                if (cache_hit)
-                {
-                    metrics_.measure_add("Agg_PMS_ImageCache_Hit");
-                }
-                else
+                if (!cache_hit)
                 {
                     metrics_.measure_add("Agg_PMS_ImageCache_Miss");
                     // Calculate canvas size

@@ -154,11 +154,7 @@ struct render_marker_symbolizer_visitor
 
         METRIC_UNUSED auto t11 = renderer_context_.metrics_.measure_time("Agg_RMS_AttrCache_Post_Search"); /* TODO: Remove this */
 
-        if (r_attributes)
-        {
-            renderer_context_.metrics_.measure_add("Agg_PMS_AttrCache_Hit");
-        }
-        else
+        if (!r_attributes)
         {
             renderer_context_.metrics_.measure_add("Agg_PMS_AttrCache_Miss");
             svg_attribute_type s_attributes;
