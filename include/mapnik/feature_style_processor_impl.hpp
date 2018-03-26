@@ -35,6 +35,8 @@
 #include <mapnik/expression_evaluator.hpp>
 #include <mapnik/feature.hpp>
 #include <mapnik/feature_type_style.hpp>
+#include <mapnik/geometry_type.hpp>
+#include <mapnik/geometry_types.hpp>
 #include <mapnik/layer.hpp>
 #include <mapnik/map.hpp>
 #include <mapnik/projection.hpp>
@@ -588,8 +590,10 @@ void feature_style_processor<Processor>::render_style(
     featureset_ptr features,
     proj_transform const& prj_trans)
 {
-    METRIC_UNUSED auto t = metrics_.measure_time("Mapnik.Render.Style"); /* TODO: Fix this*/
-    uint features_count = 0;
+#ifdef MAPNIK_METRICS
+    auto t = metrics_.measure_time("Mapnik.Render.Style"); /* TODO: Fix this*/
+    uint features_count[geometry::geometry_types::GeometryCollection+1] = {0};
+#endif
     p.start_style_processing(*style);
     if (!features)
     {
@@ -601,7 +605,11 @@ void feature_style_processor<Processor>::render_style(
     bool was_painted = false;
     while ((feature = features->next()))
     {
-        features_count++;
+#ifdef MAPNIK_METRICS
+        mapnik::geometry::geometry<double> const& geometry = feature->get_geometry();
+        geometry::geometry_types type = geometry::geometry_type(geometry);
+        features_count[type]++;
+#endif
         bool do_else = true;
         bool do_also = false;
         for (rule const* r : rc.get_if_rules() )
@@ -660,7 +668,17 @@ void feature_style_processor<Processor>::render_style(
             }
         }
     }
-    metrics_.measure_add("Mapnik.Render.Style.features", features_count);
+
+#ifdef MAPNIK_METRICS
+    metrics_.measure_add("Features_cnt_Unknown", features_count[geometry::geometry_types::Unknown]);
+    metrics_.measure_add("Features_cnt_Point", features_count[geometry::geometry_types::Point]);
+    metrics_.measure_add("Features_cnt_LineString", features_count[geometry::geometry_types::LineString]);
+    metrics_.measure_add("Features_cnt_Polygon", features_count[geometry::geometry_types::Polygon]);
+    metrics_.measure_add("Features_cnt_MultiPoint", features_count[geometry::geometry_types::MultiPoint]);
+    metrics_.measure_add("Features_cnt_MultiLineString", features_count[geometry::geometry_types::MultiLineString]);
+    metrics_.measure_add("Features_cnt_MultiPolygon", features_count[geometry::geometry_types::MultiPolygon]);
+    metrics_.measure_add("Features_cnt_GeometryCollection", features_count[geometry::geometry_types::GeometryCollection]);
+#endif
 
     p.painted(p.painted() | was_painted);
     p.end_style_processing(*style);
