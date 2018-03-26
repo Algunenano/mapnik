@@ -121,10 +121,6 @@ class MAPNIK_DECL metrics
 public:
     using metrics_array = std::vector<struct measurement>;
 
-    /* Whether metrics are enabled or not. If disabled any calls to
-     * measure_XXX (add/dec/time) will be ignored */
-    bool enabled_ = false;
-
     /**
      * Default constructor with an empty tree
      */
@@ -188,7 +184,11 @@ private:
     std::unique_ptr<autochrono> measure_time_impl(const char* const name);
     void measure_add_impl(const char* const name, int64_t value, measurement_t type);
 
-    std::shared_ptr<metrics_array> storage_{new metrics_array};
+    std::shared_ptr<metrics_array> storage_ = nullptr;
+public:
+    /* Whether metrics are enabled or not. If disabled any calls to
+     * measure_XXX (add/dec/time) will be ignored */
+    bool enabled_ = false;
 };
 
 #endif /* ifndef MAPNIK_METRICS */

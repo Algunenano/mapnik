@@ -61,20 +61,23 @@ autochrono::~autochrono()
 }
 
 metrics::metrics(bool enabled)
-    : enabled_(enabled)
+    : storage_(new metrics_array),
+      enabled_(enabled)
 {
 }
 
 /* Copy constructor */
 metrics::metrics(metrics const &m)
 {
-    *this = m;
+    storage_ = m.storage_;
+    enabled_ = m.enabled_;
 }
 
 /* Move constructor */
 metrics::metrics(metrics const &&m)
 {
-    *this = m;
+    storage_ = m.storage_;
+    enabled_ = m.enabled_;
 }
 
 /* Copy assignment operator */
@@ -88,7 +91,8 @@ metrics& metrics::operator=(metrics const& m)
 /* Move assignment operator */
 metrics& metrics::operator=(metrics&& m)
 {
-    return *this = m;
+    storage_ = m.storage_;
+    enabled_ = m.enabled_;
 }
 
 std::unique_ptr<autochrono> metrics::measure_time_impl(const char* const name)
