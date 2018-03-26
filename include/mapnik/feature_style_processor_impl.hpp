@@ -59,6 +59,12 @@
 namespace mapnik
 {
 
+static const char* METRICS_NAME_ALL = "All";
+static const char* METRICS_NAME_SETUP = "Setup";
+static const char* METRICS_NAME_DATASOURCE = "Datasource";
+static const char* METRICS_NAME_RENDER = "Render";
+static const char* METRICS_NAME_RENDER_STYLE = "Render_Style";
+
 // Store material for layer rendering in a two step process
 struct layer_rendering_material
 {
@@ -106,7 +112,7 @@ feature_style_processor<Processor>::feature_style_processor(Map const& m,
 template <typename Processor>
 void feature_style_processor<Processor>::apply(double scale_denom)
 {
-    METRIC_UNUSED auto t = metrics_.measure_time("Mapnik"); /* TODO: Fix this*/
+    METRIC_UNUSED auto t = metrics_.measure_time(METRICS_NAME_ALL);
     Processor & p = static_cast<Processor&>(*this);
     p.start_map_processing(m_);
 
@@ -169,7 +175,7 @@ void feature_style_processor<Processor>::apply(mapnik::layer const& lyr,
                                                std::set<std::string>& names,
                                                double scale_denom)
 {
-    METRIC_UNUSED auto t = metrics_.measure_time("Mapnik"); /* TODO: Fix this*/
+    METRIC_UNUSED auto t = metrics_.measure_time(METRICS_NAME_ALL);
     Processor & p = static_cast<Processor&>(*this);
     p.start_map_processing(m_);
     projection proj(m_.srs(),true);
@@ -240,7 +246,7 @@ void feature_style_processor<Processor>::prepare_layer(layer_rendering_material 
                                                        int buffer_size,
                                                        std::set<std::string>& names)
 {
-    METRIC_UNUSED auto t = metrics_.measure_time("Mapnik.Setup"); /* TODO: Fix this*/
+    METRIC_UNUSED auto t = metrics_.measure_time(METRICS_NAME_SETUP);
     layer const& lay = mat.lay_;
 
     std::vector<std::string> const& style_names = lay.styles();
@@ -452,14 +458,14 @@ void feature_style_processor<Processor>::prepare_layer(layer_rendering_material 
     std::vector<featureset_ptr> & featureset_ptr_list = mat.featureset_ptr_list_;
     if (!group_by.empty() || cache_features)
     {
-        METRIC_UNUSED auto t2 = metrics_.measure_time("Mapnik.Setup.Datasource: Get Features"); /* TODO: Fix this*/
+        METRIC_UNUSED auto t2 = metrics_.measure_time(METRICS_NAME_DATASOURCE);
         featureset_ptr_list.push_back(ds->features_with_context(q,current_ctx));
     }
     else
     {
         for(std::size_t i = 0; i < active_styles.size(); ++i)
         {
-            METRIC_UNUSED auto t2 = metrics_.measure_time("Mapnik.Setup.Datasource: Get Features"); /* TODO: Fix this*/
+            METRIC_UNUSED auto t2 = metrics_.measure_time(METRICS_NAME_DATASOURCE);
             featureset_ptr_list.push_back(ds->features_with_context(q,current_ctx));
         }
     }
@@ -470,7 +476,7 @@ template <typename Processor>
 void feature_style_processor<Processor>::render_material(layer_rendering_material const & mat,
                                                          Processor & p )
 {
-    METRIC_UNUSED auto t = metrics_.measure_time("Mapnik.Render"); /* TODO: Fix this*/
+    METRIC_UNUSED auto t = metrics_.measure_time(METRICS_NAME_RENDER);
     std::vector<feature_type_style const*> const & active_styles = mat.active_styles_;
     std::vector<featureset_ptr> const & featureset_ptr_list = mat.featureset_ptr_list_;
     if (featureset_ptr_list.empty())
@@ -591,7 +597,7 @@ void feature_style_processor<Processor>::render_style(
     proj_transform const& prj_trans)
 {
 #ifdef MAPNIK_METRICS
-    auto t = metrics_.measure_time("Mapnik.Render.Style"); /* TODO: Fix this*/
+    auto t = metrics_.measure_time(METRICS_NAME_RENDER_STYLE);
     uint features_count[geometry::geometry_types::GeometryCollection+1] = {0};
 #endif
     p.start_style_processing(*style);

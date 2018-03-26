@@ -130,30 +130,35 @@ std::string metrics::to_string()
     std::ostringstream buf;
 
     buf << "{";
-    for (auto it = storage_->begin(); it != storage_->end(); it++)
+    if (enabled_ && !storage_->empty())
     {
-        buf << R"(")" << it->name_ << R"(":)";
-        switch (it->type_)
+        buf << R"("Mapnik__":{)"; /* TODO: Remove underscore*/
+        for (auto it = storage_->begin(); it != storage_->end(); it++)
         {
-            case (measurement_t::VALUE):
-                buf << it->value_;
-                break;
-            case (measurement_t::TIME_MICROSECONDS):
-                buf << "{";
-                buf << R"(")" << measurement_str[measurement_t::TIME_MICROSECONDS];
-                buf << R"(":)" << it->value_;
-                buf << R"(,")" << measurement_str[measurement_t::CALLS];
-                buf << R"(":)" << it->calls_;
-                buf << "}";
-                break;
-            default:
-                break;
-        }
+            buf << R"(")" << it->name_ << R"(":)";
+            switch (it->type_)
+            {
+                case (measurement_t::VALUE):
+                    buf << it->value_;
+                    break;
+                case (measurement_t::TIME_MICROSECONDS):
+                    buf << "{";
+                    buf << R"(")" << measurement_str[measurement_t::TIME_MICROSECONDS];
+                    buf << R"(":)" << it->value_;
+                    buf << R"(,")" << measurement_str[measurement_t::CALLS];
+                    buf << R"(":)" << it->calls_;
+                    buf << "}";
+                    break;
+                default:
+                    break;
+            }
 
-        if (std::next(it) != storage_->end())
-        {
-            buf << ",";
+            if (std::next(it) != storage_->end())
+            {
+                buf << ",";
+            }
         }
+        buf << "}";
     }
 
     buf << "}";

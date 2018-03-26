@@ -137,26 +137,26 @@ TEST_CASE("metrics")
         metrics m(true);
         CHECK(m.to_string() == "{}");
         m.measure_add("new_metric", 10);
-        CHECK(m.to_string() == R"^({"new_metric":10})^");
+        CHECK(m.to_string() == R"^({"Mapnik":{"new_metric":10}})^");
         m.measure_add("new_metric", 15);
-        CHECK(m.to_string() == R"^({"new_metric":25})^");
+        CHECK(m.to_string() == R"^({"Mapnik":{"new_metric":25}})^");
 
         metrics m2(true);
         m2.measure_add("metric.render.vortex", 10);
-        CHECK(m2.to_string() == R"^({"metric.render.vortex":10})^");
+        CHECK(m2.to_string() == R"^({"Mapnik":{"metric.render.vortex":10}})^");
 
         m2.measure_add("metric.render", 100);
-        CHECK(m2.to_string() == R"^({"metric.render.vortex":10,"metric.render":100})^");
+        CHECK(m2.to_string() == R"^({"Mapnik":{"metric.render.vortex":10,"metric.render":100}})^");
 
         metrics m3(true);
         m3.measure_add("metric.a", 10);
         m3.measure_add("metric.b", 20);
-        CHECK(m3.to_string() == R"^({"metric.a":10,"metric.b":20})^");
+        CHECK(m3.to_string() == R"^({"Mapnik":{"metric.a":10,"metric.b":20}})^");
 
         metrics m4(true);
         m4.measure_add("time metric", 100, measurement_t::TIME_MICROSECONDS);
         m4.measure_add("time metric", 150, measurement_t::TIME_MICROSECONDS);
-        CHECK(m4.to_string() == R"^({"time metric":{"Time (us)":250,"Calls":2}})^");
+        CHECK(m4.to_string() == R"^({"Mapnik":{"time metric":{"Time (us)":250,"Calls":2}}})^");
     }
 
 } //Test case
