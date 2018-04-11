@@ -610,6 +610,7 @@ void feature_style_processor<Processor>::render_style(
     mapnik::attributes const & vars = p.variables();
     feature_ptr feature;
     bool was_painted = false;
+    auto t28 = metrics_.measure_time("Render_Style_2_5");
     while ((feature = features->next()))
     {
 #ifdef MAPNIK_METRICS
