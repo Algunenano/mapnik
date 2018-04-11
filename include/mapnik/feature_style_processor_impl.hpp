@@ -606,6 +606,7 @@ void feature_style_processor<Processor>::render_style(
         p.end_style_processing(*style);
         return;
     }
+    auto t25 = metrics_.measure_time("Render_Style_2");
     mapnik::attributes const & vars = p.variables();
     feature_ptr feature;
     bool was_painted = false;
@@ -616,12 +617,12 @@ void feature_style_processor<Processor>::render_style(
         geometry::geometry_types type = geometry::geometry_type(geometry);
         features_count[type]++;
 #endif
-        auto t = metrics_.measure_time("Render_Style_feature_loop");
+        auto t2 = metrics_.measure_time("Render_Style_feature_loop");
         bool do_else = true;
         bool do_also = false;
         for (rule const* r : rc.get_if_rules() )
         {
-            auto t = metrics_.measure_time("Render_Style_feature_if");
+            auto t3 = metrics_.measure_time("Render_Style_feature_if");
             expression_ptr const& expr = r->get_filter();
             value_type result = util::apply_visitor(evaluate<feature_impl,value_type,attributes>(*feature,vars),*expr);
             if (result.to_bool())
@@ -647,7 +648,7 @@ void feature_style_processor<Processor>::render_style(
         }
         if (do_else)
         {
-            auto t = metrics_.measure_time("Render_Style_feature_else");
+            auto t4 = metrics_.measure_time("Render_Style_feature_else");
             for( rule const* r : rc.get_else_rules() )
             {
                 was_painted = true;
@@ -663,7 +664,7 @@ void feature_style_processor<Processor>::render_style(
         }
         if (do_also)
         {
-            auto t = metrics_.measure_time("Render_Style_feature_also");
+            auto t5 = metrics_.measure_time("Render_Style_feature_also");
             for( rule const* r : rc.get_also_rules() )
             {
                 was_painted = true;
@@ -678,6 +679,7 @@ void feature_style_processor<Processor>::render_style(
             }
         }
     }
+    auto t26 = metrics_.measure_time("Render_Style_3");
 
 #ifdef MAPNIK_METRICS
     if (features_count[geometry::geometry_types::Unknown])
