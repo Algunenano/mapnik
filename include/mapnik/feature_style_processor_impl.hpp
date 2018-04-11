@@ -501,7 +501,7 @@ void feature_style_processor<Processor>::render_material(layer_rendering_materia
 
     bool cache_features = lay.cache_features() && active_styles.size() > 1;
 
-    std::string group_by = lay.group_by();
+    const std::string & group_by = lay.group_by();
 
     // Render incrementally when the column that we group by changes value.
     if (!group_by.empty())

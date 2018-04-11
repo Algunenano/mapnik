@@ -60,7 +60,7 @@ rule::rule(rule const& rhs)
       else_filter_(rhs.else_filter_),
       also_filter_(rhs.also_filter_) {}
 
-rule::rule(rule && rhs)
+rule::rule(rule && rhs) noexcept
     : name_(std::move(rhs.name_)),
       min_scale_(std::move(rhs.min_scale_)),
       max_scale_(std::move(rhs.max_scale_)),

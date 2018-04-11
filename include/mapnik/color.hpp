@@ -82,12 +82,12 @@ public:
         {}
 
     // move ctor
-    color(color && rhs)
-        : red_(std::move(rhs.red_)),
-        green_(std::move(rhs.green_)),
-        blue_(std::move(rhs.blue_)),
-        alpha_(std::move(rhs.alpha_)),
-        premultiplied_(std::move(rhs.premultiplied_)) {}
+    color(color && rhs) noexcept
+        : red_(rhs.red_),
+        green_(rhs.green_),
+        blue_(rhs.blue_),
+        alpha_(rhs.alpha_),
+        premultiplied_(rhs.premultiplied_) {}
 
     color( std::string const& str, bool premultiplied = false);
 

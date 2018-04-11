@@ -89,7 +89,7 @@ struct unary_function_call
     using argument_type = expr_node;
     unary_function_call() = default;
     unary_function_call(unary_function_impl _fun, argument_type const& _arg)
-        : fun(_fun), arg(_arg) {}
+        : fun(std::move(_fun)), arg(_arg) {}
 
     unary_function_impl fun;
     argument_type arg;
@@ -100,7 +100,7 @@ struct binary_function_call
     using argument_type = expr_node;
     binary_function_call() = default;
     binary_function_call(binary_function_impl _fun, argument_type const& _arg1, argument_type const& _arg2)
-        : fun(_fun), arg1(_arg1), arg2(_arg2) {}
+        : fun(std::move(_fun)), arg1(_arg1), arg2(_arg2) {}
     binary_function_impl fun;
     argument_type arg1;
     argument_type arg2;

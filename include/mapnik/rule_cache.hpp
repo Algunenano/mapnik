@@ -43,13 +43,13 @@ public:
           else_rules_(),
           also_rules_() {}
 
-    rule_cache(rule_cache && rhs) // move ctor
+    rule_cache(rule_cache && rhs) noexcept // move ctor
         :  if_rules_(std::move(rhs.if_rules_)),
            else_rules_(std::move(rhs.else_rules_)),
            also_rules_(std::move(rhs.also_rules_))
     {}
 
-    rule_cache& operator=(rule_cache && rhs) // move assign
+    rule_cache& operator=(rule_cache && rhs) noexcept // move assign
     {
         std::swap(if_rules_, rhs.if_rules_);
         std::swap(else_rules_,rhs.else_rules_);

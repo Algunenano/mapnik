@@ -51,17 +51,17 @@ struct glyph_info : util::noncopyable
           unscaled_line_height(0.0),
           scale_multiplier(1.0),
           offset() {}
-    glyph_info(glyph_info && rhs)
-        : glyph_index(std::move(rhs.glyph_index)),
-          char_index(std::move(rhs.char_index)),
+    glyph_info(glyph_info && rhs) noexcept
+        : glyph_index(rhs.glyph_index),
+          char_index(rhs.char_index),
           format(rhs.format), // take ref
           face(std::move(rhs.face)), // shared_ptr move just ref counts, right?
-          unscaled_ymin(std::move(rhs.unscaled_ymin)),
-          unscaled_ymax(std::move(rhs.unscaled_ymax)),
-          unscaled_advance(std::move(rhs.unscaled_advance)),
-          unscaled_line_height(std::move(rhs.unscaled_line_height)),
-          scale_multiplier(std::move(rhs.scale_multiplier)),
-          offset(std::move(rhs.offset)) {}
+          unscaled_ymin(rhs.unscaled_ymin),
+          unscaled_ymax(rhs.unscaled_ymax),
+          unscaled_advance(rhs.unscaled_advance),
+          unscaled_line_height(rhs.unscaled_line_height),
+          scale_multiplier(rhs.scale_multiplier),
+          offset(rhs.offset) {}
 
     unsigned glyph_index;
     // Position in the string of all characters i.e. before itemizing

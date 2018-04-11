@@ -32,7 +32,7 @@
 
 namespace mapnik {
 
-const std::string measurement_str[TOTAL_ENUM_SIZE] =
+const char* measurement_str[TOTAL_ENUM_SIZE] =
 {
     "UNKNOWN",
     "Time (us)",
@@ -67,31 +67,22 @@ metrics::metrics(bool enabled)
 }
 
 /* Copy constructor */
-metrics::metrics(metrics const &m)
-{
-    storage_ = m.storage_;
-    enabled_ = m.enabled_;
-}
+metrics::metrics(metrics const &m) = default;
 
 /* Move constructor */
-metrics::metrics(metrics const &&m)
+metrics::metrics(metrics &&m) noexcept
+    : storage_(std::move(m.storage_)),
+      enabled_(m.enabled_)
 {
-    storage_ = m.storage_;
-    enabled_ = m.enabled_;
 }
 
 /* Copy assignment operator */
-metrics& metrics::operator=(metrics const& m)
-{
-    enabled_ = m.enabled_;
-    storage_ = m.storage_;
-    return *this;
-}
+metrics& metrics::operator=(metrics const& m) = default;
 
 /* Move assignment operator */
-metrics& metrics::operator=(metrics&& m)
+metrics& metrics::operator=(metrics&& m) noexcept
 {
-    storage_ = m.storage_;
+    storage_ = std::move(m.storage_);
     enabled_ = m.enabled_;
     return *this;
 }

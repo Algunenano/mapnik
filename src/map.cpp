@@ -114,7 +114,7 @@ Map::Map(Map const& rhs)
       font_memory_cache_() {}
 
 
-Map::Map(Map && rhs)
+Map::Map(Map && rhs) noexcept
     : width_(std::move(rhs.width_)),
       height_(std::move(rhs.height_)),
       srs_(std::move(rhs.srs_)),

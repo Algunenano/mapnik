@@ -86,7 +86,7 @@ struct MAPNIK_DECL measurement
     int64_t value_ = 0;
     int_fast32_t calls_ = 1;
     measurement_t type_ = measurement_t::UNASSIGNED;
-    const char* const name_;
+    const char* const name_ = "";
 };
 
 class metrics;
@@ -126,18 +126,11 @@ public:
      */
     metrics() = delete;
     metrics(bool enabled);
-
-    /* Copy constructor */
     metrics(metrics const &m);
+    metrics(metrics &&m) noexcept;
 
-    /* Move constructor */
-    metrics(metrics const &&m);
-
-    /* Copy assignment operator */
     metrics& operator=(metrics const &);
-
-    /* Move assignment operator */
-    metrics& operator=(metrics &&);
+    metrics& operator=(metrics &&) noexcept;
 
     ~metrics() = default;
 

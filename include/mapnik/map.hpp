@@ -134,7 +134,7 @@ public:
     Map(Map const& rhs);
 
     // move ctor
-    Map(Map && other);
+    Map(Map && other) noexcept;
 
     // assignment operator
     Map& operator=(Map rhs);

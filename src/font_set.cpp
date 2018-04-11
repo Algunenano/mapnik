@@ -39,7 +39,7 @@ font_set::font_set(font_set const& rhs)
       face_names_(rhs.face_names_) {}
 
 // move
-font_set::font_set(font_set && rhs)
+font_set::font_set(font_set && rhs) noexcept
     : name_(std::move(rhs.name_)),
       face_names_(std::move(rhs.face_names_)) {}
 

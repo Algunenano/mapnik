@@ -74,7 +74,7 @@ class MAPNIK_DECL gradient
 public:
     gradient();
     gradient(gradient const& other);
-    gradient(gradient && other);
+    gradient(gradient && other) noexcept;
     gradient& operator=(gradient rhs);
     bool operator==(gradient const& other) const;
     void set_gradient_type(gradient_e grad);

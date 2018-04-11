@@ -53,7 +53,7 @@ public:
     // copy
     layer(layer const& l);
     // move
-    layer(layer && l);
+    layer(layer && l) noexcept;
     layer& operator=(layer rhs);
     bool operator==(layer const& other) const;
 

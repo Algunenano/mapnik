@@ -61,7 +61,7 @@ layer::layer(layer const& rhs)
       buffer_size_(rhs.buffer_size_),
       maximum_extent_(rhs.maximum_extent_) {}
 
-layer::layer(layer && rhs)
+layer::layer(layer && rhs) noexcept
     : name_(std::move(rhs.name_)),
       srs_(std::move(rhs.srs_)),
       minimum_scale_denom_(std::move(rhs.minimum_scale_denom_)),

@@ -48,7 +48,7 @@ gradient::gradient(gradient const& other)
       units_(other.units_),
       gradient_type_(other.gradient_type_) {}
 
-gradient::gradient(gradient && other)
+gradient::gradient(gradient && other) noexcept
     : transform_(std::move(other.transform_)),
       x1_(std::move(other.x1_)),
       y1_(std::move(other.y1_)),

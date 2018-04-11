@@ -72,7 +72,7 @@ public:
     box2d(box2d_type const& rhs);
     box2d(box2d_type const& rhs, agg::trans_affine const& tr);
     // move
-    box2d(box2d_type&& rhs);
+    box2d(box2d_type&& rhs) noexcept;
     // converting ctor
     template <typename T1>
     explicit box2d(box2d<T1> other)
