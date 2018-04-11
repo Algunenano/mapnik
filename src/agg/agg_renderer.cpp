@@ -241,6 +241,7 @@ void agg_renderer<T0,T1>::end_layer_processing(layer const&)
 template <typename T0, typename T1>
 void agg_renderer<T0,T1>::start_style_processing(feature_type_style const& st)
 {
+    METRIC_UNUSED auto t = agg_renderer::metrics_.measure_time("Agg_start_style_processing");
     MAPNIK_LOG_DEBUG(agg_renderer) << "agg_renderer: Start processing style";
     if (st.comp_op() || st.image_filters().size() > 0 || st.get_opacity() < 1)
     {
@@ -308,6 +309,7 @@ void agg_renderer<T0,T1>::start_style_processing(feature_type_style const& st)
 template <typename T0, typename T1>
 void agg_renderer<T0,T1>::end_style_processing(feature_type_style const& st)
 {
+    METRIC_UNUSED auto t = agg_renderer::metrics_.measure_time("Agg_end_style_processing");
     if (style_level_compositing_)
     {
         bool blend_from = false;
