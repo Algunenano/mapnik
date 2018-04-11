@@ -606,7 +606,7 @@ void feature_style_processor<Processor>::render_style(
         p.end_style_processing(*style);
         return;
     }
-    mapnik::attributes vars = p.variables();
+    mapnik::attributes const & vars = p.variables();
     feature_ptr feature;
     bool was_painted = false;
     while ((feature = features->next()))
