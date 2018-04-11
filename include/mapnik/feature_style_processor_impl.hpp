@@ -613,9 +613,9 @@ void feature_style_processor<Processor>::render_style(
     while ((feature = features->next()))
     {
 #ifdef MAPNIK_METRICS
-        mapnik::geometry::geometry<double> const& geometry = feature->get_geometry();
-        geometry::geometry_types type = geometry::geometry_type(geometry);
-        features_count[type]++;
+//        mapnik::geometry::geometry<double> const& geometry = feature->get_geometry();
+//        geometry::geometry_types type = geometry::geometry_type(geometry);
+//        features_count[type]++;
 #endif
         auto t2 = metrics_.measure_time("Render_Style_feature_loop");
         bool do_else = true;
