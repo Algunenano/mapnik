@@ -154,7 +154,7 @@ feature_ptr postgis_featureset::next()
                 {
                     case 16: //bool
                     {
-                        feature->put(name, (buf[0] != 0));
+                        feature->put<mapnik::value_bool>(name, (buf[0] != 0));
                         break;
                     }
 
