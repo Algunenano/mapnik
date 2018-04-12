@@ -29,7 +29,7 @@
 #include <mapnik/util/variant.hpp>
 // stl
 #include <string>
-
+#include <stdio.h>
 
 namespace mapnik { namespace json {
 
@@ -37,21 +37,25 @@ struct stringifier
 {
     std::string operator()(std::string const& val) const
     {
+        printf("stringifier  - STRING\n");
         return "\"" + val + "\"";
     }
 
     std::string operator()(value_null) const
     {
+        printf("stringifier  - value_null\n");
         return "null";
     }
 
     std::string operator()(value_bool val) const
     {
+        printf("stringifier  - value_bool\n");
         return val ? "true" : "false";
     }
 
     std::string operator()(value_integer val) const
     {
+        printf("stringifier  - value_integer\n");
         std::string str;
         util::to_string(str, val);
         return str;
@@ -59,6 +63,7 @@ struct stringifier
 
     std::string operator()(value_double val) const
     {
+        printf("stringifier  - value_double\n");
         std::string str;
         util::to_string(str, val);
         return str;
@@ -66,6 +71,7 @@ struct stringifier
 
     std::string operator()(std::vector<mapnik::json::json_value> const& array) const
     {
+        printf("stringifier  - vector json\n");
         std::string str = "[";
         bool first = true;
         for (auto const& val : array)
@@ -80,6 +86,7 @@ struct stringifier
 
     std::string operator()(std::vector<std::pair<std::string, mapnik::json::json_value>> const& object) const
     {
+        printf("stringifier  - vector pair string json\n");
         std::string str = "{";
         bool first = true;
         for (auto const& kv : object)
