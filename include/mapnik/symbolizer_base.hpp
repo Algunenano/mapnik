@@ -38,9 +38,9 @@
 
 // stl
 #include <memory>
-#include <vector>
 #include <iosfwd>
-#include <map>
+#include <unordered_map>
+#include <vector>
 
 namespace agg { struct trans_affine; }
 
@@ -117,7 +117,7 @@ struct MAPNIK_DECL symbolizer_base
 {
     using value_type = detail::strict_value;
     using key_type =  mapnik::keys;
-    using cont_type = std::map<key_type, value_type>;
+    using cont_type = std::unordered_map<key_type, value_type>;
     cont_type properties;
 };
 
