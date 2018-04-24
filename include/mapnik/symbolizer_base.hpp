@@ -148,6 +148,7 @@ struct MAPNIK_DECL markers_symbolizer : public symbolizer_base
 
     std::shared_ptr<svg_attribute_type> cached_attributes = nullptr;
     svg_path_ptr cached_ellipse = nullptr;
+    std::string marker_filename;
     cache_status cacheable = UNCHECKED;
 };
 
