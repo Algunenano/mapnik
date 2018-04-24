@@ -122,19 +122,6 @@ struct render_marker_symbolizer_visitor
     {
         using namespace mapnik::svg;
         auto &csym = const_cast<markers_symbolizer &>(sym_);
-        if (csym.cacheable == markers_symbolizer::cache_status::UNCHECKED)
-        {
-            if (std::all_of(csym.properties.begin(), csym.properties.end(),
-                [](symbolizer_base::cont_type::value_type const& key_prop)
-                  { return !is_expression(key_prop.second);}))
-            {
-                csym.cacheable = markers_symbolizer::cache_status::CACHEABLE;
-            }
-            else
-            {
-                csym.cacheable = markers_symbolizer::cache_status::UNCACHEABLE;
-            }
-        }
 
         // https://github.com/mapnik/mapnik/issues/1316
         bool snap_to_pixels = !mapnik::marker_cache::instance().is_uri(filename_);
@@ -292,12 +279,31 @@ void render_markers_symbolizer(markers_symbolizer const& sym,
     using VisitorType = detail::render_marker_symbolizer_visitor<Detector,
                                                                  RendererType,
                                                                  ContextType>;
-
-    std::string filename = get<std::string>(sym, keys::file, feature, common.vars_, "shape://ellipse");
-    if (!filename.empty())
+    auto &csym = const_cast<markers_symbolizer &>(sym);
+    if (csym.cacheable == markers_symbolizer::cache_status::UNCHECKED)
     {
-        auto mark = mapnik::marker_cache::instance().find(filename, true);
-        VisitorType visitor(filename, sym, feature, prj_trans, common, clip_box,
+        if (std::all_of(csym.properties.begin(), csym.properties.end(),
+            [](symbolizer_base::cont_type::value_type const& key_prop)
+              { return !is_expression(key_prop.second);}))
+        {
+            csym.cacheable = markers_symbolizer::cache_status::CACHEABLE;
+            csym.marker_filename = get<std::string>(sym, keys::file, feature, common.vars_, "shape://ellipse");
+        }
+        else
+        {
+            csym.cacheable = markers_symbolizer::cache_status::UNCACHEABLE;
+        }
+    }
+    std::string &cached = csym.marker_filename;
+    if (csym.cacheable != markers_symbolizer::cache_status::CACHEABLE)
+    {
+        cached = get<std::string>(sym, keys::file, feature, common.vars_, "shape://ellipse");
+    }
+
+    if (!cached.empty())
+    {
+        auto mark = mapnik::marker_cache::instance().find(cached, true);
+        VisitorType visitor(cached, sym, feature, prj_trans, common, clip_box,
                             renderer_context);
         util::apply_visitor(visitor, *mark);
     }
