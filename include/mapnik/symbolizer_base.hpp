@@ -143,15 +143,17 @@ struct MAPNIK_DECL line_pattern_symbolizer : public symbolizer_base {};
 struct MAPNIK_DECL polygon_pattern_symbolizer : public symbolizer_base {};
 
 //Marker symbolizer with cached attributes
+struct marker_cache_line : util::noncopyable
+{
+    std::shared_ptr<svg_attribute_type> attributes = nullptr;
+    svg_path_ptr ellipse = nullptr;
+    std::string filename;
+    markers_placement_params placement_params;
+    bool enabled = false;
+};
 struct MAPNIK_DECL markers_symbolizer : public symbolizer_base
 {
-    enum cache_status { UNCHECKED, UNCACHEABLE, CACHEABLE };
-
-    std::shared_ptr<svg_attribute_type> cached_attributes = nullptr;
-    svg_path_ptr cached_ellipse = nullptr;
-    std::string marker_filename;
-    markers_placement_params placement_params;
-    cache_status cacheable = UNCHECKED;
+    std::shared_ptr<marker_cache_line> cache = nullptr;
 };
 
 struct MAPNIK_DECL raster_symbolizer : public symbolizer_base {};
