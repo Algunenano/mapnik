@@ -249,20 +249,23 @@ markers_dispatch_params::markers_dispatch_params(box2d<double> const& size,
                                                  attributes const& vars,
                                                  double scale,
                                                  bool snap)
-    : placement_params{
-        size,
-        tr,
-        get<value_double, keys::spacing>(sym, feature, vars),
-        get<value_double, keys::max_error>(sym, feature, vars),
-        get<value_bool, keys::allow_overlap>(sym, feature, vars),
-        get<value_bool, keys::avoid_edges>(sym, feature, vars),
-        get<direction_enum, keys::direction>(sym, feature, vars),
-        get<marker_placement_enum, keys::markers_placement_type>(sym, feature, vars),
-        get<value_bool, keys::ignore_placement>(sym, feature, vars)}
+    : placement_params(sym.placement_params)
     , snap_to_pixels(snap)
     , scale_factor(scale)
     , opacity(get<value_double, keys::opacity>(sym, feature, vars))
 {
+    placement_params.size = size;
+    placement_params.tr = tr;
+    if (sym.cacheable != markers_symbolizer::cache_status::CACHEABLE)
+    {
+        placement_params.spacing = get<value_double, keys::spacing>(sym, feature, vars);
+        placement_params.max_error = get<value_double, keys::max_error>(sym, feature, vars);
+        placement_params.allow_overlap = get<value_bool, keys::allow_overlap>(sym, feature, vars);
+        placement_params.avoid_edges = get<value_bool, keys::avoid_edges>(sym, feature, vars);
+        placement_params.direction = get<direction_enum, keys::direction>(sym, feature, vars);
+        placement_params.placement_method = get<marker_placement_enum, keys::markers_placement_type>(sym, feature, vars);
+        placement_params.ignore_placement = get<value_bool, keys::ignore_placement>(sym, feature, vars);
+    }
     placement_params.spacing *= scale;
 }
 
@@ -288,6 +291,13 @@ void render_markers_symbolizer(markers_symbolizer const& sym,
         {
             csym.cacheable = markers_symbolizer::cache_status::CACHEABLE;
             csym.marker_filename = get<std::string>(sym, keys::file, feature, common.vars_, "shape://ellipse");
+            csym.placement_params.spacing = get<value_double, keys::spacing>(sym, feature, common.vars_);
+            csym.placement_params.max_error =  get<value_double, keys::max_error>(sym, feature, common.vars_);
+            csym.placement_params.allow_overlap = get<value_bool, keys::allow_overlap>(sym, feature, common.vars_);
+            csym.placement_params.avoid_edges = get<value_bool, keys::avoid_edges>(sym, feature, common.vars_);
+            csym.placement_params.direction = get<direction_enum, keys::direction>(sym, feature, common.vars_);
+            csym.placement_params.placement_method = get<marker_placement_enum, keys::markers_placement_type>(sym, feature, common.vars_);
+            csym.placement_params.ignore_placement = get<value_bool, keys::ignore_placement>(sym, feature, common.vars_);
         }
         else
         {
