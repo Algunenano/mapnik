@@ -34,8 +34,6 @@ struct markers_dispatch_params
 {
     // placement
     markers_placement_params placement_params;
-    marker_placement_enum placement_method;
-    value_bool ignore_placement;
     // rendering
     bool snap_to_pixels;
     double scale_factor;
@@ -43,7 +41,7 @@ struct markers_dispatch_params
 
     markers_dispatch_params(box2d<double> const& size,
                             agg::trans_affine const& tr,
-                            symbolizer_base const& sym,
+                            markers_symbolizer const& sym,
                             feature_impl const& feature,
                             attributes const& vars,
                             double scale_factor = 1.0,

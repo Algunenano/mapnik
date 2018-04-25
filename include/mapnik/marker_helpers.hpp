@@ -57,7 +57,7 @@ struct vector_markers_dispatch : util::noncopyable
                             svg_path_adapter & path,
                             svg_attribute_type & attrs,
                             agg::trans_affine const& marker_trans,
-                            symbolizer_base const& sym,
+                            markers_symbolizer const& sym,
                             Detector & detector,
                             double scale_factor,
                             feature_impl const& feature,
@@ -77,9 +77,9 @@ struct vector_markers_dispatch : util::noncopyable
     void add_path(T & path)
     {
         markers_placement_finder<T, Detector> placement_finder(
-            params_.placement_method, path, detector_, params_.placement_params);
+            path, detector_, params_.placement_params);
         double x, y, angle = .0;
-        while (placement_finder.get_point(x, y, angle, params_.ignore_placement))
+        while (placement_finder.get_point(x, y, angle, params_.placement_params.ignore_placement))
         {
             agg::trans_affine matrix = params_.placement_params.tr;
             matrix.rotate(angle);
@@ -108,7 +108,7 @@ struct raster_markers_dispatch : util::noncopyable
 {
     raster_markers_dispatch(image_rgba8 const& src,
                             agg::trans_affine const& marker_trans,
-                            symbolizer_base const& sym,
+                            markers_symbolizer const& sym,
                             Detector & detector,
                             double scale_factor,
                             feature_impl const& feature,
@@ -125,9 +125,9 @@ struct raster_markers_dispatch : util::noncopyable
     void add_path(T & path)
     {
         markers_placement_finder<T, Detector> placement_finder(
-            params_.placement_method, path, detector_, params_.placement_params);
+            path, detector_, params_.placement_params);
         double x, y, angle = .0;
-        while (placement_finder.get_point(x, y, angle, params_.ignore_placement))
+        while (placement_finder.get_point(x, y, angle, params_.placement_params.ignore_placement))
         {
             agg::trans_affine matrix = params_.placement_params.tr;
             matrix.rotate(angle);
