@@ -133,12 +133,11 @@ struct render_marker_symbolizer_visitor
 
         std::shared_ptr<svg_attribute_type> r_attributes = nullptr;
 
-        bool cacheable = !renderer_context_.symbolizer_caches_disabled_ &&
-                (csym.cacheable == markers_symbolizer::cache_status::CACHEABLE);
+        bool cacheable = !renderer_context_.symbolizer_caches_disabled_ && csym.cache->enabled;
 
         if (cacheable)
         {
-            r_attributes = csym.cached_attributes;
+            r_attributes = csym.cache->attributes;
         }
 
         if (r_attributes == nullptr)
@@ -149,7 +148,7 @@ struct render_marker_symbolizer_visitor
 
             if (cacheable)
             {
-                csym.cached_attributes = r_attributes;
+                csym.cache->attributes = r_attributes;
             }
         }
 
@@ -164,7 +163,7 @@ struct render_marker_symbolizer_visitor
             // special case for simple ellipse markers to allow for full control over rx/ry dimensions
             // Ellipses are built procedurally. We do caching of the built ellipses, this is useful for rendering stages
 
-            marker_ptr = cacheable ? csym.cached_ellipse : nullptr;
+            marker_ptr = cacheable ? csym.cache->ellipse : nullptr;
             if (!marker_ptr)
             {
                 renderer_context_.metrics_.measure_add("Agg_PMS_EllipseCache_Miss");
@@ -177,7 +176,7 @@ struct render_marker_symbolizer_visitor
                 // an expression we can cache the output of the ellipse per symbolizer
                 if (cacheable)
                 {
-                    csym.cached_ellipse = marker_ptr;
+                    csym.cache->ellipse = marker_ptr;
                 }
             }
         }
@@ -249,14 +248,14 @@ markers_dispatch_params::markers_dispatch_params(box2d<double> const& size,
                                                  attributes const& vars,
                                                  double scale,
                                                  bool snap)
-    : placement_params(sym.placement_params)
+    : placement_params(sym.cache->placement_params)
     , snap_to_pixels(snap)
     , scale_factor(scale)
     , opacity(get<value_double, keys::opacity>(sym, feature, vars))
 {
     placement_params.size = size;
     placement_params.tr = tr;
-    if (sym.cacheable != markers_symbolizer::cache_status::CACHEABLE)
+    if (!sym.cache->enabled)
     {
         placement_params.spacing = get<value_double, keys::spacing>(sym, feature, vars);
         placement_params.max_error = get<value_double, keys::max_error>(sym, feature, vars);
@@ -282,30 +281,28 @@ void render_markers_symbolizer(markers_symbolizer const& sym,
     using VisitorType = detail::render_marker_symbolizer_visitor<Detector,
                                                                  RendererType,
                                                                  ContextType>;
-    auto &csym = const_cast<markers_symbolizer &>(sym);
-    if (csym.cacheable == markers_symbolizer::cache_status::UNCHECKED)
+    if (!sym.cache)
     {
-        if (std::all_of(csym.properties.begin(), csym.properties.end(),
+        std::shared_ptr<marker_cache_line> c = std::make_shared<marker_cache_line>();
+
+        if (std::all_of(sym.properties.begin(), sym.properties.end(),
             [](symbolizer_base::cont_type::value_type const& key_prop)
               { return !is_expression(key_prop.second);}))
         {
-            csym.cacheable = markers_symbolizer::cache_status::CACHEABLE;
-            csym.marker_filename = get<std::string>(sym, keys::file, feature, common.vars_, "shape://ellipse");
-            csym.placement_params.spacing = get<value_double, keys::spacing>(sym, feature, common.vars_);
-            csym.placement_params.max_error =  get<value_double, keys::max_error>(sym, feature, common.vars_);
-            csym.placement_params.allow_overlap = get<value_bool, keys::allow_overlap>(sym, feature, common.vars_);
-            csym.placement_params.avoid_edges = get<value_bool, keys::avoid_edges>(sym, feature, common.vars_);
-            csym.placement_params.direction = get<direction_enum, keys::direction>(sym, feature, common.vars_);
-            csym.placement_params.placement_method = get<marker_placement_enum, keys::markers_placement_type>(sym, feature, common.vars_);
-            csym.placement_params.ignore_placement = get<value_bool, keys::ignore_placement>(sym, feature, common.vars_);
+            c->filename = get<std::string>(sym, keys::file, feature, common.vars_, "shape://ellipse");
+            c->placement_params.spacing = get<value_double, keys::spacing>(sym, feature, common.vars_);
+            c->placement_params.max_error = get<value_double, keys::max_error>(sym, feature, common.vars_);
+            c->placement_params.allow_overlap = get<value_bool, keys::allow_overlap>(sym, feature, common.vars_);
+            c->placement_params.avoid_edges = get<value_bool, keys::avoid_edges>(sym, feature, common.vars_);
+            c->placement_params.direction = get<direction_enum, keys::direction>(sym, feature, common.vars_);
+            c->placement_params.placement_method = get<marker_placement_enum, keys::markers_placement_type>(sym, feature, common.vars_);
+            c->placement_params.ignore_placement = get<value_bool, keys::ignore_placement>(sym, feature, common.vars_);
+            c->enabled = true;
         }
-        else
-        {
-            csym.cacheable = markers_symbolizer::cache_status::UNCACHEABLE;
-        }
+        const_cast<markers_symbolizer &>(sym).cache = c;
     }
-    std::string &cached = csym.marker_filename;
-    if (csym.cacheable != markers_symbolizer::cache_status::CACHEABLE)
+    std::string &cached = sym.cache->filename;
+    if (!sym.cache->enabled)
     {
         cached = get<std::string>(sym, keys::file, feature, common.vars_, "shape://ellipse");
     }
