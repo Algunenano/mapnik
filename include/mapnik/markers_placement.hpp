@@ -37,13 +37,12 @@ template <typename Locator, typename Detector>
 class markers_placement_finder : util::noncopyable
 {
 public:
-    markers_placement_finder(marker_placement_e placement_type,
-                             Locator &locator,
+    markers_placement_finder(Locator &locator,
                              Detector &detector,
                              markers_placement_params const& params)
-        : placement_type_(placement_type)
+        : placement_type_(params.placement_method)
     {
-        switch (placement_type)
+        switch (params.placement_method)
         {
         default:
         case MARKER_POINT_PLACEMENT:

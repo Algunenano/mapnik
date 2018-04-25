@@ -244,7 +244,7 @@ struct render_marker_symbolizer_visitor
 
 markers_dispatch_params::markers_dispatch_params(box2d<double> const& size,
                                                  agg::trans_affine const& tr,
-                                                 symbolizer_base const& sym,
+                                                 markers_symbolizer const& sym,
                                                  feature_impl const& feature,
                                                  attributes const& vars,
                                                  double scale,
@@ -256,9 +256,9 @@ markers_dispatch_params::markers_dispatch_params(box2d<double> const& size,
         get<value_double, keys::max_error>(sym, feature, vars),
         get<value_bool, keys::allow_overlap>(sym, feature, vars),
         get<value_bool, keys::avoid_edges>(sym, feature, vars),
-        get<direction_enum, keys::direction>(sym, feature, vars)}
-    , placement_method(get<marker_placement_enum, keys::markers_placement_type>(sym, feature, vars))
-    , ignore_placement(get<value_bool, keys::ignore_placement>(sym, feature, vars))
+        get<direction_enum, keys::direction>(sym, feature, vars),
+        get<marker_placement_enum, keys::markers_placement_type>(sym, feature, vars),
+        get<value_bool, keys::ignore_placement>(sym, feature, vars)}
     , snap_to_pixels(snap)
     , scale_factor(scale)
     , opacity(get<value_double, keys::opacity>(sym, feature, vars))
