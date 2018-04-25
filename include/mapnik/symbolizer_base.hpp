@@ -35,6 +35,7 @@
 #include <mapnik/text/font_feature_settings.hpp>
 #include <mapnik/util/variant.hpp>
 #include <mapnik/marker.hpp>
+#include <mapnik/markers_placements/basic.hpp>
 
 // stl
 #include <memory>
@@ -149,6 +150,7 @@ struct MAPNIK_DECL markers_symbolizer : public symbolizer_base
     std::shared_ptr<svg_attribute_type> cached_attributes = nullptr;
     svg_path_ptr cached_ellipse = nullptr;
     std::string marker_filename;
+    markers_placement_params placement_params;
     cache_status cacheable = UNCHECKED;
 };
 
