@@ -51,7 +51,7 @@ struct rendering_buffer
     int stride() const { return data_.row_size();}
     uint8_t const* row_ptr(int, int y, unsigned) {return row_ptr(y);}
     uint8_t const* row_ptr(int y) const { return reinterpret_cast<std::uint8_t const*>(data_.get_row(static_cast<std::size_t>(y))); }
-    row_data row (int y) const { return row_data(0, safe_cast<int>(data_.width() - 1), row_ptr(y)); }
+    row_data row (int y) const { return row_data(0, static_cast<int>(data_.width() - 1), row_ptr(y)); }
     image_type const& data_;
 };
 
