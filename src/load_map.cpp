@@ -178,17 +178,19 @@ void load_map(Map & map, std::string const& filename, bool strict, std::string b
                     {
                         if (prop_it->second == true)
                         {
+                            printf("Symbolizer true\n");
                             continue;
                         }
                     }
                 }
-
+                printf("Symbolizer false\n");
                 // In all other cases (non-marker symbolizer, allow_overlap not explictly true) do not set ignore_placement
                 ignore_placement = false;
                 break;
             }
         }
     }
+    printf("Ignore placement: %d\n", ignore_placement);
     if (ignore_placement)
     {
         for (auto style_it = map.begin_styles(); style_it != map.end_styles(); style_it++)
