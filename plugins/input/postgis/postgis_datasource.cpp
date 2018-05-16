@@ -786,7 +786,7 @@ featureset_ptr postgis_datasource::features_with_context(query const& q,processo
             // And what's that in map units?
             const double twkb_tolerance = pow(10.0, -1.0 * twkb_rounding);
 
-            s << "SELECT ST_AsTWKB(";
+            s << "SELECT DISTINCT ST_AsTWKB(";
             s << "ST_Simplify(";
             s << "ST_RemoveRepeatedPoints(";
 
@@ -811,7 +811,7 @@ featureset_ptr postgis_datasource::features_with_context(query const& q,processo
         }
         else
         {
-            s << "SELECT ST_AsBinary(";
+            s << "SELECT DISTINCT ST_AsBinary(";
             if (simplify_geometries_)
             {
                 s << "ST_Simplify(";
