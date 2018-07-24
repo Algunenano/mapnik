@@ -423,6 +423,9 @@ void feature_style_processor<Processor>::prepare_layer(layer_rendering_material 
 
     double qw = query_ext.width()>0 ? query_ext.width() : 1;
     double qh = query_ext.height()>0 ? query_ext.height() : 1;
+    printf("qw: %.10f -- qh: %.10f\n", qw, qh);
+    printf("w: %.10f -- h: %.10f\n", width, height);
+    printf("Resolution: %.10f. Inv: %.10f\n", std::min(width/qw, height/qh), std::min(qw/width, qh/height));
     query::resolution_type res(width/qw,
                                height/qh);
 
