@@ -958,12 +958,11 @@ int main()
     return False
 
 def boost_regex_has_icu(context):
-    if env['RUNTIME_LINK'] == 'static':
-        # re-order icu libs to ensure linux linker is happy
-        for lib_name in ['icui18n',env['ICU_LIB_NAME'],'icudata']:
-            if lib_name in context.env['LIBS']:
-                context.env['LIBS'].remove(lib_name)
-            context.env.Append(LIBS=lib_name)
+    # re-order icu libs to ensure linux linker is happy
+    for lib_name in ['icui18n',env['ICU_LIB_NAME'],'icudata']:
+        if lib_name in context.env['LIBS']:
+            context.env['LIBS'].remove(lib_name)
+        context.env['LIBS'].append(lib_name)
     ret = context.TryRun("""
 
 #include <boost/regex/icu.hpp>
