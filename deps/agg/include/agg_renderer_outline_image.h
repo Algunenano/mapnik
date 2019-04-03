@@ -984,7 +984,7 @@ namespace agg
                         line3_no_clip(lp, sx, sy, ex, ey);
                     }
                 }
-                m_start = start + uround(lp.len / m_scale_x);
+                m_start = std::min(0, iround(static_cast<double>(start) + (static_cast<double>(lp.len) / m_scale_x)));
             }
             else
             {

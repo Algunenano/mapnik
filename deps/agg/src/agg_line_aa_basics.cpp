@@ -13,8 +13,9 @@
 //          http://www.antigrain.com
 //----------------------------------------------------------------------------
 
-#include <math.h>
 #include "agg_line_aa_basics.h"
+
+#include <cmath>
 
 namespace agg
 {
@@ -69,10 +70,15 @@ void bisectrix(const line_parameters& l1,
     // Check if the bisectrix is too short
     double dx = tx - l2.x1;
     double dy = ty - l2.y1;
-    if((int)sqrt(dx * dx + dy * dy) < line_subpixel_scale)
+    if(std::sqrt(dx * dx + dy * dy) < static_cast<double>(line_subpixel_scale))
     {
-        *x = (l2.x1 + l2.x1 + (l2.y1 - l1.y1) + (l2.y2 - l2.y1)) >> 1;
-        *y = (l2.y1 + l2.y1 - (l2.x1 - l1.x1) - (l2.x2 - l2.x1)) >> 1;
+//        *x = (l2.x1 + l2.x1 + (l2.y1 - l1.y1) + (l2.y2 - l2.y1)) >> 1;
+//        *y = (l2.y1 + l2.y1 - (l2.x1 - l1.x1) - (l2.x2 - l2.x1)) >> 1;
+        // Adapted to prevent undefined behaviour due to overflows
+        double x_value = (2 * static_cast<double>(l2.x1) + static_cast<double>(l2.y1) - static_cast<double>(l1.y1) + static_cast<double>(l2.y2) - static_cast<double>(l2.y1)) / 2;
+        double y_value = (2 * static_cast<double>(l2.y1) + static_cast<double>(l2.x1) - static_cast<double>(l1.x1) + static_cast<double>(l2.x2) - static_cast<double>(l2.x1)) / 2;
+        *x = iround(x_value);
+        *y = iround(y_value);
         return;
     }
     *x = iround(tx);
