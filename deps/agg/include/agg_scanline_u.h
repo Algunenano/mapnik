@@ -149,6 +149,11 @@ namespace agg
         void add_cell(int x, unsigned cover)
         {
             x -= m_min_x;
+            if (x >= m_covers.size())
+            {
+                printf("Requested writing in position %d (+%d), but size is only %d\n", x, m_min_x, m_covers.size());
+                return;
+            }
             m_covers[x] = (cover_type)cover;
             if(x == m_last_x+1)
             {
