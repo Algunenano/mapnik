@@ -57,12 +57,14 @@ public:
 
     virtual void close()
     {
+        printf("Postgis plugin: Closing %p\n", res_);
         PQclear(res_);
         res_ = 0;
     }
 
     virtual ~ResultSet()
     {
+        printf("Postgis plugin: Closing %p\n", res_);
         PQclear(res_);
     }
 

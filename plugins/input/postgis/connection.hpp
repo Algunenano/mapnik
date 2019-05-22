@@ -114,6 +114,7 @@ public:
         mapnik::progress_timer __stats__(std::clog, std::string("postgis_connection::execute_query ") + sql);
 #endif
         PGresult* result = 0;
+        uint32_t l = 0;
         if ( executeAsyncQuery(sql, type) ) {
           // fetch multiple times until NULL is returned,
           // to handle multi-statement queries
@@ -133,6 +134,8 @@ public:
             if ( result ) PQclear(result);
             throw mapnik::datasource_exception(err_msg);
         }
+
+        printf ("Postgis plugin saved: %p\n", result);
 
         return std::make_shared<ResultSet>(result);
     }
@@ -205,6 +208,7 @@ public:
             close();
             throw mapnik::datasource_exception(err_msg);
         }
+        printf ("Postgis plugin saved: %p\n", result);
        return std::make_shared<ResultSet>(result);
     }
 
@@ -222,6 +226,7 @@ public:
             close();
             throw mapnik::datasource_exception(err_msg);
         }
+        printf ("Postgis plugin saved: %p\n", result);
         return std::make_shared<ResultSet>(result);
     }
 
