@@ -344,6 +344,9 @@ face_ptr freetype_engine::create_face_impl(std::string const& family_name,
         itr = global_font_file_mapping.find(family_name);
         if (itr != global_font_file_mapping.end())
         {
+#ifdef MAPNIK_THREADSAFE
+            std::lock_guard<std::mutex> lock(mutex_);
+#endif
             auto mem_font_itr = global_memory_fonts.find(itr->second.second);
             // if font already in memory, use it
             if (mem_font_itr != global_memory_fonts.end())
